@@ -3,3 +3,7 @@
 *.xcodeproj/xcuserdata/
 DerivedData/
 .DS_Store
+
+# Python tooling
+.venv/
+__pycache__/
