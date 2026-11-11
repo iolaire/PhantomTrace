@@ -10,6 +10,11 @@
 # lint-config, or script file is staged, so docs-only commits stay fast.
 # Exit 2 blocks the action and shows stderr; this script never edits files.
 set -u
+# SwiftLint needs its frameworks on Command Line Tools installs.
+if [ "$(xcode-select -p 2>/dev/null)" = "/Library/Developer/CommandLineTools" ] \
+    && [ -d /Library/Developer/CommandLineTools/usr/lib ]; then
+    export DYLD_FRAMEWORK_PATH=/Library/Developer/CommandLineTools/usr/lib
+fi
 mode="${1:-}"
 git_mode=0
 [ "${2:-}" = "--git" ] && git_mode=1

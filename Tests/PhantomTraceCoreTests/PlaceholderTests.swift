@@ -1,6 +1,8 @@
-import PhantomTraceCore
 import Testing
+@testable import PhantomTraceCore
 
-@Test func versionIsPlaceholder() {
-    #expect(PhantomTraceCore.version == "0.0.0")
+struct PlaceholderTests {
+    @Test func versionIsPlaceholder() {
+        #expect(PhantomTraceCore.version == "0.0.0")
+    }
 }

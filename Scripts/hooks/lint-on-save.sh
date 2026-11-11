@@ -2,6 +2,11 @@
 # Lint only the saved Swift file. Used by the Kiro PostFileSave hook.
 # Reads the hook payload (JSON) on stdin and looks for the saved file path.
 set -u
+# SwiftLint needs its frameworks on Command Line Tools installs.
+if [ "$(xcode-select -p 2>/dev/null)" = "/Library/Developer/CommandLineTools" ] \
+    && [ -d /Library/Developer/CommandLineTools/usr/lib ]; then
+    export DYLD_FRAMEWORK_PATH=/Library/Developer/CommandLineTools/usr/lib
+fi
 cd "$(dirname "$0")/../.." || exit 0
 
 payload="$(cat)"

@@ -71,7 +71,7 @@ This feature sets up the initial project foundation for PhantomTrace, a macOS ut
 
 #### Acceptance Criteria
 
-1. THE Scaffold SHALL contain a `LICENSE` file at the repository root with the standard MIT License text and a copyright line in the format `Copyright (c) <YYYY> PhantomTrace`, where `<YYYY>` is a four-digit calendar year. The text SHALL be the unmodified standard MIT text so that GitHub detects the license and shows it in the repository About section, as the Hackathon_Rules require.
+1. THE Scaffold SHALL contain a `LICENSE` file at the repository root with the standard MIT License text and a copyright line in the format `Copyright (c) <YYYY> iolaire mcfadden`, where `<YYYY>` is a four-digit calendar year. The text SHALL be the unmodified standard MIT text so that GitHub detects the license and shows it in the repository About section, as the Hackathon_Rules require.
 2. THE Scaffold SHALL contain a `.gitignore` file at the repository root with one separate line entry for each of `.build/`, `.swiftpm/`, `*.xcodeproj/xcuserdata/`, `DerivedData/`, and `.DS_Store`. THE `.gitignore` SHALL NOT contain any entry that matches `.kiro`, `.kiro/`, or any path beneath it, because the Hackathon_Rules state that ignoring `/.kiro` can disqualify the submission.
 3. THE Scaffold SHALL contain Lint_Config at the repository root that sets `included` to `Sources` and `Tests`.
 4. WHEN `swiftlint --strict` is run at the repository root on macOS 27.2.1 (build 26B131), THE Scaffold SHALL exit with code 0 and report zero warnings and zero errors.

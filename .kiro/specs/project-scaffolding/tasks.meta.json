@@ -28,6 +28,31 @@
         "executionId": "88f9a2f5-d89d-4044-8b81-3a2be391b9aa",
         "chatSessionId": "sess_188cd68b-aa37-45eb-b85e-cdd6eaf83e83",
         "timestamp": 1794342237268
+      },
+      {
+        "executionId": "11d0fa3d-1c96-485a-937b-c6c34ec5bc2e",
+        "chatSessionId": "sess_92d6e93a-abd9-4f56-af17-4169559c0068",
+        "timestamp": 1794357845792
+      },
+      {
+        "executionId": "11d0fa3d-1c96-485a-937b-c6c34ec5bc2e",
+        "chatSessionId": "sess_92d6e93a-abd9-4f56-af17-4169559c0068",
+        "timestamp": 1794357845827
+      },
+      {
+        "executionId": "11d0fa3d-1c96-485a-937b-c6c34ec5bc2e",
+        "chatSessionId": "sess_92d6e93a-abd9-4f56-af17-4169559c0068",
+        "timestamp": 1794357849050
+      },
+      {
+        "executionId": "fb719ba1-32bd-4cd2-b1f1-4805c86123c7",
+        "chatSessionId": "sess_92d6e93a-abd9-4f56-af17-4169559c0068",
+        "timestamp": 1794357886161
+      },
+      {
+        "executionId": "fb719ba1-32bd-4cd2-b1f1-4805c86123c7",
+        "chatSessionId": "sess_92d6e93a-abd9-4f56-af17-4169559c0068",
+        "timestamp": 1794357963056
       }
     ],
     "1.3 Add `.swiftlint.yml`": [
@@ -110,6 +135,21 @@
         "executionId": "88f9a2f5-d89d-4044-8b81-3a2be391b9aa",
         "chatSessionId": "sess_188cd68b-aa37-45eb-b85e-cdd6eaf83e83",
         "timestamp": 1794342217868
+      },
+      {
+        "executionId": "11d0fa3d-1c96-485a-937b-c6c34ec5bc2e",
+        "chatSessionId": "sess_92d6e93a-abd9-4f56-af17-4169559c0068",
+        "timestamp": 1794357849625
+      },
+      {
+        "executionId": "fb719ba1-32bd-4cd2-b1f1-4805c86123c7",
+        "chatSessionId": "sess_92d6e93a-abd9-4f56-af17-4169559c0068",
+        "timestamp": 1794357885715
+      },
+      {
+        "executionId": "fb719ba1-32bd-4cd2-b1f1-4805c86123c7",
+        "chatSessionId": "sess_92d6e93a-abd9-4f56-af17-4169559c0068",
+        "timestamp": 1794357963110
       }
     ],
     "4.1 Write `Scripts/verify-scaffold.sh` (committed, mode 755)": [
@@ -117,6 +157,16 @@
         "executionId": "88f9a2f5-d89d-4044-8b81-3a2be391b9aa",
         "chatSessionId": "sess_188cd68b-aa37-45eb-b85e-cdd6eaf83e83",
         "timestamp": 1794342217870
+      },
+      {
+        "executionId": "fb719ba1-32bd-4cd2-b1f1-4805c86123c7",
+        "chatSessionId": "sess_92d6e93a-abd9-4f56-af17-4169559c0068",
+        "timestamp": 1794357964698
+      },
+      {
+        "executionId": "fb719ba1-32bd-4cd2-b1f1-4805c86123c7",
+        "chatSessionId": "sess_92d6e93a-abd9-4f56-af17-4169559c0068",
+        "timestamp": 1794402229391
       }
     ],
     "4.2 Run the verification and build checks": [
@@ -124,6 +174,16 @@
         "executionId": "88f9a2f5-d89d-4044-8b81-3a2be391b9aa",
         "chatSessionId": "sess_188cd68b-aa37-45eb-b85e-cdd6eaf83e83",
         "timestamp": 1794342217871
+      },
+      {
+        "executionId": "25a414fa-3041-48a2-99c6-3aaf100b7cbf",
+        "chatSessionId": "sess_92d6e93a-abd9-4f56-af17-4169559c0068",
+        "timestamp": 1794402363278
+      },
+      {
+        "executionId": "25a414fa-3041-48a2-99c6-3aaf100b7cbf",
+        "chatSessionId": "sess_92d6e93a-abd9-4f56-af17-4169559c0068",
+        "timestamp": 1794408461223
       }
     ],
     "5. Final checkpoint - Ensure all tests pass": [
@@ -131,6 +191,16 @@
         "executionId": "88f9a2f5-d89d-4044-8b81-3a2be391b9aa",
         "chatSessionId": "sess_188cd68b-aa37-45eb-b85e-cdd6eaf83e83",
         "timestamp": 1794342217872
+      },
+      {
+        "executionId": "25a414fa-3041-48a2-99c6-3aaf100b7cbf",
+        "chatSessionId": "sess_92d6e93a-abd9-4f56-af17-4169559c0068",
+        "timestamp": 1794408463055
+      },
+      {
+        "executionId": "25a414fa-3041-48a2-99c6-3aaf100b7cbf",
+        "chatSessionId": "sess_92d6e93a-abd9-4f56-af17-4169559c0068",
+        "timestamp": 1794408628696
       }
     ],
     "2. Add repository files and documentation": [
@@ -138,6 +208,34 @@
         "executionId": "88f9a2f5-d89d-4044-8b81-3a2be391b9aa",
         "chatSessionId": "sess_188cd68b-aa37-45eb-b85e-cdd6eaf83e83",
         "timestamp": 1794342501014
+      }
+    ],
+    "6. Manual hackathon submission checks (not automatable)": [
+      {
+        "executionId": "11d0fa3d-1c96-485a-937b-c6c34ec5bc2e",
+        "chatSessionId": "sess_92d6e93a-abd9-4f56-af17-4169559c0068",
+        "timestamp": 1794357845858
+      }
+    ],
+    "1. Create folder structure and SwiftPM package skeleton": [
+      {
+        "executionId": "fb719ba1-32bd-4cd2-b1f1-4805c86123c7",
+        "chatSessionId": "sess_92d6e93a-abd9-4f56-af17-4169559c0068",
+        "timestamp": 1794357963082
+      }
+    ],
+    "3. Add Kiro steering, hooks, and helper script": [
+      {
+        "executionId": "fb719ba1-32bd-4cd2-b1f1-4805c86123c7",
+        "chatSessionId": "sess_92d6e93a-abd9-4f56-af17-4169559c0068",
+        "timestamp": 1794357963132
+      }
+    ],
+    "4. Add and run the verification script": [
+      {
+        "executionId": "25a414fa-3041-48a2-99c6-3aaf100b7cbf",
+        "chatSessionId": "sess_92d6e93a-abd9-4f56-af17-4169559c0068",
+        "timestamp": 1794408461298
       }
     ]
   }

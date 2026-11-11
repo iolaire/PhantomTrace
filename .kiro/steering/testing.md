@@ -4,7 +4,7 @@ inclusion: always
 
 # Testing
 
-Frameworks: Swift Testing (`import Testing`, `@Test`, `#expect`) for unit and property tests, as in the existing placeholders. Property-based tests use the library pinned in `Package.swift` (`PropertyBased`; see `tech.md`). Use XCTest only where Swift Testing cannot do the job (for example UI or performance metrics).
+Frameworks: Swift Testing (`import Testing`, `@Test`, `#expect`) for unit and property tests, as in the existing placeholders. Property-based tests use the library pinned in `Package.swift` (`PropertyBased`; see `tech.md`). XCTest is not available on Command Line Tools installs, so do not use it.
 
 ## Layout
 

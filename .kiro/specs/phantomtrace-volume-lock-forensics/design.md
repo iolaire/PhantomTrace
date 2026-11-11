@@ -875,7 +875,7 @@ For any path (including spaces, quotes, and shell metacharacters), the subproces
 
 ### Unit Testing Approach
 
-- Swift Testing / XCTest in `PhantomTraceCoreTests` with mock `ProcessRunner`, `SignalSender`, `Unmounter`, `FileSystemProbe`.
+- Swift Testing in `PhantomTraceCoreTests` with mock `ProcessRunner`, `SignalSender`, `Unmounter`, `FileSystemProbe`.
 - Fixture-driven parser tests from real captured `lsof` outputs: spaces, newlines, unicode, `\x` escapes, deleted files, symlinked mounts, `/Volumes` firmlink.
 - Classifier tests for each daemon allowlist entry and shell variant.
 - Safety policy table tests for every protected process and stage-order rule.
@@ -914,7 +914,7 @@ Fuzz the `lsof`/`fuser` output parser against malformed paths, non-UTF8 bytes, s
 
 - Apple frameworks: Foundation, AppKit, DiskArbitration, Darwin, OSLog
 - System tools: `/usr/sbin/lsof`, `/usr/bin/fuser` (optional cross-check), `/usr/sbin/diskutil`, `/usr/bin/hdiutil`
-- Test-only: SwiftCheck (SwiftPM), XCTest / Swift Testing
+- Test-only: SwiftCheck (SwiftPM), Swift Testing
 - Dev tooling: SwiftLint (Homebrew), Kiro hooks to enforce `swiftlint --strict` and `swift test` before commits
 - Platform: macOS "Golden Gate" (27.2.1, build 26B131) or later, the only version available for testing; older macOS releases are unsupported. Swift toolchain matching that SDK
 - Assets: bundled bitmap-style fonts (open-licensed Chicago/Monaco-alike substitutes verified for license) and Kiro ghost sprite set
