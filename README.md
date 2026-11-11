@@ -59,6 +59,16 @@ swift test
 - **Agent hooks** in `.kiro/hooks/`: pre-commit checks that enforce swiftlint rules and require passing tests.
 - **Steering files** in `.kiro/steering/`.
 
+See [docs/KiroUsage.md](docs/KiroUsage.md) for how each Kiro feature was used.
+
+## Hackathon submission
+
+- Category: Resurrection. Hackathon: Kiroween 2026.
+- [Submission checklist](docs/SubmissionChecklist.md)
+- [Demo script](docs/demo-script.md)
+- Pre-existing code: none. The project was created during the Submission Period.
+- Runtime dependencies: none. SwiftCheck and SwiftLint are development tools only.
+
 ## Specs
 
 - [Project overview](docs/ProjectOverview.md)

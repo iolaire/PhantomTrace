@@ -4,7 +4,13 @@
 
 This feature creates the initial PhantomTrace repository foundation: folder structure, an empty but buildable SwiftPM package, README, LICENSE, `.gitignore`, SwiftLint config, documentation stubs, Kiro steering files, Kiro hooks, and a helper script. It contains no feature logic. The layout follows the "Project Layout" section of the Master_Spec (`.kiro/specs/phantomtrace-volume-lock-forensics/`), which is not modified.
 
-The target platform is macOS 27.2.1 (build 26B131) or later. Earlier versions are out of scope.
+The target platform is macOS only, and macOS 27.2.1 (build 26B131) only. Every other macOS version and operating system is out of scope. SwiftPM can only declare a minimum platform, so the exact-version scope is stated in prose in the README, `docs/ProjectOverview.md`, and the `product.md` and `tech.md` steering files.
+
+The scaffold is also shaped by the Kiroween 2026 rules (`docs/Hackathon/Rules.md`). The rules and judging criteria drive these decisions:
+- Eligibility: public GitHub repo, detectable MIT license, `/.kiro` present and never gitignored, runnable instructions, English-only materials, no copyrighted media or third-party trademarks.
+- Technological Implementation (20%): visible, varied Kiro use. The scaffold therefore ships specs, six steering files, four hooks, and a `docs/KiroUsage.md` write-up skeleton.
+- Presentation (20%): a demo script for a video under 3 minutes that shows the app running on the Mac.
+- Impact, Design, Innovation (60%): the README and `docs/ProjectOverview.md` state the real problem, audience, category, and visual direction.
 
 Key design decisions:
 - The scaffold is static files only. There is no generator program; the files are written once by the spec task executor.
@@ -51,12 +57,16 @@ PhantomTrace/
 │   ├── lint-and-test.sh                  # mode 755
 │   └── README.md
 ├── docs/
+│   ├── ProjectOverview.md                # pitch, problem, category, platform
+│   ├── SubmissionChecklist.md            # rules checklist and criteria map
+│   ├── KiroUsage.md                      # Kiro feature write-up
 │   ├── architecture.md
 │   ├── demo-script.md
+│   ├── Hackathon/{Rules,Faq}.md
 │   └── screenshots/.gitkeep
 └── .kiro/
-    ├── steering/{product,tech,structure,safety,testing}.md
-    └── hooks/{swiftlint-pre-commit,tests-pre-commit,lint-on-save}.json
+    ├── steering/{product,tech,structure,safety,testing,hackathon}.md
+    └── hooks/{swiftlint-pre-commit,tests-pre-commit,lint-on-save,kiro-gitignore-guard}.json
 ```
 
 Because `Sources/PhantomTraceCore` contains a source file, its directory-level `.gitkeep` is not needed; the five subdirectories contain only `.gitkeep` and so keep it (Requirement 1.3). `Sources/phantomtrace`, `Tests/PhantomTraceCoreTests`, and `Tests/PhantomTracePropertyTests` likewise contain source files.
@@ -143,6 +153,7 @@ Written in the Kiro v2 hook format (`version`, `hooks` array with one entry each
 | `swiftlint-pre-commit.json` | `PreToolUse` | tool name for shell execution, with the command checked for `git commit` | checks `command -v swiftlint`; if missing, prints "SwiftLint is unavailable" to stderr and exits 2; otherwise runs `swiftlint --strict` and exits 2 on failure |
 | `tests-pre-commit.json` | `PreToolUse` | same | runs `swift test`; exits 2 on failure with output on stderr |
 | `lint-on-save.json` | `PostFileSave` | `.*\.swift$` | runs `swiftlint lint --strict` on the saved file path |
+| `kiro-gitignore-guard.json` | `PreToolUse` | same as the pre-commit hooks | when the command is `git commit`, searches `.gitignore` with `grep -Eq '^/?\.kiro(/|$)'`; on a match prints "Ignoring .kiro can disqualify the Kiroween submission" to stderr and exits 2 |
 
 Exit code 2 blocks the action and forwards stderr to the user (per hook semantics). Hooks only read the working tree and never modify or stage anything, which satisfies the "leave working tree unmodified" criteria. The commands read the JSON from stdin to detect `git commit` and to obtain the saved file path, and quote all paths. The implementer verifies the exact stdin field names against the hook documentation when writing them.
 
@@ -160,20 +171,22 @@ Runs lint first; a lint failure prints its output and exits non-zero without run
 
 ### Steering files
 
-Five concise Markdown files in `.kiro/steering/`, derived from the Master_Spec, each containing the statements required by Requirement 6:
-- `product.md`: mission "identify which processes prevent a volume from ejecting", Resurrection theme, macOS 27.2.1 (build 26B131) or later, older versions out of scope.
-- `tech.md`: Swift, SwiftPM, AppKit, DiskArbitration; zero third-party runtime dependencies; SwiftCheck and SwiftLint as test and development tools only.
+Six concise Markdown files in `.kiro/steering/`, derived from the Master_Spec and the Hackathon_Rules, each containing the statements required by Requirement 6:
+- `product.md`: mission "identify which processes prevent a volume from ejecting", Resurrection theme, macOS only and macOS 27.2.1 (build 26B131) only, every other version out of scope.
+- `hackathon.md`: category and deadline, `.kiro/` never gitignored, public GitHub repo with MIT license, demo video under 3 minutes with no copyrighted material, English-only materials, keep `docs/KiroUsage.md` current.
+- `tech.md`: Swift, SwiftPM, AppKit, DiskArbitration; macOS 27.2.1 only; zero third-party runtime dependencies; SwiftCheck and SwiftLint as test and development tools only.
 - `structure.md`: Core_Library imports no AppKit; lists the nine directories and five Core subdirectories from Requirement 1.
 - `safety.md`: argument-array subprocesses without a shell; Safety_Policy is the single approval path; protected processes never signalled; no network, no telemetry.
 - `testing.md`: SwiftCheck at least 500 iterations per property in CI; round-trip property for every parser and printer; every system effect behind a mock protocol.
 
 ### Documentation, README, LICENSE, .gitignore
 
-- `README.md`: 1 to 3 sentence pitch, status section containing "scaffolding stage", platform statement (macOS 27.2.1 (build 26B131) or later; older unsupported), build section with `swift build` then `swift test` in separate fenced blocks, relative links to `.kiro/specs/phantomtrace-volume-lock-forensics/` and `.kiro/specs/project-scaffolding/`, MIT statement with link to `LICENSE`.
+- `README.md`: pitch, problem, three lock types, resolution pipeline, status section containing "scaffolding stage", platform statement (macOS only, macOS 27.2.1 (build 26B131) only; everything else unsupported), build section with `swift build` then `swift test` in separate fenced blocks, "Built with Kiro" section, hackathon section (category, no pre-existing code, no runtime dependencies, links to the Submission_Docs), relative links to `.kiro/specs/phantomtrace-volume-lock-forensics/` and `.kiro/specs/project-scaffolding/`, MIT statement with link to `LICENSE`. Run instructions are added when a runnable app exists.
+- `docs/ProjectOverview.md`, `docs/SubmissionChecklist.md`, `docs/KiroUsage.md`: submission-facing documents described in Requirement 5. `KiroUsage.md` only records real usage and marks the rest "Evidence to add".
 - `LICENSE`: standard MIT text, `Copyright (c) <YYYY> PhantomTrace` with the current four-digit year at creation time.
 - `.gitignore`: one line each for `.build/`, `.swiftpm/`, `*.xcodeproj/xcuserdata/`, `DerivedData/`, `.DS_Store`.
 - `docs/architecture.md`: first line `# Architecture`, with a relative link `../.kiro/specs/phantomtrace-volume-lock-forensics/design.md`.
-- `docs/demo-script.md`: first line `# Demo Script`, with the sentence "The demo length target is at most 3 minutes (180 seconds)."
+- `docs/demo-script.md`: first line `# Demo Script`, with the sentence "The demo length target is at most 3 minutes (180 seconds)." and the planned flow: locked drive, Finder failing to eject, PhantomTrace revealing the process, safe eject. The video must show the app running on a Mac, use no copyrighted music or trademarks, and be public on YouTube.
 
 ## Data Models
 
@@ -213,6 +226,7 @@ Verification is by smoke checks and example-based checks, collected in one shell
 - Documents (R3, R5): README contains required phrases and the commands in order; a link checker resolves every relative link in `README.md` and `docs/*.md`; first-line headings and the 180-second sentence are present; `docs/screenshots/.gitkeep` is 0 bytes.
 - Licensing and lint (R4): LICENSE copyright line matches a regex `^Copyright \(c\) [0-9]{4} PhantomTrace$`; each `.gitignore` entry is on its own line; `swiftlint --strict` exits 0.
 - Steering (R6): each file exists, is non-empty UTF-8, and contains grep-able required phrases.
-- Hooks (R7): each file parses as JSON (`python3 -m json.tool`), has exactly one trigger and one action; manual spot checks run the hook commands: one with a deliberately failing lint, one with `swiftlint` removed from `PATH`.
+- Hooks (R7): each file parses as JSON (`python3 -m json.tool`), has exactly one trigger and one action; manual spot checks run the hook commands: one with a deliberately failing lint, one with `swiftlint` removed from `PATH`, and one with a temporary `.kiro/` line in a copy of `.gitignore` for the guard hook.
+- Hackathon readiness (R9): `.kiro/specs`, `.kiro/steering`, and `.kiro/hooks` exist; `.gitignore` has no `.kiro` entry; `LICENSE` is the standard MIT text; the three Submission_Docs and `hackathon.md` exist and are non-empty; no non-English or binary media assets are present. The script cannot verify repository visibility, license detection on GitHub, the YouTube video, or the form fields, so those stay manual items in `docs/SubmissionChecklist.md`.
 - Script (R8): the owner execute bit is set; behaviour tested by running it on the clean tree (exit 0) and with a temporary lint violation (exit non-zero, tests not run); the temporary violation is removed afterward.
 - Git (R8): `.git` presence before and after scaffolding is identical.

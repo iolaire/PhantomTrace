@@ -4,6 +4,8 @@ PhantomTrace is a retro-themed macOS contextual forensic utility that demystifie
 
 Given a volume (external drive, USB stick, or mounted `.dmg`), it resolves the mount point, lists the processes holding locks, classifies each lock (background system daemon, CWD lock, or open file handle), and offers a graduated, opt-in resolution pipeline: Egress Shells, Graceful Request, Banish Locks, Clean Handoff.
 
+Mission: identify which processes prevent a volume from ejecting.
+
 The full overview is in `docs/ProjectOverview.md`.
 
 ## Hackathon theme
