@@ -45,9 +45,13 @@ Category: **Resurrection**. Bonus categories to pursue: Best Demo, Bonus Blog Pr
 
 ## Known gaps
 
-- Hooks exist (`lint-on-save`, `pre-commit-check`, `kiro-gitignore-guard`) but are untested live in Kiro. SwiftLint 0.65.1 is installed on the dev machine; the lint scripts set `TOOLCHAIN_DIR` so it runs with Command Line Tools only.
-- `swift test` fails on the dev machine because the Swift Testing macro plugin is missing from the Command Line Tools install (no Xcode.app). Install Xcode or fix the toolchain, then confirm `Scripts/lint-and-test.sh` passes. Git hooks (`Scripts/install-git-hooks.sh`) are written but not enabled in this clone.
-- Feature logic is not implemented yet (scaffolding stage). The app, Quick Action, and UI must exist before submission.
-- `docs/architecture.md` and `docs/demo-script.md` are placeholders.
-- No screenshots in `docs/screenshots`.
-- Git history has a single commit. Commit steadily to show the build happened inside the Submission Period.
+Last reviewed 2026-11-11.
+
+- Feature logic is not implemented (scaffolding stage). The parser, resolver, discovery, safety policy, pipeline, CLI, app, Quick Action, and UI must exist before submission. Status table: [architecture.md](architecture.md).
+- Hooks exist (`lint-on-save`, `pre-commit-check`, `kiro-gitignore-guard`, `project-log-check`) but are not confirmed live in Kiro. Git hooks (`Scripts/install-git-hooks.sh`) are written but not enabled in every clone.
+- `swift test` fails on the dev machine because the Swift Testing macro plugin is missing from the Command Line Tools install (no Xcode.app). Install Xcode or fix the toolchain, then confirm `Scripts/lint-and-test.sh` passes. The Kiro Web sandbox is Linux and cannot build or test macOS code.
+- [demo-script.md](demo-script.md) is a plan and cannot be recorded until the app works.
+- `docs/screenshots/` is empty. Capture the idle, haunting, and released states once the UI exists.
+- Design reference art is in [LookAndFeel](LookAndFeel/README.md), but the origin and license of those images are not recorded. Record them before submission.
+- [KiroUsage.md](KiroUsage.md) still has "Evidence to add" lines (steering impact, property-testing bugs found, hooks catches, surface differences).
+- Commit steadily and keep [ProjectLog.md](ProjectLog.md) current; the history and log are the proof the build happened inside the Submission Period.

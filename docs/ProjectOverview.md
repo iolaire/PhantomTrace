@@ -89,3 +89,20 @@ When external drives, USB sticks, or disk images (`.dmg`) fail to unmount on mac
 
 
 * **Demo Video:** A $\le 3$-minute video showing a locked drive, Finder failing to unmount, PhantomTrace revealing the hidden process, and the safe eject execution.
+
+
+---
+
+#### 6. Status and Where to Look
+
+* **Status:** scaffolding is complete (Swift package, CLI stub, lint, hooks, scripts, steering, specs). Feature logic, the CLI inspect command, and the AppKit app are not built yet. Current state: [README.md](../README.md) and [architecture.md](architecture.md).
+
+
+* **Safety guardrails:** every action goes through one safety policy; protected processes and system volumes are never touched; each stage is opt-in, previewed, and re-verified against a fresh scan. See [architecture.md](architecture.md).
+
+
+* **Design reference:** [LookAndFeel/README.md](LookAndFeel/README.md).
+
+
+* **Work, tools, and decisions:** [ProjectLog.md](ProjectLog.md). **Kiro usage evidence:** [KiroUsage.md](KiroUsage.md). **Submission tracking:** [SubmissionChecklist.md](SubmissionChecklist.md). **Demo plan:** [demo-script.md](demo-script.md).
+

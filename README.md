@@ -77,6 +77,13 @@ See [docs/KiroUsage.md](docs/KiroUsage.md) for how each Kiro feature was used.
 - Pre-existing code: none. The project was created during the Submission Period.
 - Runtime dependencies: none. swift-property-based and SwiftLint are development tools only.
 
+## Documentation
+
+- [Architecture](docs/architecture.md): layers, data flow, pipeline, safety model, implementation status
+- [Project log](docs/ProjectLog.md): work, tools, and decisions
+- [Look and feel](docs/LookAndFeel/README.md): visual design reference
+- [docs index](docs/README.md)
+
 ## Specs
 
 - [Project overview](docs/ProjectOverview.md)
