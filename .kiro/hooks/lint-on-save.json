@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Lint Swift file on save",
+      "trigger": "PostFileSave",
+      "description": "Runs SwiftLint (strict) on only the saved Swift file for fast feedback.",
+      "matcher": ".*\\.swift$",
+      "action": {
+        "type": "command",
+        "command": "Scripts/hooks/lint-on-save.sh",
+        "timeout": 30
+      }
+    }
+  ]
+}

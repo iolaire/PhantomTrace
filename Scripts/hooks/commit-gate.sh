@@ -1,0 +1,50 @@
+#!/bin/bash
+# Commit-time gate used by Kiro PreToolUse hooks.
+#   commit-gate.sh checks     run Scripts/lint-and-test.sh (lint, then tests)
+#   commit-gate.sh gitignore  fail if .gitignore ignores .kiro
+# Reads the hook payload (JSON) on stdin. Does nothing unless the shell command
+# is a `git commit`. Exit 2 blocks the action and shows stderr; it never edits files.
+set -u
+mode="${1:-}"
+root="$(cd "$(dirname "$0")/../.." && pwd)" || exit 0
+cd "$root" || exit 0
+
+payload="$(cat)"
+command_text="$(printf '%s' "$payload" | python3 -c '
+import json, sys
+try:
+    data = json.load(sys.stdin)
+    tool_input = data.get("tool_input") or data.get("toolArgs") or {}
+    print(tool_input.get("command", "") if isinstance(tool_input, dict) else "")
+except Exception:
+    pass
+' 2>/dev/null)"
+
+case "$command_text" in
+    *"git commit"*) ;;
+    *) exit 0 ;;
+esac
+
+case "$mode" in
+    checks)
+        if ! command -v swiftlint >/dev/null 2>&1; then
+            echo "Commit blocked: SwiftLint is unavailable. Install it with: brew install swiftlint" >&2
+            exit 2
+        fi
+        if ! "$root/Scripts/lint-and-test.sh" >&2; then
+            echo "Commit blocked: lint or tests failed (output above)." >&2
+            exit 2
+        fi
+        ;;
+    gitignore)
+        if [ -f .gitignore ] && grep -Eq '^[[:space:]]*/?\.kiro(/.*|\*)?[[:space:]]*$' .gitignore; then
+            echo "Commit blocked: .gitignore ignores .kiro. Ignoring .kiro can disqualify the Kiroween submission." >&2
+            exit 2
+        fi
+        ;;
+    *)
+        echo "commit-gate.sh: unknown mode '$mode'" >&2
+        exit 0
+        ;;
+esac
+exit 0

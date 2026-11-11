@@ -45,7 +45,7 @@ Category: **Resurrection**. Bonus categories to pursue: Best Demo, Bonus Blog Pr
 
 ## Known gaps
 
-- `.kiro/hooks/` is empty. Overview promises pre-commit hooks for swiftlint and tests. Add them.
+- Hooks exist (`lint-on-save`, `pre-commit-check`, `kiro-gitignore-guard`) but are untested live in Kiro, and SwiftLint is not installed on the dev machine (`brew install swiftlint`). Until it is, the commit gate blocks every agent commit.
 - Feature logic is not implemented yet (scaffolding stage). The app, Quick Action, and UI must exist before submission.
 - `docs/architecture.md` and `docs/demo-script.md` are placeholders.
 - No screenshots in `docs/screenshots`.

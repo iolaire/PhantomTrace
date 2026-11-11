@@ -51,12 +51,13 @@ Create the static scaffold files described in the design: folder structure, a bu
     - `.kiro/steering/{product,tech,structure,safety,testing,hackathon}.md`, concise, derived from the Master_Spec and the Hackathon_Rules, each containing the statements required by Requirement 6 (platform stated as macOS 27.2.1 only)
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.8_
 
-  - [~] 3.2 Write the four hook files
-    - `.kiro/hooks/swiftlint-pre-commit.json`, `tests-pre-commit.json` (PreToolUse, detect `git commit` from stdin, exit 2 on failure; SwiftLint-missing case prints "SwiftLint is unavailable" and exits 2), `lint-on-save.json` (PostFileSave, matcher `.*\.swift$`, lints only the saved file), and `kiro-gitignore-guard.json` (PreToolUse on `git commit`, exit 2 if `.gitignore` ignores `.kiro`)
-    - After writing the hooks, update `docs/KiroUsage.md` (Agent hooks section) and `docs/SubmissionChecklist.md` (remove the "hooks folder empty" gap)
-    - Verify stdin field names against the hook documentation; quote all paths; hooks never modify or stage files
-    - Each file: v1 format, one trigger, one command action
-    - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7, 7.8, 7.9, 9.7_
+  - [x] 3.2 Write the three hook files and their scripts
+    - `Scripts/hooks/commit-gate.sh` (modes `checks` and `gitignore`; reads stdin JSON, acts only on `git commit`, exit 2 to block) and `Scripts/hooks/lint-on-save.sh` (reads the saved file path from stdin, lints that file only); both mode 755
+    - `.kiro/hooks/lint-on-save.json` (PostFileSave, matcher `.*\.swift$`), `pre-commit-check.json` (PreToolUse on `execute_bash`, runs `commit-gate.sh checks`), and `kiro-gitignore-guard.json` (PreToolUse on `execute_bash`, runs `commit-gate.sh gitignore`)
+    - Each file: v1 format, one trigger, one command action; hooks never modify or stage files
+    - Test the scripts with sample payloads (commit, non-commit, empty payload, missing swiftlint) and live in Kiro
+    - Update `docs/KiroUsage.md` (Agent hooks section) and `docs/SubmissionChecklist.md` (remove the "hooks folder empty" gap)
+    - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7, 7.8, 9.7_
 
   - [~] 3.3 Write `Scripts/lint-and-test.sh`
     - As in the design: `swiftlint --strict` first, then `swift test`, non-zero exit on either failure, set mode 755
@@ -64,7 +65,7 @@ Create the static scaffold files described in the design: folder structure, a bu
 
 - [ ] 4. Add and run the verification script
   - [~] 4.1 Write `Scripts/verify-scaffold.sh` (committed, mode 755)
-    - Check required directories and `.gitkeep` files, absence of forbidden `App`/Xcode/Quick Action items, `docs/screenshots/.gitkeep` size 0, Package.swift targets and SwiftCheck scope, LICENSE copyright regex, `.gitignore` entries, README phrases and command order, relative links in `README.md` and `docs/*.md` resolve, doc heading and 180-second checks, steering files non-empty with required phrases, hook files parse as JSON with one trigger and one action, `Scripts/lint-and-test.sh` owner execute bit, hackathon readiness (`.kiro/specs`, `.kiro/steering`, `.kiro/hooks` exist; no `.kiro` entry in `.gitignore`; LICENSE is MIT; Submission_Docs and `hackathon.md` exist and are non-empty; README and steering state macOS 27.2.1 only)
+    - Check required directories and `.gitkeep` files, absence of forbidden `App`/Xcode/Quick Action items, `docs/screenshots/.gitkeep` size 0, Package.swift targets and SwiftCheck scope, LICENSE copyright regex, `.gitignore` entries, README phrases and command order, relative links in `README.md` and `docs/*.md` resolve, doc heading and 180-second checks, steering files non-empty with required phrases, three hook files parse as JSON with one trigger and one action, `Scripts/lint-and-test.sh` owner execute bit, hackathon readiness (`.kiro/specs`, `.kiro/steering`, `.kiro/hooks` exist; no `.kiro` entry in `.gitignore`; LICENSE is MIT; Submission_Docs and `hackathon.md` exist and are non-empty; README and steering state macOS 27.2.1 only)
     - Report the file and failed check for each failure; make no changes; exit non-zero on any failure
     - Do not run any git command
     - _Requirements: 1.1, 1.2, 1.3, 1.5, 2.1, 2.9, 3.3, 3.5, 4.1, 4.2, 4.6, 5.1, 5.2, 5.3, 5.4, 5.5, 6.1, 6.7, 7.1, 7.8, 8.1, 9.1, 9.2, 9.3, 9.9_

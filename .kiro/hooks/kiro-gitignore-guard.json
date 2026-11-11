@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Guard .kiro from .gitignore",
+      "trigger": "PreToolUse",
+      "description": "Blocks git commit if .gitignore ignores .kiro, which can disqualify the hackathon submission.",
+      "matcher": "execute_bash",
+      "action": {
+        "type": "command",
+        "command": "Scripts/hooks/commit-gate.sh gitignore",
+        "timeout": 10
+      }
+    }
+  ]
+}

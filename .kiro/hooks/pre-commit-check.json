@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Lint and test before commit",
+      "trigger": "PreToolUse",
+      "description": "Blocks git commit unless Scripts/lint-and-test.sh passes (swiftlint --strict, then swift test).",
+      "matcher": "execute_bash",
+      "action": {
+        "type": "command",
+        "command": "Scripts/hooks/commit-gate.sh checks",
+        "timeout": 600
+      }
+    }
+  ]
+}

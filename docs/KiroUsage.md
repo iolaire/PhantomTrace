@@ -27,8 +27,17 @@ Files in `.kiro/steering/`:
 
 ## Agent hooks
 
-- Planned: pre-commit hook running `swiftlint --strict` and `swift test` via `Scripts/lint-and-test.sh`.
-- Status: `.kiro/hooks/` is empty. Add hooks, then record the workflow each one automates and the issues it caught.
+Four hooks in `.kiro/hooks/`, kept small on purpose. Each addresses a different problem, and the logic lives in testable scripts under `Scripts/`.
+
+- `project-log-check.json` (PreToolUse on shell commands): when the agent runs `git commit` with code or config staged, requires `docs/ProjectLog.md` to be staged too (`Scripts/check-project-log.sh`; `[skip-log]` in the message bypasses it).
+
+- `lint-on-save.json` (PostFileSave on `*.swift`): lints only the saved file, for the fastest feedback.
+- `pre-commit-check.json` (PreToolUse on shell commands): when the agent runs `git commit`, runs `Scripts/lint-and-test.sh` (`swiftlint --strict`, then `swift test`) and blocks the commit on failure. One hook instead of separate lint and test hooks.
+- `kiro-gitignore-guard.json` (PreToolUse on shell commands): blocks a commit if `.gitignore` ignores `.kiro`, a disqualification risk in the Rules.
+- Rejected on purpose: a post-task test hook (duplicates the commit gate) and a Stop hook (runs every turn, too noisy).
+- Limit: PreToolUse hooks see only commits the agent runs, not commits typed in a terminal.
+- Status: scripts tested with sample payloads (commit, non-commit, empty, garbage, missing SwiftLint). Live behavior in Kiro still to confirm.
+- Evidence to add: issues the hooks actually caught during the build.
 
 ## Property-based testing
 

@@ -8,7 +8,7 @@ The target platform is macOS only, and macOS 27.2.1 (build 26B131) only. Every o
 
 The scaffold is also shaped by the Kiroween 2026 rules (`docs/Hackathon/Rules.md`). The rules and judging criteria drive these decisions:
 - Eligibility: public GitHub repo, detectable MIT license, `/.kiro` present and never gitignored, runnable instructions, English-only materials, no copyrighted media or third-party trademarks.
-- Technological Implementation (20%): visible, varied Kiro use. The scaffold therefore ships specs, six steering files, four hooks, and a `docs/KiroUsage.md` write-up skeleton.
+- Technological Implementation (20%): visible, varied Kiro use. The scaffold therefore ships specs, six steering files, three hooks, and a `docs/KiroUsage.md` write-up skeleton.
 - Presentation (20%): a demo script for a video under 3 minutes that shows the app running on the Mac.
 - Impact, Design, Innovation (60%): the README and `docs/ProjectOverview.md` state the real problem, audience, category, and visual direction.
 
@@ -27,7 +27,7 @@ graph TD
     CoreTests[PhantomTraceCoreTests] --> Core
     PropTests[PhantomTracePropertyTests] --> Core
     PropTests --> SC[SwiftCheck - test only]
-    Hooks[.kiro/hooks] --> Tools[swiftlint / swift test]
+    Hooks[.kiro/hooks] --> HookScripts[Scripts/hooks] --> Tools[swiftlint / swift test]
     Script[Scripts/lint-and-test.sh] --> Tools
 ```
 
@@ -55,6 +55,7 @@ PhantomTrace/
 │   └── Fixtures/.gitkeep
 ├── Scripts/
 │   ├── lint-and-test.sh                  # mode 755
+│   ├── hooks/{commit-gate,lint-on-save}.sh  # mode 755
 │   └── README.md
 ├── docs/
 │   ├── ProjectOverview.md                # pitch, problem, category, platform
@@ -66,7 +67,7 @@ PhantomTrace/
 │   └── screenshots/.gitkeep
 └── .kiro/
     ├── steering/{product,tech,structure,safety,testing,hackathon}.md
-    └── hooks/{swiftlint-pre-commit,tests-pre-commit,lint-on-save,kiro-gitignore-guard}.json
+    └── hooks/{lint-on-save,pre-commit-check,kiro-gitignore-guard}.json
 ```
 
 Because `Sources/PhantomTraceCore` contains a source file, its directory-level `.gitkeep` is not needed; the five subdirectories contain only `.gitkeep` and so keep it (Requirement 1.3). `Sources/phantomtrace`, `Tests/PhantomTraceCoreTests`, and `Tests/PhantomTracePropertyTests` likewise contain source files.
@@ -148,12 +149,15 @@ All placeholder Swift files are written to pass `swiftlint --strict` with defaul
 
 Written in the Kiro v2 hook format (`version`, `hooks` array with one entry each). Each file has one trigger and one `command` action.
 
-| File | Trigger | Matcher | Command |
+| File | Trigger | Matcher | Action |
 |---|---|---|---|
-| `swiftlint-pre-commit.json` | `PreToolUse` | tool name for shell execution, with the command checked for `git commit` | checks `command -v swiftlint`; if missing, prints "SwiftLint is unavailable" to stderr and exits 2; otherwise runs `swiftlint --strict` and exits 2 on failure |
-| `tests-pre-commit.json` | `PreToolUse` | same | runs `swift test`; exits 2 on failure with output on stderr |
-| `lint-on-save.json` | `PostFileSave` | `.*\.swift$` | runs `swiftlint lint --strict` on the saved file path |
-| `kiro-gitignore-guard.json` | `PreToolUse` | same as the pre-commit hooks | when the command is `git commit`, searches `.gitignore` with `grep -Eq '^/?\.kiro(/|$)'`; on a match prints "Ignoring .kiro can disqualify the Kiroween submission" to stderr and exits 2 |
+| `lint-on-save.json` | `PostFileSave` | `.*\.swift$` | `Scripts/hooks/lint-on-save.sh`: reads the saved file path from stdin and runs `swiftlint lint --strict --path <file>` |
+| `pre-commit-check.json` | `PreToolUse` | `execute_bash` | `Scripts/hooks/commit-gate.sh checks`: exits 0 unless the command is `git commit`; if `swiftlint` is missing prints "SwiftLint is unavailable" and exits 2; otherwise runs `Scripts/lint-and-test.sh` and exits 2 on failure |
+| `kiro-gitignore-guard.json` | `PreToolUse` | `execute_bash` | `Scripts/hooks/commit-gate.sh gitignore`: exits 0 unless the command is `git commit`; if `.gitignore` matches `^/?\.kiro(/|$)` prints "Ignoring .kiro can disqualify the Kiroween submission" and exits 2 |
+
+Why three hooks: the two commit-time checks share one script (`lint-and-test.sh`) instead of two near-identical hooks, the per-file lint gives the fastest feedback, and the gitignore guard costs one `grep` for a disqualification-level risk. A PostTaskExec test hook and a Stop hook were rejected as duplicate or noisy.
+
+Limits: PreToolUse hooks only see commits the agent runs, not commits typed in a terminal. The hook stdin payload uses snake_case fields (`tool_name`, `tool_input`); `commit-gate.sh` reads `tool_input.command` and treats a missing command as "not a commit". The scripts are tested live and by piping sample payloads.
 
 Exit code 2 blocks the action and forwards stderr to the user (per hook semantics). Hooks only read the working tree and never modify or stage anything, which satisfies the "leave working tree unmodified" criteria. The commands read the JSON from stdin to detect `git commit` and to obtain the saved file path, and quote all paths. The implementer verifies the exact stdin field names against the hook documentation when writing them.
 

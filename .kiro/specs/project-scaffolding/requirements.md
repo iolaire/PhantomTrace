@@ -111,19 +111,18 @@ This feature sets up the initial project foundation for PhantomTrace, a macOS ut
 
 ### Requirement 7: Kiro Hooks
 
-**User Story:** As a maintainer, I want hooks that run lint and tests, so that code quality is enforced automatically.
+**User Story:** As a maintainer, I want a small set of hooks that catch lint, test, and submission-rule problems early, so that quality is enforced automatically without hook overload.
 
 #### Acceptance Criteria
 
-1. THE Scaffold SHALL contain four Hook_Files named `swiftlint-pre-commit.json`, `tests-pre-commit.json`, `lint-on-save.json`, and `kiro-gitignore-guard.json` in `.kiro/hooks/`. Agent hooks are a Technological Implementation item in the Hackathon_Rules, so the hooks SHALL be committed and described in `docs/KiroUsage.md`.
-2. WHEN a `git commit` command is about to run, THE `swiftlint-pre-commit.json` hook SHALL run `swiftlint --strict` from the repository root.
-3. IF `swiftlint --strict` exits with a non-zero status, THEN THE `swiftlint-pre-commit.json` hook SHALL block the commit, leave the working tree and staged changes unmodified, and present the SwiftLint output to the user.
-4. WHEN a `git commit` command is about to run, THE `tests-pre-commit.json` hook SHALL run `swift test` from the repository root.
-5. IF `swift test` exits with a non-zero status, THEN THE `tests-pre-commit.json` hook SHALL block the commit, leave the working tree and staged changes unmodified, and present the test output to the user.
-6. WHEN a file matching `*.swift` is saved, THE `lint-on-save.json` hook SHALL run SwiftLint on only that file and present any violations to the user.
-7. IF SwiftLint is not installed or cannot be executed, THEN THE `swiftlint-pre-commit.json` hook SHALL block the commit and present an error message indicating that SwiftLint is unavailable.
-8. THE Hook_Files SHALL each parse as valid JSON and conform to the Kiro hook file format, with each file defining one trigger event and one action.
-9. WHEN a `git commit` command is about to run, THE `kiro-gitignore-guard.json` hook SHALL check `.gitignore` for any entry that matches `.kiro`, and IF one is found, THEN THE hook SHALL block the commit with exit status 2 and a message explaining that ignoring `.kiro` can disqualify the hackathon submission.
+1. THE Scaffold SHALL contain exactly three Hook_Files named `lint-on-save.json`, `pre-commit-check.json`, and `kiro-gitignore-guard.json` in `.kiro/hooks/`. Each hook SHALL address a distinct problem: fast per-file lint feedback, a whole-tree commit gate, and the `.kiro` submission rule. Agent hooks are a Technological Implementation item in the Hackathon_Rules, so the hooks SHALL be committed and described in `docs/KiroUsage.md`.
+2. WHEN a file matching `*.swift` is saved, THE `lint-on-save.json` hook SHALL run SwiftLint on only that file and present any violations to the user.
+3. WHEN a `git commit` command is about to run, THE `pre-commit-check.json` hook SHALL run `Scripts/lint-and-test.sh` from the repository root, which runs `swiftlint --strict` first and `swift test` second.
+4. IF `Scripts/lint-and-test.sh` exits with a non-zero status, THEN THE `pre-commit-check.json` hook SHALL block the commit with exit status 2, leave the working tree and staged changes unmodified, and present the SwiftLint or test output to the user.
+5. IF SwiftLint is not installed or cannot be executed, THEN THE `pre-commit-check.json` hook SHALL block the commit and present an error message indicating that SwiftLint is unavailable.
+6. WHEN a `git commit` command is about to run, THE `kiro-gitignore-guard.json` hook SHALL check `.gitignore` for any entry that matches `.kiro`, and IF one is found, THEN THE hook SHALL block the commit with exit status 2 and a message explaining that ignoring `.kiro` can disqualify the hackathon submission.
+7. THE two commit-time hooks SHALL take no action and exit with status 0 for any command that is not a `git commit`, and for any payload from which the command cannot be read, so that they never block unrelated work.
+8. THE Hook_Files SHALL each parse as valid JSON and conform to the Kiro hook file format, with each file defining one trigger event and one action. Hook logic SHALL live in shell scripts under `Scripts/hooks/` so that it can be tested outside Kiro.
 
 ### Requirement 8: Scripts Folder and Git Policy
 
