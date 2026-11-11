@@ -9,6 +9,7 @@
 | [SubmissionChecklist.md](SubmissionChecklist.md) | Kiroween 2026 requirements and known gaps | Anything is done or a gap appears |
 | [demo-script.md](demo-script.md) | Plan for the under-3-minute demo video | The app flow changes |
 | [LookAndFeel/README.md](LookAndFeel/README.md) | Visual design reference art and notes | New art or UI direction |
+| [Assets.md](Assets.md) | Provenance and license of images and fonts | An asset is added, replaced, or bundled |
 | [Hackathon/Rules.md](Hackathon/Rules.md), [Hackathon/Faq.md](Hackathon/Faq.md) | Official rules and FAQ (reference only, do not edit) | Never |
 | `screenshots/` | App screenshots for the README and demo (empty until the UI exists) | UI states are captured |
 

@@ -52,6 +52,6 @@ Last reviewed 2026-11-11.
 - `swift test` fails on the dev machine because the Swift Testing macro plugin is missing from the Command Line Tools install (no Xcode.app). Install Xcode or fix the toolchain, then confirm `Scripts/lint-and-test.sh` passes. The Kiro Web sandbox is Linux and cannot build or test macOS code.
 - [demo-script.md](demo-script.md) is a plan and cannot be recorded until the app works.
 - `docs/screenshots/` is empty. Capture the idle, haunting, and released states once the UI exists.
-- Design reference art is in [LookAndFeel](LookAndFeel/README.md), but the origin and license of those images are not recorded. Record them before submission.
+- Design reference art is in [LookAndFeel](LookAndFeel/README.md), and their origin (Google Gemini) is recorded in [Assets.md](Assets.md), but its "To confirm" items (Gemini terms, the ghost side-by-side check, title font license) are still open. Close them before submission.
 - [KiroUsage.md](KiroUsage.md) still has "Evidence to add" lines (steering impact, property-testing bugs found, hooks catches, surface differences).
 - Commit steadily and keep [ProjectLog.md](ProjectLog.md) current; the history and log are the proof the build happened inside the Submission Period.

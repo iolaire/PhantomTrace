@@ -28,7 +28,7 @@ PhantomTrace shows what is blocking the volume and tells these cases apart:
 
 ## Visual direction
 
-Platinum Retro Gothic: a System 7 / Mac OS 9 platinum alert window (pinstripe title bars, Monaco/Chicago typography, 1px beveled frames) haunted by the Kiro ghost mascot. It resurrects classic single-purpose Mac diagnostic tools, such as *Put Away* inspectors and *What's Keeping Me?*, for the modern Darwin APFS kernel.
+Platinum Retro Gothic: a System 7 / Mac OS 9 platinum alert window (pinstripe title bars, Monaco/Chicago typography, 1px beveled frames) haunted by an original, Kiro-inspired ghost mascot. It resurrects classic single-purpose Mac diagnostic tools, such as *Put Away* inspectors and *What's Keeping Me?*, for the modern Darwin APFS kernel.
 
 ## Status
 

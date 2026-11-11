@@ -32,7 +32,7 @@ When external drives, USB sticks, or disk images (`.dmg`) fail to unmount on mac
 * **The Narrative Hook:** Resurrecting classic Mac single-purpose diagnostic tools (such as System 7/OS 9 *Put Away* inspectors and early OS X utilities like *What’s Keeping Me?*) re-engineered for the modern Darwin APFS kernel.
 
 
-* **Visual Direction:** **Platinum Retro Gothic.** Styled like a classic System 7 / Mac OS 9 platinum alert window (pinstripe title bars, Monaco/Chicago typography, 1px beveled frames) haunted by the playful, glowing Kiro ghost mascot.
+* **Visual Direction:** **Platinum Retro Gothic.** Styled like a classic System 7 / Mac OS 9 platinum alert window (pinstripe title bars, Monaco/Chicago typography, 1px beveled frames) haunted by the playful, glowing, Kiro-inspired ghost mascot (an original character, not the Kiro ghost).
 
 
 

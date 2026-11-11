@@ -6,7 +6,7 @@ Visual reference material for the Platinum Retro Gothic UI. These are design ref
 
 - A grey System 7 / Mac OS 9 style window with a pixel-font title plaque, pinstripe title bar, and square close box.
 - A black-and-white engraved frame of twisted ribbon, chains, and skulls, with a halftone dot texture.
-- The Kiro ghost mascot in colour, glowing purple, carrying a lantern (and a magnifying glass when inspecting), perched over the window edge.
+- A Kiro-inspired ghost mascot (an original character, not the Kiro ghost) in colour, glowing purple, carrying a lantern (and a magnifying glass when inspecting), perched over the window edge.
 - A small engraved illustration in the lower right of the content area that matches the state.
 
 ## Composed mockups (`original/composed/`)
@@ -32,4 +32,4 @@ Building blocks used to compose the mockups: the window frame, the CRT diagnosti
 
 ## Provenance and licensing (to confirm)
 
-How these images were produced and under what terms is not recorded in the repository. Before submission, record their source and license here and in `docs/ProjectLog.md`, because the Rules require all assets to be used within their licenses and forbid unauthorized third-party material. The Kiro ghost mascot is a Kiro brand character; confirm its use is permitted by the hackathon rules.
+All images were generated with Google Gemini. Source, prompts, terms, and open questions are recorded in [../Assets.md](../Assets.md). Still to confirm before submission: the exact Gemini terms and generation dates, and a side-by-side check that the Kiro-inspired ghost is clearly different from the official Kiro ghost.
