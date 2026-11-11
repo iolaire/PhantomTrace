@@ -11,7 +11,7 @@ Applies to the AppKit app target (not Core). Spec: Requirements 12-14 and Compon
 
 - Platinum gray `#DDDDDD` background; pinstripe title bar; 1 px beveled frames; square close/zoom boxes.
 - Titles in a Chicago-style bitmap font; table cells in Monaco (or a verified open-license substitute). Bundle only fonts and sprites whose licenses are checked and recorded in `docs/`; no third-party trademarks or copyrighted material.
-- Kiro ghost mascot sprites: **idle** (idle, scanning), **haunting** (Blocked), **banished** (clean, unmounted). Glow animation only when Reduce Motion is off; otherwise a static sprite.
+- Kiro-inspired ghost mascot (an original character, not the Kiro ghost): one sprite per window, **yellow** (CANNOT PUT AWAY), **red** (PHANTOM TRACE), **green** (VOLUME RELEASED). Glow animation only when Reduce Motion is off; otherwise a static sprite.
 - Playful but clear copy. Retro styling never replaces a clear statement of what an action does.
 
 ## Diagnostic Sheet

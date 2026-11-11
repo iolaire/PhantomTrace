@@ -2,7 +2,7 @@
 
 ## Introduction
 
-PhantomTrace is a retro-themed macOS utility that identifies which processes prevent a volume from ejecting. Given a volume, folder, or mounted disk image, PhantomTrace resolves the owning mount point, enumerates and classifies every lock on that volume, and presents the result in a System 7 / Mac OS 9 Platinum-styled diagnostic sheet. The user then walks a graduated, opt-in resolution pipeline: Egress Shells, Graceful Request, Banish Locks, and Clean Handoff (unmount). Every stage is previewed, gated by a safety policy, and re-verified against a fresh scan. These requirements are derived from the approved design document. PhantomTrace targets macOS "Golden Gate" (27.2.1, build 26B131) or later; earlier macOS versions are out of scope because they cannot be tested.
+PhantomTrace is a retro-themed macOS utility that identifies which processes prevent a volume from ejecting. Given a volume, folder, or mounted disk image, PhantomTrace resolves the owning mount point, enumerates and classifies every lock on that volume, and presents the result in a System 7 / Mac OS 9 Platinum-styled diagnostic sheet. The user then walks a graduated, opt-in resolution pipeline: Egress Shells, Graceful Request, Banish Locks, and Clean Handoff (unmount). Every stage is previewed, gated by a safety policy, and re-verified against a fresh scan. These requirements are derived from the approved design document. PhantomTrace is built entirely with Swift Package Manager on a machine that has only the Command Line Tools: a Core library, a CLI, and a programmatic AppKit executable target, assembled into an App_Bundle by a Bundling_Script. There is no Xcode project, Interface Builder file, asset catalog, or SwiftUI preview, and full Xcode.app is not required. PhantomTrace targets macOS "Golden Gate" (27.2.1, build 26B131) or later; earlier macOS versions are out of scope because they cannot be tested.
 
 ## Glossary
 
@@ -30,9 +30,29 @@ PhantomTrace is a retro-themed macOS utility that identifies which processes pre
 - **Protected_Process**: PID 0, PID 1, PhantomTrace's own PID, and processes named `launchd`, `kernel_task`, `WindowServer`, `loginwindow`, or `Finder`.
 - **Process_Identity**: The pair (pid, process start time) used to guard against PID reuse.
 - **Unmounter**: The component that unmounts a volume via DiskArbitration with a `diskutil` fallback.
-- **Diagnostic_Sheet**: The Platinum-styled window that displays the lock table and stage controls.
-- **Ghost_Mascot**: The Kiro ghost sprite that reflects discovery state.
-- **Quick_Action**: The Finder Quick Action named "Why Can't I Eject?" / "Inspect Volume Locks".
+- **Diagnostic_Sheet**: The Platinum-styled window that displays exactly one Window_State at a time, composed of the Window_Frame_Art, one illustration, one Ghost_Mascot sprite, a title plaque, and the content of that Window_State.
+- **Window_State**: One of `cannotPutAway` (title plaque "CANNOT PUT AWAY"), `phantomTrace` (title plaque "PHANTOM TRACE"), or `volumeReleased` (title plaque "VOLUME RELEASED"). The Window_State is a presentation layer over the discovery state and adds no discovery state.
+- **Window_Selector**: The pure component that selects the Window_State from the discovery state, the Proceeded_Flag, and the current Window_State.
+- **Proceeded_Flag**: A Boolean that is set when the user activates the Proceed_Button in the `cannotPutAway` window.
+- **Phantom_Choice**: The control in the `phantomTrace` window that offers either "Let PhantomTrace act" with one selectable Resolution_Stage among Egress Shells, Graceful Request, and Banish Locks, or "I'll deal with these processes myself".
+- **Proceed_Button**: The single primary button of the `cannotPutAway` and `phantomTrace` windows.
+- **Eject_Button**: The button of the `volumeReleased` window that performs the Clean Handoff stage.
+- **Scanning_Overlay**: A progress indication drawn inside the current Diagnostic_Sheet while a scan is running, which does not change the Window_State or the Ghost_Mascot sprite.
+- **Failure_Banner**: The banner shown in the `phantomTrace` window when discovery fails or returns partial results, containing the description, Parse_Warnings, and the Rescan button.
+- **Ghost_Mascot**: The original, Kiro-inspired, left-facing cloaked ghost sprite (not the Kiro ghost) whose Ghost_State is derived from the Window_State.
+- **Quick_Action**: The Finder entry point named "Why Can't I Eject?" / "Inspect Volume Locks", implemented as a hand-written `.workflow` bundle and/or an `NSServices` entry in the App_Bundle `Info.plist`.
+- **App_Bundle**: The `PhantomTrace.app` macOS application bundle assembled by the Bundling_Script.
+- **Bundling_Script**: The shell script `Scripts/make-app.sh` that builds the App_Bundle from the SwiftPM build output.
+- **Command_Line_Tools**: The Apple Command Line Tools toolchain, without the full Xcode.app.
+- **Entitlements_File**: The file `PhantomTrace.entitlements` declaring the minimal entitlements used when signing the App_Bundle.
+- **Sprite_Set**: The set of exported, cropped PNG images (`name.png` at 1x and `name@2x.png` at 2x) loaded by the app: the window frame, one illustration per Window_State, and one Ghost_Mascot sprite per Ghost_State.
+- **Ghost_State**: One of `yellow`, `red`, or `green`, the three left-facing sprite states of the Ghost_Mascot, derived from the Window_State: `yellow` for `cannotPutAway`, `red` for `phantomTrace`, and `green` for `volumeReleased`.
+- **Title_Font**: An optional bundled bitmap font, not yet chosen, used for title plaque text, stored in `Contents/Resources` with its license file stored beside it. When no Title_Font is present or registrable, a system font is used.
+- **Table_Font**: The font of the lock table cells: Monaco loaded by name from the system, falling back to Menlo and then to the system monospaced font. No Apple font file is committed or bundled.
+- **Resource_Files**: Plain files (sprites and, when present, the Title_Font) stored in `Contents/Resources` of the App_Bundle and loaded at runtime from the bundle resource directory.
+- **Window_Frame_Art**: The window frame image, which is opaque inside the frame and therefore rendered as a 9-slice or with a content cutout.
+- **Original_Art**: The source art in `docs/LookAndFeel/original/`.
+- **Assets_Record**: The file `docs/Assets.md`, which records the provenance, author, and license terms of every non-code asset (images, fonts, app icon).
 - **Drop_Target**: The non-menu-bar window or Dock icon that accepts dropped volumes or folders.
 - **CLI**: The `phantomtrace` command-line executable.
 - **Blocked_State**: The state in which a fresh scan reports one or more Lock_Records.
@@ -231,6 +251,8 @@ The 30-second scan limits in this requirement apply to the general stage-start s
 7. WHEN the CLI completes discovery successfully, THE CLI SHALL exit with status 0.
 8. THE PhantomTrace SHALL provide a script that installs the Quick_Action.
 9. IF the Quick_Action installation script fails, THEN THE PhantomTrace SHALL print an error message indicating the cause, exit with a non-zero status, and leave any previously installed Quick_Action unchanged.
+10. THE PhantomTrace SHALL implement the Quick_Action as a hand-written `.workflow` bundle composed of plain property list files, as an `NSServices` entry in the App_Bundle `Info.plist`, or as both, and SHALL NOT use App Intents.
+11. WHEN the Quick_Action installation script succeeds, THE PhantomTrace SHALL have copied the `.workflow` bundle to `~/Library/Services` and refreshed the Services list.
 
 ### Requirement 13: Diagnostic Sheet and Ghost Mascot
 
@@ -238,19 +260,20 @@ The 30-second scan limits in this requirement apply to the general stage-start s
 
 #### Acceptance Criteria
 
-1. WHEN one or more Lock_Records are available, THE Diagnostic_Sheet SHALL display a table with the columns Process Name, PID, User, Lock Category, and File Path, with one row per Lock_Record.
+1. WHEN the Window_State is `phantomTrace` and one or more Lock_Records are available, THE Diagnostic_Sheet SHALL display a table with the columns Process Name, PID, User, Lock Category, and File Path, with one row per Lock_Record.
 2. WHEN a File Path is wider than its column, THE Diagnostic_Sheet SHALL truncate the path in the middle with an ellipsis, keeping the first and last path components visible, and SHALL show the full untruncated path in a tooltip within 1 second of the pointer resting on the cell.
-3. THE Diagnostic_Sheet SHALL display exactly one button for each Resolution_Stage, in stage order.
-4. IF a Resolution_Stage is not applicable to the current Lock_Records, THEN THE Diagnostic_Sheet SHALL show the button for that stage as disabled, SHALL ignore activation of it, and SHALL expose the disabled state to VoiceOver.
-5. WHILE a Resolution_Stage is executing, THE Diagnostic_Sheet SHALL display a progress state on that stage's button and SHALL disable all other Resolution_Stage buttons.
-6. WHILE the discovery state is idle or scanning, THE Ghost_Mascot SHALL display the idle sprite.
-7. WHILE the discovery state is Blocked_State, THE Ghost_Mascot SHALL display the haunting sprite.
-8. WHILE the discovery state is clean or unmounted, THE Ghost_Mascot SHALL display the banished sprite.
+3. THE Diagnostic_Sheet SHALL display in the `phantomTrace` window one Phantom_Choice control, containing one selectable option for each of Egress Shells, Graceful Request, and Banish Locks in stage order under "Let PhantomTrace act" and one option "I'll deal with these processes myself", together with exactly one Proceed_Button. Clean Handoff is not an option of the Phantom_Choice; it is performed by the Eject_Button.
+4. IF a Resolution_Stage is not applicable to the current Lock_Records, THEN THE Diagnostic_Sheet SHALL show the Phantom_Choice option for that stage as disabled, SHALL ignore activation of it, and SHALL expose the disabled state to VoiceOver.
+5. WHILE a Resolution_Stage is executing, THE Diagnostic_Sheet SHALL display a progress state on the Proceed_Button, SHALL dim the lock table, and SHALL disable the Proceed_Button and every Phantom_Choice option.
+6. WHILE the Window_State is `cannotPutAway`, THE Ghost_Mascot SHALL display the `yellow` sprite.
+7. WHILE the Window_State is `phantomTrace`, THE Ghost_Mascot SHALL display the `red` sprite.
+8. WHILE the Window_State is `volumeReleased`, THE Ghost_Mascot SHALL display the `green` sprite.
 9. THE Diagnostic_Sheet SHALL render pinstripe title bars, 1-pixel beveled frames, and a platinum gray (#DDDDDD) background.
 10. WHERE the user has enabled Reduce Motion, THE Ghost_Mascot SHALL display its current sprite as a static image with no glow animation.
 11. THE Diagnostic_Sheet SHALL provide a non-empty VoiceOver label for every custom control, including each Resolution_Stage button and the Ghost_Mascot.
 12. WHEN a Lock_Record belongs to a process owned by a user other than the current user, THE Diagnostic_Sheet SHALL display that row as read-only with a lock icon and a visible text explanation that the process is owned by another user, and SHALL exclude that Lock_Record from the targets of every Resolution_Stage.
-13. IF the discovery state is Blocked_State and no Lock_Records are available, THEN THE Diagnostic_Sheet SHALL display an empty table with a text message stating that no lock details could be retrieved, and SHALL disable all Resolution_Stage buttons.
+13. IF the discovery state is Blocked_State and no Lock_Records are available, THEN THE Diagnostic_Sheet SHALL display an empty table with a text message stating that no lock details could be retrieved, and SHALL disable every Phantom_Choice option that selects a Resolution_Stage.
+14. THE Diagnostic_Sheet SHALL provide a non-empty VoiceOver label for the Phantom_Choice, each of its options, the Proceed_Button, the Eject_Button, the Failure_Banner, the Rescan button, and each illustration, and WHERE the user has enabled Reduce Motion, THE Diagnostic_Sheet SHALL display every sprite and illustration as a static image with no animation.
 
 ### Requirement 14: Error Reporting
 
@@ -278,3 +301,82 @@ The 30-second scan limits in this requirement apply to the general stage-start s
 6. WHEN a subprocess is launched, THE PhantomTrace SHALL enforce a default timeout of 10 seconds on the subprocess unless a requirement specifies another timeout (lsof discovery: 15 seconds), and SHALL terminate the subprocess if it has not exited when the applicable timeout elapses.
 7. IF a subprocess exceeds its timeout, THEN THE PhantomTrace SHALL report a timeout error identifying the command that timed out, SHALL discard any partial output from that subprocess, and SHALL remain responsive to further user actions.
 8. IF a path or process name returned by `lsof` begins with a `-` character, THEN THE PhantomTrace SHALL pass it to any subprocess only after an end-of-options marker or as an absolute path, so that it cannot be interpreted as an option.
+
+### Requirement 16: Application Packaging
+
+**User Story:** As a developer on a machine with only the Command Line Tools, I want one script that builds a signed PhantomTrace.app from the SwiftPM output, so that I can run and demo the app without Xcode.
+
+#### Acceptance Criteria
+
+1. WHEN the Bundling_Script is run, THE Bundling_Script SHALL build the `PhantomTraceApp` executable with `swift build` using only the Command_Line_Tools, and SHALL NOT invoke `xcodebuild`, `actool`, or Interface Builder.
+2. WHEN the build succeeds, THE Bundling_Script SHALL assemble the App_Bundle at `build/PhantomTrace.app` containing `Contents/MacOS/PhantomTrace`, `Contents/Info.plist`, and `Contents/Resources`.
+3. THE Bundling_Script SHALL write an `Info.plist` that declares `CFBundleExecutable`, `CFBundleIdentifier`, `LSMinimumSystemVersion` with the value `27.2.1`, and a `CFBundleURLTypes` entry registering the `phantomtrace` URL scheme.
+4. WHERE an `NSServices` Quick_Action is shipped, THE Bundling_Script SHALL include the `NSServices` entry in the `Info.plist`.
+5. THE Bundling_Script SHALL copy the Sprite_Set into `Contents/Resources` of the App_Bundle, and WHERE a Title_Font file and its license file are present, THE Bundling_Script SHALL copy both into `Contents/Resources` of the App_Bundle.
+6. WHEN the App_Bundle is assembled, THE Bundling_Script SHALL sign it with `codesign` using the hardened runtime option and the Entitlements_File, using the ad-hoc identity `-` unless another identity is provided.
+7. THE Entitlements_File SHALL declare only the entitlements required by PhantomTrace and SHALL NOT enable the App Sandbox.
+8. WHEN signing completes, THE Bundling_Script SHALL run `codesign --verify --strict` on the App_Bundle and SHALL report success only if verification passes.
+9. IF any step of the Bundling_Script fails, THEN THE Bundling_Script SHALL print an error message naming the failed step and its cause to standard error and exit with a non-zero status.
+10. IF any step of the Bundling_Script fails, THEN THE Bundling_Script SHALL leave any previously existing App_Bundle at `build/PhantomTrace.app` unchanged, by assembling the new bundle in a temporary location and replacing the previous bundle only after signing and verification succeed.
+11. WHEN the Bundling_Script completes successfully, THE Bundling_Script SHALL exit with status 0.
+12. THE PhantomTrace documentation SHALL describe notarization with `xcrun notarytool submit --wait` and `xcrun stapler staple` as a manual, optional step, and THE Bundling_Script SHALL NOT perform notarization.
+
+### Requirement 17: Asset Pipeline and Resource Loading
+
+**User Story:** As a developer and designer, I want sprites and fonts delivered as plain bundle files with safe fallbacks, so that the retro look works without Xcode asset tooling and a missing image never breaks the app.
+
+#### Acceptance Criteria
+
+1. THE PhantomTrace SHALL load every sprite and font from Resource_Files in the App_Bundle resource directory, and SHALL NOT use an asset catalog (`.xcassets`).
+2. WHERE a Title_Font file is present in the Resource_Files, THE PhantomTrace SHALL register it at launch using `CTFontManagerRegisterFontsForURL`.
+3. THE Sprite_Set SHALL contain, each as one cropped image at 1x (`name.png`) and one at 2x (`name@2x.png`) named in kebab-case: `window-frame`, `shackled-volume-and-padlocks`, `crt-diagnostic-portal`, `shattered-chains-and-portullis`, `ghost-looking-left-yellow`, `ghost-looking-left-red`, and `ghost-looking-left-green`.
+4. WHEN a sprite is loaded, THE PhantomTrace SHALL compose a single image from its 1x and 2x files.
+5. THE Diagnostic_Sheet SHALL render Window_Frame_Art as a 9-slice with fixed corners and edges, or with a content cutout, and SHALL place the table and buttons inside the interior rectangle.
+6. THE PhantomTrace SHALL record the 9-slice insets of Window_Frame_Art alongside the sprite files.
+7. IF a sprite file is missing or cannot be decoded, THEN THE Diagnostic_Sheet SHALL render a text or system-drawn substitute for that image, log the name of the missing file, and keep all other Diagnostic_Sheet functions operational.
+8. IF no Title_Font file is present or the Title_Font cannot be registered, THEN THE Diagnostic_Sheet SHALL render title text with a system font and keep all other Diagnostic_Sheet functions operational.
+9. THE PhantomTrace asset tooling SHALL NOT modify, overwrite, or delete any file in `docs/LookAndFeel/original/`.
+10. WHEN the asset tooling produces transparent full-size PNGs, THE PhantomTrace asset tooling SHALL write them to `docs/LookAndFeel/use/`.
+11. THE PhantomTrace documentation SHALL record the confirmed mapping from Window_State to image files: `cannotPutAway` uses `shackled-volume-and-padlocks` and `ghost-looking-left-yellow`, `phantomTrace` uses `crt-diagnostic-portal` and `ghost-looking-left-red`, and `volumeReleased` uses `shattered-chains-and-portullis` and `ghost-looking-left-green`, all inside the shared `window-frame`.
+12. THE PhantomTrace documentation SHALL record in the Assets_Record, before the project is submitted, the provenance and license of the Original_Art, the result and date of the side-by-side check of the Ghost_Mascot against the official Kiro ghost, and the name, author, version, source, and license of the Title_Font WHERE a Title_Font is bundled.
+13. THE PhantomTrace asset tooling written in Python SHALL pin its dependencies in `Scripts/requirements.txt` and SHALL NOT be included in the App_Bundle.
+14. THE Diagnostic_Sheet SHALL draw the title plaque text of each Window_State in the Title_Font WHERE the Title_Font is available, otherwise in a system font, and SHALL NOT rely on text baked into the Window_Frame_Art.
+15. THE PhantomTrace SHALL use no Kiro logo and no Kiro ghost artwork in the app, the app icon, or any bundled asset.
+16. THE Diagnostic_Sheet SHALL draw lock table cell text in the Table_Font, using Monaco when installed, Menlo when Monaco is unavailable, and the system monospaced font when both are unavailable.
+17. THE PhantomTrace repository and App_Bundle SHALL contain no Apple font file (Monaco, Menlo, SF, or Chicago).
+18. WHEN an asset is added, replaced, or bundled, THE PhantomTrace documentation SHALL be updated in the Assets_Record in the same change.
+
+### Requirement 18: Window States and Window Selection
+
+**User Story:** As a user, I want one clear window for each phase of the investigation, so that I always know whether my disk is blocked, being traced, or released.
+
+Provisional items, pending user confirmation: criteria 6, 7, 15, 16, 21, 23, and 26 implement proposals from the design's open questions and may change after confirmation.
+
+#### Acceptance Criteria
+
+1. WHEN the discovery state is Clean, Unmounting, or Unmounted, THE Window_Selector SHALL select the Window_State `volumeReleased`.
+2. WHILE the discovery state is Blocked_State and the Proceeded_Flag is not set and the current Window_State is not `phantomTrace`, THE Window_Selector SHALL select the Window_State `cannotPutAway`.
+3. WHILE the discovery state is Blocked_State and either the Proceeded_Flag is set or the current Window_State is `phantomTrace`, THE Window_Selector SHALL select the Window_State `phantomTrace`.
+4. WHEN a scan fails or returns partial results, THE Window_Selector SHALL select the Window_State `phantomTrace`.
+5. WHILE a scan is running, THE Diagnostic_Sheet SHALL keep the current Window_State and Ghost_State unchanged and SHALL display a Scanning_Overlay.
+6. WHILE the discovery state is Idle or Resolving, or Failed because of a resolution error under Requirement 2, THE Diagnostic_Sheet SHALL display no Window_State content (provisional, pending user confirmation).
+7. IF the first scan of a resolved volume runs longer than 500 milliseconds, THEN THE Diagnostic_Sheet SHALL display the Window_Frame_Art with a Scanning_Overlay until the first scan result arrives (provisional, pending user confirmation).
+8. THE Diagnostic_Sheet SHALL derive the Ghost_State only from the Window_State.
+9. WHEN the volume is no longer present in the mount table, THE Window_Selector SHALL select the Window_State `volumeReleased` with the volume marked as no longer mounted, from any current Window_State.
+10. THE Diagnostic_Sheet SHALL display the title plaque "CANNOT PUT AWAY", the illustration `shackled-volume-and-padlocks`, and the `yellow` Ghost_Mascot in the `cannotPutAway` window.
+11. THE Diagnostic_Sheet SHALL display in the `cannotPutAway` window a spooky-style message that the disk cannot be put away, a question asking whether to run a Phantom Trace, one Proceed_Button, and a close box.
+12. WHEN the user activates the Proceed_Button in the `cannotPutAway` window, THE Diagnostic_Sheet SHALL set the Proceeded_Flag and display the `phantomTrace` window.
+13. THE Diagnostic_Sheet SHALL display the title plaque "PHANTOM TRACE", the illustration `crt-diagnostic-portal`, the `red` Ghost_Mascot, the lock table, the Phantom_Choice, and one Proceed_Button in the `phantomTrace` window.
+14. WHILE no option of the Phantom_Choice is selected, THE Diagnostic_Sheet SHALL disable the Proceed_Button.
+15. THE Diagnostic_Sheet SHALL provide no control that returns from the `phantomTrace` window to the `cannotPutAway` window (provisional, pending user confirmation).
+16. WHEN the user activates the Proceed_Button with the option "I'll deal with these processes myself" selected, THE Resolution_Pipeline SHALL perform a fresh rescan, SHALL send no signal, and SHALL leave all processes unchanged (provisional, pending user confirmation).
+17. WHEN the user activates the Proceed_Button with a Resolution_Stage selected, THE Resolution_Pipeline SHALL execute that stage under Requirements 6 to 9 and 11, including the plan preview and, for Banish Locks, the explicit confirmation, and SHALL then perform a fresh rescan.
+18. WHEN a rescan started from the `phantomTrace` window finds one or more Lock_Records, THE Diagnostic_Sheet SHALL remain in the `phantomTrace` window and display the remaining Lock_Records.
+19. WHEN a rescan started from the `phantomTrace` window finds zero Lock_Records, THE Window_Selector SHALL select the Window_State `volumeReleased`.
+20. THE Diagnostic_Sheet SHALL display the title plaque "VOLUME RELEASED", the illustration `shattered-chains-and-portullis`, the `green` Ghost_Mascot, and a spooky-style message on how to proceed in the `volumeReleased` window.
+21. WHILE the volume is still mounted, THE Diagnostic_Sheet SHALL display in the `volumeReleased` window an Eject_Button and a note that retrying Eject in Finder also works (provisional, pending user confirmation).
+22. WHEN the user activates the Eject_Button, THE Resolution_Pipeline SHALL perform the Clean Handoff stage under Requirement 10.
+23. WHILE the volume is no longer mounted, THE Diagnostic_Sheet SHALL display in the `volumeReleased` window only the message and the instruction to retry in Finder, with no Eject_Button (provisional, pending user confirmation).
+24. WHILE the Unmounter is unmounting, THE Diagnostic_Sheet SHALL display a progress state on the Eject_Button and disable it.
+25. IF the unmount returns `kDAReturnBusy` or `EBUSY`, THEN THE Diagnostic_Sheet SHALL display the `phantomTrace` window with the newly discovered Lock_Records and the `red` Ghost_Mascot.
+26. IF a scan fails or returns partial results, THEN THE Diagnostic_Sheet SHALL display the Failure_Banner of Requirement 14.1 in the `phantomTrace` window with an enabled Rescan button, and SHALL disable the Proceed_Button and every Phantom_Choice option that selects a Resolution_Stage (provisional, pending user confirmation).

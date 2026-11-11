@@ -2,11 +2,13 @@
 
 ## Overview
 
-PhantomTrace is a retro-themed macOS utility (targeting macOS 27.2.1 / build 26B131 or later) that answers the question Finder refuses to answer: "Which program is keeping this disk from ejecting?" Given a volume (external drive, USB stick, or mounted `.dmg`), it resolves the mount point, enumerates every process holding a lock on that volume, classifies each lock, and presents the result in a System 7 / Mac OS 9 Platinum-styled diagnostic sheet haunted by the Kiro ghost mascot. It resurrects classic "What's Keeping Me?" / Put Away inspector tools for modern Darwin and APFS (Hackathon category: Resurrection).
+PhantomTrace is a retro-themed macOS utility (targeting macOS 27.2.1 / build 26B131 or later) that answers the question Finder refuses to answer: "Which program is keeping this disk from ejecting?" Given a volume (external drive, USB stick, or mounted `.dmg`), it resolves the mount point, enumerates every process holding a lock on that volume, classifies each lock, and presents the result in a System 7 / Mac OS 9 Platinum-styled diagnostic sheet haunted by an original, Kiro-inspired ghost mascot (not the Kiro ghost). It resurrects classic "What's Keeping Me?" / Put Away inspector tools for modern Darwin and APFS (Hackathon category: Resurrection).
 
 Locks are classified into three kinds: background system daemons (Spotlight `mds`, `mdworker_shared`, QuickLook satellites), CWD locks (idle shells such as `zsh`/`bash`/`node` whose current working directory sits inside the volume), and open file handles (apps with read/write descriptors on specific files). The user then walks a graduated resolution pipeline: (1) Egress Shells, (2) Graceful Request, (3) Banish Locks (targeted SIGKILL), (4) Clean Handoff (unmount via DiskArbitration or `diskutil`). Each stage is opt-in, previewed, and re-verified against fresh process discovery before the next, escalating only what is still blocking.
 
-The system is implemented in Swift (Swift Package Manager core library + AppKit app target + Finder Quick Action). The core is pure and testable: parsers and classifiers are pure functions fuzzed with property-based tests; all system effects (spawning `lsof`, sending signals, unmounting) are behind protocols so they can be mocked. The project is developed spec-first with Kiro (`.kiro/specs`, steering, and hooks).
+The UI is three Platinum window states, one per mockup in `docs/LookAndFeel/original/composed/`: CANNOT PUT AWAY (the disk is blocked, offers to run a trace), PHANTOM TRACE (lock table plus the choice of letting PhantomTrace act or handling the processes yourself), and VOLUME RELEASED (no locks remain, offers Eject or a Finder retry). Each window has its own illustration and its own ghost colour (yellow, red, green). The window state is derived from the discovery state plus a little UI-only state (see Window States).
+
+The system is implemented in Swift and built entirely with Swift Package Manager (core library, CLI, and a programmatic AppKit executable target), plus a Finder Quick Action. Full Xcode.app is not installed on the development machine (Command Line Tools only), so there is no `.xcodeproj`, no Interface Builder, no SwiftUI previews, and no asset catalog. `Scripts/make-app.sh` assembles the `.app` bundle from the SwiftPM build output. The core is pure and testable: parsers and classifiers are pure functions fuzzed with property-based tests; all system effects (spawning `lsof`, sending signals, unmounting) are behind protocols so they can be mocked. The project is developed spec-first with Kiro (`.kiro/specs`, steering, and hooks).
 
 ## Architecture
 
@@ -18,7 +20,7 @@ graph TD
         CLI[phantomtrace CLI]
     end
 
-    subgraph App["PhantomTrace.app (AppKit)"]
+    subgraph App["PhantomTraceApp (SwiftPM executable, AppKit, bundled as PhantomTrace.app)"]
         AD[AppDelegate / URL + Services Handler]
         VM[DiagnosticViewModel]
         UI[Platinum UI Layer<br/>Sheet, Table, Ghost]
@@ -83,6 +85,103 @@ stateDiagram-v2
     Unmounted --> [*]
     Failed --> [*]
 ```
+
+### Window States (confirmed UI)
+
+Three window states are confirmed. They are a presentation layer over the discovery state machine above; they do not add discovery states.
+
+| Window state | Title plaque | Mockup | Illustration | Ghost | Shown when |
+|---|---|---|---|---|---|
+| `cannotPutAway` | CANNOT PUT AWAY | `composed-cannot put away.jpg` | `shackled-volume-and-padlocks.png` | `ghost-looking-left-yellow.png` | Volume resolved and the first scan reports locks (entry into Blocked_State) |
+| `phantomTrace` | PHANTOM TRACE | `composed-phantom trace.jpg` | `crt-diagnostic-portal.png` | `ghost-looking-left-red.png` | The user proceeds from `cannotPutAway`; also while rescanning, while a stage runs, and after a rescan that still finds locks |
+| `volumeReleased` | VOLUME RELEASED | `composed-volume released.jpg` | `shattered-chains-and-portullis.png` | `ghost-looking-left-green.png` | A fresh scan reports zero locks, or the volume has been unmounted |
+
+Content of each window (the content area of the mockups is empty; the app draws it):
+
+- `cannotPutAway`: a spooky message that the disk cannot be put away, a question asking whether to run a Phantom Trace, and one proceed button (and the close box).
+- `phantomTrace`: the lock table (Process Name, PID, User, Lock Category, File Path); a choice between "Let PhantomTrace act" (with the graduated stages Egress Shells, Graceful Request, Banish Locks to pick from) and "I'll deal with these processes myself"; and one proceed button. Proceed runs the chosen stage (if any, after the Safety_Policy preview and, for Banish Locks, explicit confirmation) and then always triggers a fresh rescan.
+- `volumeReleased`: a spooky message on how to proceed. If the volume is still mounted: an Eject button (runs Clean Handoff, Stage 4) together with a note that retrying Eject in Finder also works. If the volume is already unmounted: the message and instruction only, no Eject button.
+
+```swift
+public enum WindowState: Equatable, Sendable { case cannotPutAway, phantomTrace, volumeReleased }
+
+public enum PhantomChoice: Equatable, Sendable {
+    case letPhantomTraceAct(ResolutionStage)  // .egressShells, .gracefulRequest, .banishLocks
+    case handleMyself
+}
+
+public struct WindowModel: Equatable, Sendable {
+    public var window: WindowState
+    public var ghost: GhostState            // derived from window, never set independently
+    public var locks: [LockRecord]
+    public var isScanning: Bool             // progress overlay inside the current window
+    public var banner: Banner?              // failed / partial discovery (Requirement 14)
+    public var volumeStillMounted: Bool
+    public var choice: PhantomChoice?       // only meaningful in .phantomTrace
+}
+
+public enum GhostState: Equatable, Sendable { case yellow, red, green }  // all left-facing
+```
+
+Transitions:
+
+```mermaid
+stateDiagram-v2
+    [*] --> Hidden: input received (resolving, first scan)
+    Hidden --> cannotPutAway: scan finds locks
+    Hidden --> volumeReleased: scan finds zero locks
+    Hidden --> phantomTrace: scan failed or partial (banner)
+    cannotPutAway --> phantomTrace: proceed (Run Phantom Trace)
+    phantomTrace --> phantomTrace: proceed, rescan still finds locks
+    phantomTrace --> volumeReleased: proceed, rescan finds zero locks
+    volumeReleased --> [*]: Eject succeeds, or closed
+    volumeReleased --> phantomTrace: Eject busy, rescan finds locks
+    cannotPutAway --> [*]: closed
+    phantomTrace --> [*]: closed
+```
+
+Mapping from discovery state to window:
+
+| Discovery state | Window state | Notes |
+|---|---|---|
+| Idle | none | No window content until input arrives |
+| Resolving / first Scanning | none ("Hidden"), or the frame with a scanning overlay if the scan exceeds 500 ms | See open question 1 |
+| Resolving → Failed (protected volume, not a mount point, cannot verify) | none | Alert only (Requirement 2); no lock window is shown |
+| Scanning → Failed or Partial (lsof error, timeout) | `phantomTrace` with failure banner and Rescan button | Empty or partial table, stage choices disabled (Requirement 14); see open question 2 |
+| Blocked, first result | `cannotPutAway` | Ghost yellow |
+| Blocked, after the user proceeded | `phantomTrace` | Ghost red; also during stage execution and rescans (table dimmed, progress shown, proceed disabled) |
+| Clean | `volumeReleased` | Ghost green; Eject button if volume still mounted |
+| Unmounting | `volumeReleased` (progress on the Eject button) | Eject disabled while running |
+| Unmounted | `volumeReleased` | Eject button hidden; message confirms the release |
+| Unmounting → Blocked (EBUSY) | `phantomTrace` | Newly found locks shown; ghost red |
+
+If the volume becomes unmounted at any time (the user ejected it in Finder, or it was removed), the next scan or mount-table check moves to `volumeReleased` with `volumeStillMounted = false`, from any window. Scan-in-progress never changes the window or ghost; it only sets `isScanning`.
+
+Selection rule (pure, testable):
+
+```pascal
+ALGORITHM selectWindow(discovery, proceeded, current)
+INPUT: discovery state, proceeded flag (user pressed proceed in cannotPutAway), current window
+OUTPUT: WindowState or HIDDEN
+
+BEGIN
+  CASE discovery OF
+    Clean, Unmounting, Unmounted: RETURN volumeReleased
+    Blocked:
+      IF proceeded OR current = phantomTrace THEN RETURN phantomTrace
+      RETURN cannotPutAway
+    Failed or Partial after scan:   RETURN phantomTrace
+    Scanning:                       RETURN current       // unchanged; HIDDEN if none yet
+    Idle, Resolving, Failed (resolve): RETURN HIDDEN
+  END CASE
+END
+
+ALGORITHM ghostFor(window)
+  cannotPutAway -> yellow; phantomTrace -> red; volumeReleased -> green
+END
+```
+
+This replaces the earlier Ghost_State mapping (idle/scanning, haunting, banished). The three sprite states are now defined by the window, not by raw discovery state.
 
 ### Resolution Pipeline Sequence
 
@@ -253,8 +352,9 @@ public protocol Unmounting {
 **Purpose**: Get the user into the diagnostic sheet from Finder without a menu-bar widget.
 
 **Responsibilities**:
-- Finder Quick Action: Automator-style `.workflow` (or App Intent / Services `NSServices` entry) named "Why Can't I Eject?" / "Inspect Volume Locks" that passes the selected item to `phantomtrace://inspect?path=<percent-encoded>`
+- Finder Quick Action: a hand-written Automator-style `.workflow` bundle (plain `Info.plist` and `document.wflow` property lists, no Xcode tooling) and/or an `NSServices` entry in the app's `Info.plist`, named "Why Can't I Eject?" / "Inspect Volume Locks". Either route passes the selected item to `phantomtrace://inspect?path=<percent-encoded>`. App Intents are not used because they need Xcode's metadata extraction tooling. `Scripts/install-quick-action.sh` copies the workflow to `~/Library/Services` and refreshes Services (`/System/Library/CoreServices/pbs -flush`). Which of the two routes ships is decided by manual testing in Finder; both are cheap to keep.
 - Desktop drop target: a small, non-menu-bar window/Dock icon accepting dropped volume icons or folders
+- URL scheme: the app bundle's `Info.plist` declares `CFBundleURLTypes` for `phantomtrace`; the handler runs in `AppDelegate` (`application(_:open:)`)
 - `phantomtrace` CLI for scripting and for end-to-end tests
 
 ### Component 9: Platinum UI Layer
@@ -262,12 +362,103 @@ public protocol Unmounting {
 **Purpose**: Render the diagnostic sheet in System 7 / Mac OS 9 Platinum Retro Gothic style.
 
 **Responsibilities**:
-- Custom-drawn window chrome: pinstripe title bar, 1px beveled frames, platinum gray (#DDDDDD) background, square close/zoom boxes
-- Typography: Chicago-like (e.g., bundled ChicagoFLF/open substitute) for titles, Monaco for table cells
+- Programmatic AppKit only: views, windows, and menus are built in code (no `.xib`/`.storyboard`, no SwiftUI previews)
+- Custom-drawn window chrome: pinstripe title bar, 1px beveled frames, platinum gray (#DDDDDD) background, square close/zoom boxes. Where reference art frames the window, it is drawn as a 9-slice or with a content cutout (see Asset Pipeline)
+- Typography (see `docs/Assets.md`): table cells use Monaco, loaded by name from the system with `NSFont(name: "Monaco", size:)`, falling back to Menlo, then the system monospaced font. Monaco is never bundled. Titles use an optional bundled open-licensed bitmap title font (Chicago-style; not yet chosen), registered at launch from a bundle file with `CTFontManagerRegisterFontsForURL`. If that font file is absent or registration fails, titles use a system font. Apple font files (Monaco, Menlo, SF, Chicago) are never committed or bundled
 - Table columns: Process Name, PID, User, Lock Category, File Path (with middle truncation and tooltip for full path)
-- Buttons for each pipeline stage (disabled when not applicable), with progress states
-- Kiro ghost mascot: glowing sprite that changes state (idle, haunting when locks found, banished/relieved when zero)
+- Three window states (CANNOT PUT AWAY, PHANTOM TRACE, VOLUME RELEASED), selected by `selectWindow` from the discovery state (see Window States). One window is on screen at a time; a state change swaps the illustration, ghost, title plaque, and content
+- In PHANTOM TRACE: a choice control (PhantomTrace acts with stage 1, 2, or 3 / I'll handle it myself) and one proceed button with a progress state; stage choices that do not apply are disabled. Clean Handoff is not a choice here; it is the Eject button in VOLUME RELEASED
+- Kiro-inspired ghost mascot (original character, not the Kiro ghost): left-facing glowing sprite whose colour follows the window: yellow (CANNOT PUT AWAY), red (PHANTOM TRACE), green (VOLUME RELEASED)
 - Accessibility: VoiceOver labels on all custom controls, Reduce Motion respected for glow animation, sufficient contrast
+
+## Build, Packaging, and Asset Pipeline
+
+### Build and bundling (SwiftPM only)
+
+The environment has Command Line Tools only (macOS 27.2.1). Nothing in the design may require Xcode.app, `xcodebuild`, `actool`, or Interface Builder.
+
+- The app is a SwiftPM `.executableTarget` (`PhantomTraceApp`) that depends on `PhantomTraceCore`. `swift build -c release` produces the binary.
+- `Scripts/make-app.sh` assembles `PhantomTrace.app`:
+
+```pascal
+ALGORITHM makeApp(config)
+BEGIN
+  swift build -c config
+  bundle ← "build/PhantomTrace.app"
+  CREATE bundle/Contents/MacOS, bundle/Contents/Resources
+  COPY .build/config/PhantomTraceApp TO bundle/Contents/MacOS/PhantomTrace
+  WRITE bundle/Contents/Info.plist       // CFBundleExecutable, CFBundleIdentifier, LSMinimumSystemVersion 27.2.1,
+                                         // CFBundleURLTypes (scheme "phantomtrace"), optional NSServices entry
+  COPY App sprites (1x/2x PNG) TO bundle/Contents/Resources
+  IF an open-licensed title font file exists in Resources/Fonts THEN
+    COPY the font file AND its license file TO bundle/Contents/Resources   // optional; never Apple fonts
+  END IF
+  codesign --force --options runtime --entitlements PhantomTrace.entitlements --sign identity bundle
+  codesign --verify --strict bundle
+END
+```
+
+- Signing uses the hardened runtime and minimal entitlements. No App Sandbox (it blocks `lsof` and signalling). Automation (Apple events) is declared only if Terminal scripting ships. An ad-hoc identity (`-`) is the default for local runs.
+- Notarization with `xcrun notarytool submit --wait` and `xcrun stapler staple` is a documented, manual, optional step, not run by the script.
+- Resources are plain files loaded at runtime from `Bundle.main.resourceURL`. SwiftPM `resources:` is not relied on for the shipped app, because the script owns the bundle layout. There is no `.xcassets`.
+- Debugging uses `lldb` and `swift run`; the UI is exercised by launching the bundled app.
+
+### Asset pipeline
+
+```mermaid
+graph LR
+    A[docs/LookAndFeel/original/<br/>source art, never modified] --> B[Scripts/make-transparent-pngs.py<br/>see ProjectLog D-011]
+    B --> C[docs/LookAndFeel/use/<br/>transparent full-size PNGs, 2-5 MB]
+    C --> D[Export step: crop + 1x/2x sprites]
+    D --> E[Resources in app target / bundle]
+    E --> F[Scripts/make-app.sh copies into PhantomTrace.app]
+```
+
+- Source art stays in `docs/LookAndFeel/original/` and is never modified.
+- Transparent full-size PNGs are produced into `docs/LookAndFeel/use/` by `Scripts/make-transparent-pngs.py` (flood-fill from the border, per-image `SEAL_RADIUS_OVERRIDES`; proofs via `Scripts/make-proof-sheets.py`).
+- The app needs cropped 1x and 2x sprites exported from `use/` (full-size files are too large to ship). Naming is `name.png` and `name@2x.png`, kebab-case. Sprite loading composes an `NSImage` with both representations. The export script is a follow-up task and lives with the other Python tooling (pinned in `Scripts/requirements.txt`).
+- `window.png` is opaque inside the frame. The window frame is therefore drawn as a 9-slice (fixed corners and edges, with the center region left transparent or filled by the app with platinum `#DDDDDD`) or by a content cutout that clears the interior. Slice insets are recorded alongside the sprite and used by a `NinePartImageView` (or `NSImage.capInsets` with `resizingMode = .stretch`). Content such as the table and buttons is placed in the cutout rectangle.
+
+### Confirmed art-to-window mapping
+
+The user confirmed three window states (see Window States). Mockups in `docs/LookAndFeel/original/composed/` are mood references; the app composes each window from the window frame, one illustration, and one ghost sprite.
+
+| Window state | Illustration (from `use/`) | Ghost (from `use/`) | Mockup reference |
+|---|---|---|---|
+| `cannotPutAway` | `shackled-volume-and-padlocks.png` | `ghost-looking-left-yellow.png` | `composed-cannot put away.jpg` |
+| `phantomTrace` | `crt-diagnostic-portal.png` (source `original/base-images/base-crt diagnostic portal.jpg`) | `ghost-looking-left-red.png` | `composed-phantom trace.jpg` |
+| `volumeReleased` | `shattered-chains-and-portullis.png` | `ghost-looking-left-green.png` | `composed-volume released.jpg` |
+
+All three windows share one window frame (`window.png`), drawn as a 9-slice. The title plaque text (CANNOT PUT AWAY, PHANTOM TRACE, VOLUME RELEASED) is drawn by the app in the bundled bitmap title font when one is available, otherwise in a system font, and is not baked into the frame.
+
+Sprite set to export (cropped, 1x and 2x, kebab-case, plain files in `Contents/Resources`, no asset catalog):
+
+| Sprite file | Used by |
+|---|---|
+| `window-frame.png`, `window-frame@2x.png` (+ recorded 9-slice insets) | all three windows |
+| `shackled-volume-and-padlocks.png`, `@2x` | `cannotPutAway` |
+| `crt-diagnostic-portal.png`, `@2x` | `phantomTrace` |
+| `shattered-chains-and-portullis.png`, `@2x` | `volumeReleased` |
+| `ghost-looking-left-yellow.png`, `@2x` | `cannotPutAway` |
+| `ghost-looking-left-red.png`, `@2x` | `phantomTrace` |
+| `ghost-looking-left-green.png`, `@2x` | `volumeReleased` |
+
+`ghost-looking-right-yellow` is not part of the sprite set. No window uses a right-facing ghost; it may be added later only if a stated purpose appears (for example a scanning overlay).
+
+Reduce Motion: each sprite is shown static with no glow animation. If a sprite is missing or cannot be decoded, a text or system-drawn substitute is shown and the window keeps working (Requirement 17.7).
+
+### Open items
+
+- Unresolved UI questions (not guessed; proposals above are provisional):
+  1. What is shown during the first resolve and scan, before any of the three confirmed windows applies? No mockup exists. Provisional: show nothing until the result (target under 2 s), or the window frame with a scanning overlay after 500 ms.
+  2. Which window shows a failed or partial scan (lsof error or timeout)? Provisional: PHANTOM TRACE with a failure banner, Rescan button, and stage choices disabled.
+  3. When exactly does VOLUME RELEASED show the Eject button versus only the "retry in Finder" instruction? Provisional: Eject button plus a Finder-retry note while the volume is mounted; instruction only once it is unmounted.
+  4. Does "I'll deal with these processes myself" need a wait or hint (for example, per-process steps)? Provisional: just the process list and a Rescan via the proceed button.
+  5. Can the user return from PHANTOM TRACE to CANNOT PUT AWAY? Provisional: no, close and reopen.
+- Provenance and license of the look-and-feel art are recorded in [docs/Assets.md](../../../docs/Assets.md) (see also `docs/LookAndFeel/README.md`); its "To confirm" fields must be filled before submission.
+- Do a side-by-side check of the Kiro-inspired ghost mascot against the official Kiro ghost, and record the result and date in `docs/Assets.md`. If any pose looks too close, regenerate or replace it.
+- The Chicago-style bitmap title font is not chosen. It is optional: if one is picked, it needs an open license (for example SIL OFL), with its license file stored next to it and a row in `docs/Assets.md`. Without it, titles use a system font. Monaco is a system font and is not bundled.
+- The app icon is pending (no icon exists yet); add its row to `docs/Assets.md` when it is created.
 
 ## Data Models
 
@@ -667,20 +858,26 @@ PhantomTrace/
 │   │   ├── Resolution/           # ResolutionPipeline, SafetyPolicy, ShellEgress
 │   │   ├── System/               # ProcessRunner, SignalSender, Unmounter (live adapters)
 │   │   └── Models/               # LockRecord, errors, stages
-│   └── phantomtrace/             # CLI executable
+│   ├── phantomtrace/             # CLI executable
+│   └── PhantomTraceApp/          # SwiftPM executable target: programmatic AppKit app
+│       ├── AppDelegate.swift, DiagnosticViewModel.swift
+│       ├── UI/                   # Platinum UI layer (window chrome, table, ghost, 9-slice view)
+│       └── Resources/            # Sprites (name.png, name@2x.png) and an optional open-licensed title font with its license file, plain files
 ├── Tests/
-│   ├── PhantomTraceCoreTests/    # Unit tests with mock adapters
-│   ├── PhantomTracePropertyTests/# SwiftCheck property tests (parser fuzzing)
+│   ├── PhantomTraceCoreTests/    # Unit tests with mock adapters (Swift Testing)
+│   ├── PhantomTracePropertyTests/# swift-property-based tests (parser fuzzing)
 │   └── Fixtures/                 # Captured lsof outputs (spaces, non-UTF8, symlinks)
-├── App/
-│   ├── PhantomTrace.xcodeproj    # AppKit app target depending on the local package
-│   ├── PhantomTrace/             # AppDelegate, ViewModel, Platinum UI, Assets (ghost sprites, fonts)
-│   ├── QuickAction/              # "Why Can't I Eject?".workflow / Services plist
-│   └── Info.plist, PhantomTrace.entitlements
+├── Packaging/
+│   ├── Info.plist.template       # CFBundleURLTypes (phantomtrace://), optional NSServices
+│   ├── PhantomTrace.entitlements # Minimal entitlements for the hardened runtime
+│   └── QuickAction/              # Hand-written "Why Can't I Eject?".workflow bundle
 ├── Scripts/
-│   ├── install-quick-action.sh
+│   ├── make-app.sh               # Assembles and codesigns PhantomTrace.app (no Xcode)
+│   ├── install-quick-action.sh   # Installs the workflow into ~/Library/Services
+│   ├── make-transparent-pngs.py, make-proof-sheets.py, requirements.txt  # Art tooling (dev only)
 │   └── lint-and-test.sh          # Used by hooks
 ├── docs/                         # Architecture notes, demo script, screenshots
+│   └── LookAndFeel/              # original/ (source, never modified), use/ (transparent PNGs), proofs/
 └── .kiro/
     ├── specs/
     │   └── phantomtrace-volume-lock-forensics/   # this spec (+ future focused specs)
@@ -701,7 +898,7 @@ PhantomTrace/
 
 **Planned focused specs** (as the user requested spec-driven development): `mount-point-path-resolution`, `darwin-process-discovery-state-machine`, `safe-unmount-workflow`.
 
-**Dependencies in layout**: SwiftCheck (test-only) for property tests; SwiftLint as a developer tool (not a package dependency).
+**Dependencies in layout**: swift-property-based (`PropertyBased`, test-only, per ProjectLog D-003) for property tests; SwiftLint as a developer tool (not a package dependency).
 
 ## Correctness Properties
 
@@ -823,9 +1020,15 @@ For any path and column width, the truncated display string fits the width, keep
 
 ### Property 20: Ghost state mapping
 
-For any discovery state, the ghost sprite is idle for idle/scanning, haunting for Blocked, and banished for clean/unmounted.
+For any window state, the ghost is yellow for `cannotPutAway`, red for `phantomTrace`, and green for `volumeReleased`, and the ghost is never set independently of the window state. Scanning in progress does not change the ghost.
 
 **Validates: Requirements 13.6, 13.7, 13.8**
+
+### Property 22: Window state selection
+
+For any discovery state, `proceeded` flag, and current window: Clean, Unmounting, and Unmounted select `volumeReleased`; Blocked selects `cannotPutAway` before the user proceeds and `phantomTrace` afterwards; a failed or partial scan selects `phantomTrace`; Scanning leaves the window unchanged. `cannotPutAway` is reachable only from a first scan that found locks, and a rescan that finds locks never returns the user to `cannotPutAway`.
+
+**Validates: Requirements 10.3, 10.6, 13.6, 13.7, 13.8**
 
 ### Property 21: Argument-array fidelity
 
@@ -865,6 +1068,12 @@ For any path (including spaces, quotes, and shell metacharacters), the subproces
 **Response**: Return to Blocked, rescan, display newly found culprits.
 **Recovery**: Restart pipeline at the appropriate stage; force unmount only under advanced confirmation.
 
+### Error Scenario 7: Volume already unmounted
+
+**Condition**: The volume disappears from the mount table (ejected in Finder, removed, or unmounted by Clean Handoff).
+**Response**: Show VOLUME RELEASED with `volumeStillMounted = false`, no Eject button, and a message confirming the release. No scan or unmount is attempted.
+**Recovery**: Close the window.
+
 ### Error Scenario 6: Shell egress not possible
 
 **Condition**: Shell's terminal is not scriptable or shell is running a foreground job.
@@ -886,13 +1095,13 @@ For any path (including spaces, quotes, and shell metacharacters), the subproces
 
 Fuzz the `lsof`/`fuser` output parser against malformed paths, non-UTF8 bytes, spaces, symlinks, truncation, and interleaved unknown fields. Cover Correctness Properties 1–8 and 14 using generators for: arbitrary `Data`; structured record sets serialized to `lsof -F` format; byte-level mutations (flip, drop, duplicate, truncate) of valid output. Safety-policy properties (10–12) use generated process tables and stage histories.
 
-**Property Test Library**: SwiftCheck (default 500+ iterations in CI, shrinking enabled; minimized counterexamples saved as fixtures).
+**Property Test Library**: swift-property-based (`PropertyBased`, pinned in `Package.swift`), run through Swift Testing (default 500+ iterations in CI, shrinking where the library provides it; minimized counterexamples saved as fixtures).
 
 ### Integration Testing Approach
 
 - Local-only test creating a temporary disk image (`hdiutil create -size 10m -fs APFS`), attaching it, spawning helper processes (`cat` on a file, a shell with cwd inside), then running discover → pipeline → unmount end-to-end via the CLI.
-- UI snapshot tests of the diagnostic sheet in idle/haunted/clean states.
-- Manual QA checklist for the Finder Quick Action and drop target.
+- UI verification is manual: build the bundle with `Scripts/make-app.sh`, launch it, and walk the idle, scanning, haunted, and clean states against a real or test disk image. There are no Xcode UI tests and no snapshot tests. Keep UI logic thin (state to view-model mapping lives in Core or the view model) so Properties 19 and 20 are still covered by unit and property tests.
+- Manual QA checklist for the bundle (signature verifies, URL scheme opens the app), the Finder Quick Action, the drop target, and font and sprite loading (1x and 2x).
 
 ## Performance Considerations
 
@@ -907,15 +1116,17 @@ Fuzz the `lsof`/`fuser` output parser against malformed paths, non-UTF8 bytes, s
 - Signals only to verified identities and only to processes owned by the current user by default; no silent privilege elevation.
 - SafetyPolicy is the single choke point; the UI cannot call signal adapters directly.
 - No network access; no telemetry. Diagnostic data stays local.
-- App Sandbox cannot be enabled (needs `lsof`/signals); document hardened runtime, notarization, and minimal entitlements. Quick Action handler validates the `phantomtrace://` URL input (percent-decoding, canonicalization) before use.
+- App Sandbox cannot be enabled (needs `lsof`/signals); `Scripts/make-app.sh` signs with the hardened runtime and minimal entitlements, and optional notarization via `xcrun notarytool` is documented as a manual step. Quick Action handler validates the `phantomtrace://` URL input (percent-decoding, canonicalization) before use.
 - AppleScript/terminal automation requires user-granted Automation permission; text injected is a fixed literal (` cd ~`), never derived from user data.
 
 ## Dependencies
 
 - Apple frameworks: Foundation, AppKit, DiskArbitration, Darwin, OSLog
 - System tools: `/usr/sbin/lsof`, `/usr/bin/fuser` (optional cross-check), `/usr/sbin/diskutil`, `/usr/bin/hdiutil`
-- Test-only: SwiftCheck (SwiftPM), Swift Testing
-- Dev tooling: SwiftLint (Homebrew), Kiro hooks to enforce `swiftlint --strict` and `swift test` before commits
+- Test-only: swift-property-based (SwiftPM, exact pin), Swift Testing
+- Build toolchain: Command Line Tools only; full Xcode.app is NOT required. Tools used: `swift` (SwiftPM), `codesign`, `lldb`, and `xcrun notarytool`/`stapler` (optional, manual). Not used: `xcodebuild`, `actool`, Interface Builder, App Intents metadata tooling
+- Dev tooling: SwiftLint (Homebrew), Kiro hooks to enforce `swiftlint --strict` and `swift test` before commits; Python art tooling in a uv venv (Pillow, NumPy, SciPy, pinned in `Scripts/requirements.txt`), dev only, never shipped
 - Platform: macOS "Golden Gate" (27.2.1, build 26B131) or later, the only version available for testing; older macOS releases are unsupported. Swift toolchain matching that SDK
-- Assets: bundled bitmap-style fonts (open-licensed Chicago/Monaco-alike substitutes verified for license) and Kiro ghost sprite set
+- Assets: plain PNG sprites (1x/2x) in the app target's Resources, no asset catalog, plus an optional open-licensed bitmap title font with its license file. Provenance and license of every asset are recorded in [docs/Assets.md](../../../docs/Assets.md). The ghost is an original, Kiro-inspired mascot; no Kiro logo or Kiro ghost artwork is used anywhere in the app, icon, or docs. The Kiro name appears only to say the project was built with Kiro. The app icon is pending
+- Fonts: Monaco is loaded by name from the system (`NSFont(name:)`), falling back to Menlo, then the system monospaced font; it is not bundled. Apple font files (Monaco, Menlo, SF, Chicago) are never committed or bundled. The Chicago-style title font is not yet chosen; without a bundled open-licensed font, titles use a system font
 - Repository deliverables: public GitHub repo, MIT `LICENSE`, clean commit history, visible `.kiro/` folder, demo video ≤ 3 minutes
