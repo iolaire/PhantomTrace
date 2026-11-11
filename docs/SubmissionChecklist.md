@@ -45,7 +45,8 @@ Category: **Resurrection**. Bonus categories to pursue: Best Demo, Bonus Blog Pr
 
 ## Known gaps
 
-- Hooks exist (`lint-on-save`, `pre-commit-check`, `kiro-gitignore-guard`) but are untested live in Kiro, and SwiftLint is not installed on the dev machine (`brew install swiftlint`). Until it is, the commit gate blocks every agent commit.
+- Hooks exist (`lint-on-save`, `pre-commit-check`, `kiro-gitignore-guard`) but are untested live in Kiro. SwiftLint 0.65.1 is installed on the dev machine; the lint scripts set `TOOLCHAIN_DIR` so it runs with Command Line Tools only.
+- `swift test` fails on the dev machine because the Swift Testing macro plugin is missing from the Command Line Tools install (no Xcode.app). Install Xcode or fix the toolchain, then confirm `Scripts/lint-and-test.sh` passes. Git hooks (`Scripts/install-git-hooks.sh`) are written but not enabled in this clone.
 - Feature logic is not implemented yet (scaffolding stage). The app, Quick Action, and UI must exist before submission.
 - `docs/architecture.md` and `docs/demo-script.md` are placeholders.
 - No screenshots in `docs/screenshots`.

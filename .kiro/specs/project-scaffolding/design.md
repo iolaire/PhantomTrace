@@ -14,7 +14,7 @@ The scaffold is also shaped by the Kiroween 2026 rules (`docs/Hackathon/Rules.md
 
 Key design decisions:
 - The scaffold is static files only. There is no generator program; the files are written once by the spec task executor.
-- The Package has one library, one executable, and two test targets. Only the property test target depends on SwiftCheck.
+- The Package has one library, one executable, and two test targets. Only the property test target depends on swift-property-based.
 - Empty directories are kept with zero-byte `.gitkeep` files, which are removed from a directory only when real content arrives (not part of this feature).
 - Nothing touches git: no `git init`, no commit, no config changes.
 - The `App/` directory, Xcode project, and Quick Action are deliberately absent; a later feature adds them.
@@ -26,7 +26,7 @@ graph TD
     CLI[phantomtrace executable] --> Core[PhantomTraceCore library]
     CoreTests[PhantomTraceCoreTests] --> Core
     PropTests[PhantomTracePropertyTests] --> Core
-    PropTests --> SC[SwiftCheck - test only]
+    PropTests --> SC[swift-property-based - test only]
     Hooks[.kiro/hooks] --> HookScripts[Scripts/hooks] --> Tools[swiftlint / swift test]
     Script[Scripts/lint-and-test.sh] --> Tools
 ```
@@ -88,7 +88,7 @@ let package = Package(
         .executable(name: "phantomtrace", targets: ["phantomtrace"])
     ],
     dependencies: [
-        .package(url: "https://github.com/typelift/SwiftCheck.git", exact: "0.12.0")
+        .package(url: "https://github.com/x-sheep/swift-property-based.git", exact: "2.0.1")
     ],
     targets: [
         .target(name: "PhantomTraceCore"),
@@ -96,12 +96,12 @@ let package = Package(
         .testTarget(name: "PhantomTraceCoreTests", dependencies: ["PhantomTraceCore"]),
         .testTarget(name: "PhantomTracePropertyTests",
                     dependencies: ["PhantomTraceCore",
-                                   .product(name: "SwiftCheck", package: "SwiftCheck")])
+                                   .product(name: "PropertyBased", package: "swift-property-based")])
     ]
 )
 ```
 
-Platform declaration (Requirement 2.2): the implementer uses the `PackageDescription` `SupportedPlatform` form that expresses macOS 27.2.1, or, if the installed toolchain only provides named-version cases, the lowest case that is at least that release (for example `.v27`). The chosen value is checked with `swift build`. No earlier macOS is declared. SwiftCheck is pinned to an exact version (the implementer confirms the latest release resolves under the installed toolchain).
+Platform declaration (Requirement 2.2): the implementer uses the `PackageDescription` `SupportedPlatform` form that expresses macOS 27.2.1, or, if the installed toolchain only provides named-version cases, the lowest case that is at least that release (for example `.v27`). The chosen value is checked with `swift build`. No earlier macOS is declared. swift-property-based is pinned to an exact version (the implementer confirms the latest release resolves under the installed toolchain).
 
 ### PhantomTraceCore
 
@@ -131,7 +131,7 @@ print(PhantomTraceCore.version)
 
 ### Placeholder tests
 
-Each test target has one passing test (for example `XCTAssertEqual(PhantomTraceCore.version, "0.0.0")` in the core target and `XCTAssertTrue(true)` in the property target, which also imports SwiftCheck so that dependency resolution is exercised).
+Each test target has one passing test (for example `XCTAssertEqual(PhantomTraceCore.version, "0.0.0")` in the core target and `XCTAssertTrue(true)` in the property target, which also imports swift-property-based so that dependency resolution is exercised).
 
 ### SwiftLint configuration
 
@@ -178,10 +178,10 @@ Runs lint first; a lint failure prints its output and exits non-zero without run
 Six concise Markdown files in `.kiro/steering/`, derived from the Master_Spec and the Hackathon_Rules, each containing the statements required by Requirement 6:
 - `product.md`: mission "identify which processes prevent a volume from ejecting", Resurrection theme, macOS only and macOS 27.2.1 (build 26B131) only, every other version out of scope.
 - `hackathon.md`: category and deadline, `.kiro/` never gitignored, public GitHub repo with MIT license, demo video under 3 minutes with no copyrighted material, English-only materials, keep `docs/KiroUsage.md` current.
-- `tech.md`: Swift, SwiftPM, AppKit, DiskArbitration; macOS 27.2.1 only; zero third-party runtime dependencies; SwiftCheck and SwiftLint as test and development tools only.
+- `tech.md`: Swift, SwiftPM, AppKit, DiskArbitration; macOS 27.2.1 only; zero third-party runtime dependencies; swift-property-based and SwiftLint as test and development tools only.
 - `structure.md`: Core_Library imports no AppKit; lists the nine directories and five Core subdirectories from Requirement 1.
 - `safety.md`: argument-array subprocesses without a shell; Safety_Policy is the single approval path; protected processes never signalled; no network, no telemetry.
-- `testing.md`: SwiftCheck at least 500 iterations per property in CI; round-trip property for every parser and printer; every system effect behind a mock protocol.
+- `testing.md`: swift-property-based at least 500 iterations per property in CI; round-trip property for every parser and printer; every system effect behind a mock protocol.
 
 ### Documentation, README, LICENSE, .gitignore
 
@@ -221,12 +221,12 @@ There are no runtime data models. The only structured data are the hook JSON fil
 
 ## Testing Strategy
 
-Property-based testing does not apply to this feature. It consists of static files, configuration, and declarative package structure with no function that has meaningful input variation, so the Correctness Properties section is omitted. The placeholder `PhantomTracePropertyTests` target exists only so later features have SwiftCheck wired up.
+Property-based testing does not apply to this feature. It consists of static files, configuration, and declarative package structure with no function that has meaningful input variation, so the Correctness Properties section is omitted. The placeholder `PhantomTracePropertyTests` target exists only so later features have swift-property-based wired up.
 
 Verification is by smoke checks and example-based checks, collected in one shell script that the final task runs (for example `Scripts/verify-scaffold.sh`, or run ad hoc and not committed; the choice is left to the task list). Checks:
 
 - Structure (R1): every required directory exists; each directory containing only scaffold subdirectories or nothing holds a zero-byte `.gitkeep`; no `App`, `.xcodeproj`, `.xcworkspace`, `.workflow`, or `.action` items exist; master spec files are unchanged (compare a checksum listing taken before and after).
-- Package (R2): `swift build` and `swift test` exit 0; running `swift run phantomtrace` prints exactly `0.0.0\n` on stdout with empty stderr; `Package.swift` inspected for a single library, single executable, SwiftCheck only on the property test target; Core source imports only Foundation.
+- Package (R2): `swift build` and `swift test` exit 0; running `swift run phantomtrace` prints exactly `0.0.0\n` on stdout with empty stderr; `Package.swift` inspected for a single library, single executable, swift-property-based only on the property test target; Core source imports only Foundation.
 - Documents (R3, R5): README contains required phrases and the commands in order; a link checker resolves every relative link in `README.md` and `docs/*.md`; first-line headings and the 180-second sentence are present; `docs/screenshots/.gitkeep` is 0 bytes.
 - Licensing and lint (R4): LICENSE copyright line matches a regex `^Copyright \(c\) [0-9]{4} PhantomTrace$`; each `.gitignore` entry is on its own line; `swiftlint --strict` exits 0.
 - Steering (R6): each file exists, is non-empty UTF-8, and contains grep-able required phrases.

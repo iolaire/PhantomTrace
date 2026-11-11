@@ -1,0 +1,6 @@
+#!/bin/bash
+# Git pre-commit hook: runs the same checks as the Kiro commit hooks, so commits
+# made by hand are covered too. Enable with Scripts/install-git-hooks.sh.
+cd "$(git rev-parse --show-toplevel)" || exit 1
+Scripts/hooks/commit-gate.sh gitignore --git || exit 1
+Scripts/hooks/commit-gate.sh checks --git || exit 1

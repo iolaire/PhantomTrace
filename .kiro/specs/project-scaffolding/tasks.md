@@ -15,10 +15,10 @@ Create the static scaffold files described in the design: folder structure, a bu
     - _Requirements: 1.1, 1.2, 1.3, 1.5, 1.6, 5.4_
 
   - [-] 1.2 Write `Package.swift`, Core placeholder, CLI, and placeholder tests
-    - `Package.swift` as in the design (one library, one executable, two test targets, SwiftCheck pinned exactly and only on `PhantomTracePropertyTests`); confirm the platform declaration for macOS 27.2.1 builds with the installed toolchain and confirm the SwiftCheck version resolves
+    - `Package.swift` as in the design (one library, one executable, two test targets, swift-property-based pinned exactly and only on `PhantomTracePropertyTests`); confirm the platform declaration for macOS 27.2.1 builds with the installed toolchain and confirm the swift-property-based version resolves
     - `Sources/PhantomTraceCore/PhantomTraceCore.swift` (Foundation only, `version = "0.0.0"`)
     - `Sources/phantomtrace/main.swift` prints `PhantomTraceCore.version`
-    - `PlaceholderTests.swift` and `PlaceholderPropertyTests.swift` (imports SwiftCheck), each with one passing test
+    - `PlaceholderTests.swift` and `PlaceholderPropertyTests.swift` (imports swift-property-based), each with one passing test
     - Write all Swift so it passes `swiftlint --strict` (trailing newline, no trailing whitespace, lines under 120 characters)
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9, 2.10_
 
@@ -65,7 +65,7 @@ Create the static scaffold files described in the design: folder structure, a bu
 
 - [ ] 4. Add and run the verification script
   - [~] 4.1 Write `Scripts/verify-scaffold.sh` (committed, mode 755)
-    - Check required directories and `.gitkeep` files, absence of forbidden `App`/Xcode/Quick Action items, `docs/screenshots/.gitkeep` size 0, Package.swift targets and SwiftCheck scope, LICENSE copyright regex, `.gitignore` entries, README phrases and command order, relative links in `README.md` and `docs/*.md` resolve, doc heading and 180-second checks, steering files non-empty with required phrases, three hook files parse as JSON with one trigger and one action, `Scripts/lint-and-test.sh` owner execute bit, hackathon readiness (`.kiro/specs`, `.kiro/steering`, `.kiro/hooks` exist; no `.kiro` entry in `.gitignore`; LICENSE is MIT; Submission_Docs and `hackathon.md` exist and are non-empty; README and steering state macOS 27.2.1 only)
+    - Check required directories and `.gitkeep` files, absence of forbidden `App`/Xcode/Quick Action items, `docs/screenshots/.gitkeep` size 0, Package.swift targets and swift-property-based scope, LICENSE copyright regex, `.gitignore` entries, README phrases and command order, relative links in `README.md` and `docs/*.md` resolve, doc heading and 180-second checks, steering files non-empty with required phrases, three hook files parse as JSON with one trigger and one action, `Scripts/lint-and-test.sh` owner execute bit, hackathon readiness (`.kiro/specs`, `.kiro/steering`, `.kiro/hooks` exist; no `.kiro` entry in `.gitignore`; LICENSE is MIT; Submission_Docs and `hackathon.md` exist and are non-empty; README and steering state macOS 27.2.1 only)
     - Report the file and failed check for each failure; make no changes; exit non-zero on any failure
     - Do not run any git command
     - _Requirements: 1.1, 1.2, 1.3, 1.5, 2.1, 2.9, 3.3, 3.5, 4.1, 4.2, 4.6, 5.1, 5.2, 5.3, 5.4, 5.5, 6.1, 6.7, 7.1, 7.8, 8.1, 9.1, 9.2, 9.3, 9.9_

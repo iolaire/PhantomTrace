@@ -1,0 +1,6 @@
+#!/bin/bash
+# Git commit-msg hook: requires docs/ProjectLog.md with code or config changes and
+# a valid Kiro surface in new work-log rows. [skip-log] in the message bypasses it.
+# Enable with Scripts/install-git-hooks.sh.
+cd "$(git rev-parse --show-toplevel)" || exit 1
+Scripts/check-project-log.sh --git "$1" || exit 1

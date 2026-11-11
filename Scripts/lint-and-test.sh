@@ -8,5 +8,12 @@ if ! command -v swiftlint >/dev/null 2>&1; then
     exit 1
 fi
 
+# Without Xcode.app, SwiftLint cannot find sourcekitd unless it is pointed at the
+# Command Line Tools toolchain.
+if [ -z "${TOOLCHAIN_DIR:-}" ]; then
+    developer_dir="$(xcode-select -p 2>/dev/null)"
+    case "$developer_dir" in */CommandLineTools) export TOOLCHAIN_DIR="$developer_dir" ;; esac
+fi
+
 swiftlint --strict || exit 1
 swift test || exit 1

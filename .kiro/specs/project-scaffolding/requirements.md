@@ -47,7 +47,7 @@ This feature sets up the initial project foundation for PhantomTrace, a macOS ut
 6. THE Test_Targets SHALL each contain at least one placeholder test that passes.
 7. WHEN `swift build` is run at the repository root on macOS 27.2.1, THE Package SHALL build with zero errors and exit with status 0.
 8. WHEN `swift test` is run at the repository root on macOS 27.2.1, THE Package SHALL execute every placeholder test, report zero failures, and exit with status 0.
-9. THE Package SHALL declare no third-party runtime dependency, and SHALL declare SwiftCheck only as a dependency of `PhantomTracePropertyTests`.
+9. THE Package SHALL declare no third-party runtime dependency, and SHALL declare swift-property-based only as a dependency of `PhantomTracePropertyTests`.
 10. IF `swift build` or `swift test` fails to resolve a declared dependency, THEN THE Package SHALL cause the command to exit with a non-zero status and report an error identifying the unresolved dependency, leaving the source files unmodified.
 
 ### Requirement 3: README
@@ -102,10 +102,10 @@ This feature sets up the initial project foundation for PhantomTrace, a macOS ut
 
 1. THE Scaffold SHALL contain at least six Steering_Files, named `product.md`, `tech.md`, `structure.md`, `safety.md`, `testing.md`, and `hackathon.md`, in `.kiro/steering/`, and each file SHALL be non-empty UTF-8 Markdown text.
 2. THE `product.md` file SHALL state the mission "identify which processes prevent a volume from ejecting", the Resurrection hackathon theme, and the platform target as macOS only and macOS 27.2.1 (build 26B131) only, with every other macOS version stated as out of scope.
-3. THE `tech.md` file SHALL state the use of Swift, SwiftPM, AppKit, and DiskArbitration, SHALL state that zero third-party runtime dependencies are permitted, and SHALL state that SwiftCheck and SwiftLint are used as test and development tools only.
+3. THE `tech.md` file SHALL state the use of Swift, SwiftPM, AppKit, and DiskArbitration, SHALL state that zero third-party runtime dependencies are permitted, and SHALL state that swift-property-based and SwiftLint are used as test and development tools only.
 4. THE `structure.md` file SHALL state the layering rule that Core_Library imports no AppKit module, and SHALL list every directory convention defined in Requirement 1.
 5. THE `safety.md` file SHALL state all of the following rules: subprocesses are launched with argument arrays and without a shell; the Safety_Policy is the single approval path for every action; protected processes are never sent a signal; no network access and no telemetry are permitted.
-6. THE `testing.md` file SHALL state all of the following property-based testing conventions: SwiftCheck runs at least 500 iterations per property in CI; every parser and every printer has a round-trip property; every system effect is accessed through a mock protocol.
+6. THE `testing.md` file SHALL state all of the following property-based testing conventions: swift-property-based runs at least 500 iterations per property in CI; every parser and every printer has a round-trip property; every system effect is accessed through a mock protocol.
 7. IF any of the six Steering_Files is missing from `.kiro/steering/`, or lacks a statement required by criteria 2 to 6 and 8, THEN THE Scaffold validation SHALL report a failure that names the file and the missing statement, and SHALL leave the existing files unchanged.
 8. THE `hackathon.md` file SHALL state the Resurrection category and the submission deadline, that `.kiro/` is never added to `.gitignore`, that the repository stays public on GitHub with the MIT license, that the demo video is under 3 minutes with no copyrighted material, that all materials are in English, and that `docs/KiroUsage.md` is kept current with real evidence.
 
@@ -147,7 +147,7 @@ This feature sets up the initial project foundation for PhantomTrace, a macOS ut
 1. THE Scaffold SHALL contain a `/.kiro` directory at the repository root holding `specs`, `steering`, and `hooks`, and THE `.gitignore` SHALL NOT exclude it (Requirement 4.2).
 2. THE Scaffold SHALL contain a `LICENSE` file with an OSI-approved license (MIT) at the repository root so that GitHub shows the license in the About section.
 3. THE Scaffold SHALL contain the Submission_Docs and a `.kiro/steering/hackathon.md` file that restate the rules a contributor must not break (Requirement 6.8).
-4. THE Scaffold SHALL declare zero third-party runtime dependencies, so no third-party license or terms apply to the shipped app, and SHALL record SwiftCheck and SwiftLint as development tools only.
+4. THE Scaffold SHALL declare zero third-party runtime dependencies, so no third-party license or terms apply to the shipped app, and SHALL record swift-property-based and SwiftLint as development tools only.
 5. THE Scaffold SHALL NOT include copyrighted images, fonts, music, or third-party trademarks as assets. Historical tool names (for example "What's Keeping Me?") MAY appear in text as references only.
 6. THE Scaffold SHALL keep all documentation, comments, and file names in English.
 7. THE `docs/SubmissionChecklist.md` file SHALL list each known gap that blocks submission (empty hooks folder, missing feature code, placeholder docs, missing screenshots), and WHEN a gap is closed THE checklist SHALL be updated in the same change.

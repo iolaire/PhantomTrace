@@ -35,19 +35,19 @@ Four hooks in `.kiro/hooks/`, kept small on purpose. Each addresses a different 
 - `pre-commit-check.json` (PreToolUse on shell commands): when the agent runs `git commit`, runs `Scripts/lint-and-test.sh` (`swiftlint --strict`, then `swift test`) and blocks the commit on failure. One hook instead of separate lint and test hooks.
 - `kiro-gitignore-guard.json` (PreToolUse on shell commands): blocks a commit if `.gitignore` ignores `.kiro`, a disqualification risk in the Rules.
 - Rejected on purpose: a post-task test hook (duplicates the commit gate) and a Stop hook (runs every turn, too noisy).
-- Limit: PreToolUse hooks see only commits the agent runs, not commits typed in a terminal.
+- Limit: PreToolUse hooks see only commits the agent runs. Real git hooks in `Scripts/git-hooks/` (enabled with `Scripts/install-git-hooks.sh`) call the same scripts so commits typed by hand are covered too.
 - Status: scripts tested with sample payloads (commit, non-commit, empty, garbage, missing SwiftLint). Live behavior in Kiro still to confirm.
 - Evidence to add: issues the hooks actually caught during the build.
 
 ## Property-based testing
 
-- SwiftCheck, pinned to an exact version, in `Tests/PhantomTracePropertyTests`.
+- swift-property-based, pinned to an exact version, in `Tests/PhantomTracePropertyTests`.
 - Targets: the `lsof`/`fuser` output parser against malformed paths, non-UTF8 strings, spaces, and symlinks; round-trip properties for every parser and printer.
 - Evidence to add: bugs PBT found that unit tests did not.
 
 ## Other Kiro features
 
-- Kiro IDE, CLI, Web, or Crew: record which were used and how they differed.
+- Kiro IDE, CLI, Web, Crew, or Mobile: each work-log row in `docs/ProjectLog.md` names the surface (detected by `Scripts/kiro-surface.sh`), so the log shows which surface did what. Evidence to add: how they differed.
 - Custom agents: record any created and their effect.
 - MCP: record any servers used and what they enabled.
 - Kiro powers: record any powers used.

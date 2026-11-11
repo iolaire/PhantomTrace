@@ -52,6 +52,14 @@ Run the tests:
 swift test
 ```
 
+Enable the commit checks once per clone (lint, tests, project log, and `.kiro` guard on every commit):
+
+```
+Scripts/install-git-hooks.sh
+```
+
+SwiftLint is required for the checks: `brew install swiftlint`.
+
 ## Built with Kiro
 
 - **Specs** in `.kiro/specs/`: mount-point path resolution, process discovery state machines, and safe unmount workflows.
@@ -67,7 +75,7 @@ See [docs/KiroUsage.md](docs/KiroUsage.md) for how each Kiro feature was used.
 - [Submission checklist](docs/SubmissionChecklist.md)
 - [Demo script](docs/demo-script.md)
 - Pre-existing code: none. The project was created during the Submission Period.
-- Runtime dependencies: none. SwiftCheck and SwiftLint are development tools only.
+- Runtime dependencies: none. swift-property-based and SwiftLint are development tools only.
 
 ## Specs
 

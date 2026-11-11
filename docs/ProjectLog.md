@@ -2,14 +2,20 @@
 
 Living record of the work, the tools we use, and the decisions we make. Update it in the same commit as the change it describes (enforced by `.kiro/hooks/project-log-check.json`; see `.kiro/steering/documentation.md`).
 
-Newest entries go at the top of each section. Dates are YYYY-MM-DD.
+Newest entries go at the top of each section. Dates are YYYY-MM-DD (UTC). The "Kiro surface" column records which Kiro app did the work; the hackathon write-up asks how they differed. Allowed values: Kiro IDE, Kiro CLI, Kiro Web, Kiro Crew, Kiro Mobile, Unknown, Not recorded. Run `Scripts/kiro-surface.sh --details` to detect it (see D-007).
 
 ## Work log
 
-| Date | Change | Spec refs | Verified how |
-|---|---|---|---|
-| 2026-11-11 | Rewrote steering (product, tech, structure, safety, testing, hackathon) and added swift-conventions, macos-platform, platinum-ui, git-workflow, documentation | n/a | Reviewed against master spec; not built (Linux sandbox) |
-| 2026-11-11 | Project scaffolding: SwiftPM package, CLI stub, placeholder tests, docs, LICENSE | project-scaffolding | `swift build`/`swift test` on macOS |
+| Date | Kiro surface | Change | Spec refs | Verified how |
+|---|---|---|---|---|
+| 2026-11-11 | Kiro IDE | Added real git hooks (`Scripts/git-hooks/pre-commit`, `commit-msg`, `Scripts/install-git-hooks.sh`) that call the same scripts; added `--git` mode to `commit-gate.sh` and `check-project-log.sh`; lint scripts now set `TOOLCHAIN_DIR` when only Command Line Tools are installed (see D-008) | project-scaffolding R7, R8 | Tested real `git commit` in a temporary repo with real SwiftLint and a stubbed `swift`: docs-only, clean Swift, missing log, `[skip-log]`, lint violation, ignored `.kiro`, invalid and valid surface. Hooks not enabled in this repo (`core.hooksPath` unset). `swift test` fails on this machine (Swift Testing macros missing from Command Line Tools), so the full gate has not passed here |
+| 2026-11-11 | Kiro IDE | Added `Scripts/kiro-surface.sh` (detects the Kiro surface) and made `Scripts/check-project-log.sh` reject new work-log rows with a missing or invalid surface and report the detected surface when it blocks (see D-007) | project-scaffolding R7 | Tested detection with simulated IDE, IDE-hook, VS Code terminal, no-marker, and override environments; tested the commit check in a temporary repo (valid, invalid, empty surface; code without log). Hook not yet confirmed live. Kiro CLI, Web, Crew, and Mobile detection not verified |
+| 2026-11-11 | Kiro IDE | Replaced stale SwiftCheck references with swift-property-based (`Package.swift` is the source of truth) in the scaffolding spec, README, and KiroUsage (follow-up to D-003) | project-scaffolding R2.9, R4, R6, R9 | Searched docs for leftover references; not built |
+| 2026-11-11 | Kiro IDE | Added three hooks (`lint-on-save`, `pre-commit-check`, `kiro-gitignore-guard`) and scripts `Scripts/hooks/commit-gate.sh`, `Scripts/hooks/lint-on-save.sh`, `Scripts/lint-and-test.sh` (see D-006) | project-scaffolding R7, R8.1-8.4 | Scripts run with sample payloads: non-commit, empty, garbage, commit without SwiftLint (blocks), bad and clean `.gitignore`, non-Swift file. Hooks not yet confirmed live in Kiro. SwiftLint not installed here, so the lint path never ran. Not built |
+| 2026-11-11 | Kiro IDE | Updated the scaffolding spec (requirements, design, tasks) against the Kiroween 2026 rules: macOS 27.2.1 only, new Requirement 9 (submission readiness), README and docs content rules, six steering files, three hooks, manual submission task | project-scaffolding R2-R7, R9 | Reviewed against `docs/Hackathon/Rules.md`; text checks only |
+| 2026-11-11 | Kiro IDE | Added `docs/SubmissionChecklist.md`, `docs/KiroUsage.md`, hackathon README section, platform-scope wording in README, ProjectOverview, and steering; fast-forwarded `main` to PR #1 | project-scaffolding R3, R5, R6, R9 | Links and wording reviewed; not built |
+| 2026-11-11 | Kiro IDE | Rewrote steering (product, tech, structure, safety, testing, hackathon) and added swift-conventions, macos-platform, platinum-ui, git-workflow, documentation | n/a | Reviewed against master spec; not built (Linux sandbox) |
+| 2026-11-11 | Kiro IDE | Project scaffolding: SwiftPM package, CLI stub, placeholder tests, docs, LICENSE | project-scaffolding | `swift build`/`swift test` on macOS |
 
 ## Tools
 
@@ -18,10 +24,11 @@ Newest entries go at the top of each section. Dates are YYYY-MM-DD.
 | Swift / SwiftPM | tools 6.0 | Build and test | Dev + runtime |
 | swift-property-based (`PropertyBased`) | 2.0.1 (exact) | Property-based tests | Test only |
 | Swift Testing | toolchain | Unit and property tests | Test only |
-| SwiftLint | Homebrew, `--strict` | Lint | Dev only |
+| SwiftLint | 0.65.1 (Homebrew), `--strict` | Lint; needs `TOOLCHAIN_DIR` set to the Command Line Tools when Xcode.app is absent (scripts do this) | Dev only |
 | DiskArbitration | macOS SDK | Unmount | Runtime (system) |
 | `/usr/sbin/lsof`, `/usr/bin/fuser`, `/usr/sbin/diskutil`, `/usr/bin/hdiutil` | macOS 27.2.1 | Lock discovery, unmount fallback, dmg mapping | Runtime (system) |
-| Kiro (specs, steering, hooks) | n/a | Spec-driven development | Dev only |
+| Kiro IDE (specs, steering, hooks) | version not recorded | Spec-driven development, hooks, agent work | Dev only |
+| `python3` | system / pyenv | Parses hook JSON payloads in `Scripts/hooks/` | Dev only |
 
 Runtime third-party dependencies: none.
 
@@ -51,3 +58,18 @@ Format: ID, date, status (Accepted / Superseded), context, decision, consequence
 - Context: pushes to `main` go through PRs, so a commit-time check covers all code.
 - Decision: a commit hook blocks commits that change code or config without staging `docs/ProjectLog.md`; a steering rule says what to record.
 - Consequences: small friction per commit; escape hatch is an `[skip-log]` marker in the commit message for trivial changes.
+
+### D-006 (2026-11-11, Accepted): Three focused hooks plus the project-log hook
+- Context: the hackathon rewards visible hook use, but too many hooks add friction. A separate lint hook and test hook would both fire on every commit.
+- Decision: `lint-on-save` for per-file feedback, one `pre-commit-check` that runs `Scripts/lint-and-test.sh` (lint, then tests), and `kiro-gitignore-guard` for the rule that `.kiro/` must never be ignored. Hook logic lives in scripts under `Scripts/hooks/`. Rejected: a post-task test hook (duplicates the commit gate) and a Stop hook (runs every turn).
+- Consequences: PreToolUse hooks see only commits the agent runs, not terminal commits. With `project-log-check`, three hooks fire on agent commits. SwiftLint must be installed (`brew install swiftlint`) or the commit gate blocks every agent commit. Revisit if the gate gets slow.
+
+### D-007 (2026-11-11, Accepted): Detect the Kiro surface with a script, enforce it in the existing log hook
+- Context: the hackathon write-up asks how Kiro IDE, CLI, Web, and Crew differed, so each work-log row names its surface. Typing it by hand is easy to forget or get wrong.
+- Decision: `Scripts/kiro-surface.sh` detects the surface. Verified: Kiro IDE (`TERM_PROGRAM=kiro` in the agent shell, `VSCODE_IPC_HOOK` or `VSCODE_PID` in IDE hook processes). Best effort and unverified: Kiro CLI (a `kiro-cli` parent process). Web, Crew, and Mobile have no known markers, so the script reports Unknown and `PHANTOMTRACE_KIRO_SURFACE` overrides it. The existing `project-log-check` hook runs the script and blocks commits whose new work-log rows have a missing or invalid surface. It does not block on a mismatch with the detected value, because a commit may hold rows from earlier work on another surface. No new hook was added.
+- Consequences: an agent adding a row runs `Scripts/kiro-surface.sh --details` first. Non-IDE surfaces need the override or manual entry until their markers are known; update the script when they are.
+
+### D-008 (2026-11-11, Accepted): Real git hooks mirror the Kiro commit hooks
+- Context: Kiro PreToolUse hooks only see commits the agent runs, so commits made by hand skipped the project-log, lint and test, and `.kiro` checks.
+- Decision: tracked git hooks in `Scripts/git-hooks/` call the same scripts in `--git` mode. `pre-commit` runs the `.kiro` guard and lint plus tests (lint and tests only when a Swift, package, lint-config, or script file is staged). `commit-msg` runs the project-log check, because only that hook can read `[skip-log]`. Each clone enables them once with `Scripts/install-git-hooks.sh`, which sets `core.hooksPath`. The Kiro hooks stay.
+- Consequences: an agent commit runs the checks twice, once per hook layer. Manual commits are covered. Lint and tests are skipped for docs-only commits. `git commit --no-verify` bypasses the git hooks; the git-workflow steering forbids it for the agent. Known issue: `swift test` currently fails where only Command Line Tools are installed, so install Xcode (or fix the toolchain) before relying on the gate.
