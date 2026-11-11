@@ -22,3 +22,19 @@ Scaffold verification:
 - `verify-scaffold.sh`: checks the repository against the scaffolding spec (required files, links, docs content, steering and hook shape).
 
 Not present yet: `install-quick-action.sh`, reserved for the app feature.
+
+## Image tooling (Python)
+
+Look-and-feel image scripts use a uv-managed venv at `.venv/` (git-ignored). Dependencies are pinned in `requirements.txt`.
+
+Set up:
+
+```
+uv venv .venv
+uv pip install --python .venv/bin/python -r Scripts/requirements.txt
+```
+
+- `make-transparent-pngs.py`: converts `docs/LookAndFeel/original/base-images/*.jpg` (white background) to transparent PNGs in `docs/LookAndFeel/use/`. Per-image tuning (outline-gap sealing) is in `SEAL_RADIUS_OVERRIDES` at the top of the script.
+- `make-proof-sheets.py`: builds `docs/LookAndFeel/proofs/proof-black.png` and `proof-white.png` from `docs/LookAndFeel/use/`.
+
+Run with `.venv/bin/python Scripts/<script>.py`.
