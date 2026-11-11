@@ -11,6 +11,8 @@
 #
 # Verified: Kiro IDE (agent shell has TERM_PROGRAM=kiro, KIRO_SESSION_ID, and
 # TERM_PROGRAM_VERSION; IDE hook processes carry VSCODE_IPC_HOOK or VSCODE_PID).
+# Verified: Kiro Web (agent shell has AWS_SDK_UA_APP_ID=kiro-web and
+# KIRO_CUSTOM_USER_AGENT=KiroWeb/<version>). Crew and Mobile still have no known markers.
 # Not verified: the Kiro CLI check (parent process named kiro-cli).
 
 surface="Unknown"
@@ -38,6 +40,12 @@ if [ -n "${PHANTOMTRACE_KIRO_SURFACE:-}" ]; then
     else
         evidence="ignored invalid PHANTOMTRACE_KIRO_SURFACE (use: $valid|Unknown)"
     fi
+elif [ "${AWS_SDK_UA_APP_ID:-}" = "kiro-web" ] || case "${KIRO_CUSTOM_USER_AGENT:-}" in KiroWeb/*) true ;; *) false ;; esac; then
+    surface="Kiro Web"
+    version="${KIRO_CUSTOM_USER_AGENT:-}"
+    version="${version#KiroWeb/}"
+    version="${version%% *}"
+    evidence="AWS_SDK_UA_APP_ID=kiro-web / KIRO_CUSTOM_USER_AGENT=KiroWeb/*"
 elif [ "${TERM_PROGRAM:-}" = "kiro" ]; then
     surface="Kiro IDE"
     version="${TERM_PROGRAM_VERSION:-}"

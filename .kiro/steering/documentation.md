@@ -16,7 +16,7 @@ inclusion: always
 ## Project log (`docs/ProjectLog.md`)
 
 - Single record of work, tools, and decisions. Update it in the same commit as the change.
-- Work log: one row per meaningful change with date, the Kiro surface used (Kiro IDE, CLI, Web, Crew, Mobile, Unknown, or Not recorded; run `Scripts/kiro-surface.sh --details` to detect it, and use `PHANTOMTRACE_KIRO_SURFACE` to override), spec refs, and how it was verified (say "not verified on macOS" when true).
+- Work log: one row per meaningful change with date, the Kiro surface used (Kiro IDE, CLI, Web, Crew, Mobile, Unknown, or Not recorded; run `Scripts/kiro-surface.sh --details` to detect it, and use `PHANTOMTRACE_KIRO_SURFACE` to override; Kiro Web is detected automatically), spec refs, and how it was verified (say "not verified on macOS" when true).
 - Tools: add or change a row whenever a dependency, tool, or version changes.
 - Decisions: add a numbered `D-NNN` entry (context, decision, consequences) for any choice that affects architecture, dependencies, safety, or scope. Never edit history; mark old entries Superseded and add a new one.
 - `.kiro/hooks/project-log-check.json` blocks commits that touch `Sources/`, `Tests/`, `Package.swift`, `Scripts/`, `App/`, or `.kiro/{specs,steering,hooks}` without `docs/ProjectLog.md` staged, and rejects new work-log rows with a missing or invalid Kiro surface. Use `[skip-log]` in the commit message only for trivial changes (typos, formatting).
