@@ -12,11 +12,17 @@ The Rules require a write-up showing how effectively Kiro was used. This documen
 
 Files in `.kiro/steering/`:
 
-- `product.md`: mission, theme, platform scope (macOS 27.2.1 only).
-- `tech.md`: Swift, SwiftPM, AppKit, DiskArbitration, zero third-party runtime dependencies.
-- `structure.md`: layering rule (Core library imports no AppKit) and directory layout.
-- `safety.md`: no shell strings, protected processes never signaled, opt-in and re-verified stages.
-- `testing.md`: mock protocols for all system effects, round-trip properties.
+- `product.md`: mission, principles, entry points, theme, platform scope (macOS 27.2.1 only), build order.
+- `tech.md`: Swift 6, SwiftPM, AppKit, DiskArbitration, concurrency, zero third-party runtime dependencies, quality gates.
+- `structure.md`: layering rule (Core library imports no AppKit), directory and file conventions.
+- `safety.md`: single SafetyPolicy choke point, protected processes and volumes, escalation rules, no shell strings, no network.
+- `testing.md`: Swift Testing, mock protocols for all system effects, round-trip and property coverage map, 500+ iterations.
+- `swift-conventions.md` (Swift files only): style, bytes-first data handling, dependency injection, concurrency.
+- `macos-platform.md`: macOS 27.2.1 specifics, lsof/DiskArbitration/TCC notes, packaging, Linux-sandbox caveat.
+- `platinum-ui.md` (app/UI files only): Platinum Retro Gothic look, Diagnostic Sheet rules, accessibility.
+- `git-workflow.md`: commit style, pre-commit gates, branching.
+- `documentation.md`: README, KiroUsage, spec, and checklist upkeep.
+- `hackathon.md`: disqualification risks, demo, judging criteria.
 - Evidence to add: which steering rule changed Kiro's output the most.
 
 ## Agent hooks
