@@ -1,0 +1,15 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Require ProjectLog update on commit",
+      "trigger": "PreToolUse",
+      "description": "Blocks git commit when code or config is staged without docs/ProjectLog.md.",
+      "matcher": "execute_bash",
+      "action": {
+        "type": "command",
+        "command": "[ -d PhantomTrace ] && cd PhantomTrace; Scripts/check-project-log.sh"
+      }
+    }
+  ]
+}
