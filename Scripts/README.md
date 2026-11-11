@@ -21,7 +21,7 @@ Scaffold verification:
 
 - `verify-scaffold.sh`: checks the repository against the scaffolding spec (required files, links, docs content, steering and hook shape).
 
-Not present yet: `install-quick-action.sh`, reserved for the app feature.
+- `install-quick-action.sh`: installs the Finder Quick Action into `~/Library/Services`. Its shell test is `Tests/Scripts/install-quick-action-tests.sh` (temporary `HOME` only).
 
 ## Image tooling (Python)
 

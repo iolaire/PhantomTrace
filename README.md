@@ -32,13 +32,20 @@ Platinum Retro Gothic: a System 7 / Mac OS 9 platinum alert window (pinstripe ti
 
 ## Status
 
-The project is at the scaffolding stage. The repository structure, an empty Swift package, and project tooling exist, but no feature logic has been implemented yet.
+The code for every task in the master spec's build order is written (Core library, live adapters, `phantomtrace` CLI, AppKit app, Quick Action bundle, bundling script). What has and has not been checked:
+
+- Verified on macOS during development: `swift build`, targeted `swift test` runs (unit and property tests), `swiftlint --strict`, the bundler (`Scripts/make-app.sh`) and its shell test, the Quick Action installer shell test, and a local-only integration test that attaches a throwaway disk image. See [docs/ProjectLog.md](docs/ProjectLog.md) for what was run for each change.
+- **Not verified:** the app has never been launched, so no window has been seen on screen. The three-window flow end to end, the Finder Quick Action in Finder, the drop target, VoiceOver, and Reduce Motion are untested. The 100 ms main-actor bound is not measured. Notarization has not been attempted.
+- Several behaviors are provisional and await the owner's confirmation; see [docs/architecture.md](docs/architecture.md#provisional-behaviors) and the known gaps in [docs/SubmissionChecklist.md](docs/SubmissionChecklist.md).
+- No screenshots, demo video, or app icon exist yet.
 
 ## Platform
 
 PhantomTrace is **macOS only** and targets **macOS 27.2.1 (build 26B131) only**. It is not supported on any other macOS version, older or newer, and not on Linux, Windows, or iOS.
 
 ## Build
+
+Only the Command Line Tools are needed. There is no Xcode project, and `xcodebuild`, `actool`, and Interface Builder are not used.
 
 Build the package:
 
@@ -58,7 +65,47 @@ Enable the commit checks once per clone (lint, tests, project log, and `.kiro` g
 Scripts/install-git-hooks.sh
 ```
 
-SwiftLint is required for the checks: `brew install swiftlint`.
+SwiftLint is required for the checks: `brew install swiftlint`. On a Command Line Tools only machine, `swiftlint` may fail to load SourceKit unless `DYLD_FRAMEWORK_PATH=/Library/Developer/CommandLineTools/usr/lib` is set (and in some runs `SOURCEKIT_TOOLCHAIN_PATH=/Library/Developer/CommandLineTools`). This is a known gap; `Scripts/lint-and-test.sh` does not set it for you.
+
+## Run
+
+### CLI
+
+The CLI is read-only: it resolves the volume and lists the locks. It never signals a process or unmounts anything.
+
+```
+swift run phantomtrace /Volumes/SomeDrive
+swift run phantomtrace "phantomtrace://inspect?path=%2FVolumes%2FSomeDrive"
+```
+
+### App bundle
+
+Build, sign (ad-hoc by default), and verify `build/PhantomTrace.app`:
+
+```
+Scripts/make-app.sh
+open build/PhantomTrace.app
+```
+
+`make-app.sh` runs `swift build` for `PhantomTraceApp`, assembles the bundle in a staging directory, signs it with the hardened runtime, runs `codesign --verify --strict`, and replaces `build/PhantomTrace.app` only if that passes. On failure it prints the failed step to standard error, exits non-zero, and leaves an existing bundle unchanged. Set `SIGN_IDENTITY` to use a real identity instead of ad-hoc. The script does not notarize. The bundle has been built and verified; it has not been launched (see Status).
+
+### Finder Quick Action
+
+```
+Scripts/install-quick-action.sh
+```
+
+Copies `Packaging/QuickAction/Why Can't I Eject?.workflow` into `~/Library/Services` and refreshes Services. It prints an error and exits non-zero on failure, and leaves any existing installation untouched. The shell test for the installer passes, but the real `pbs -flush` path and the action's behavior in Finder have not been exercised.
+
+### Optional manual notarization
+
+Not required to run the app locally, and not done for this repository. `notarytool` and `stapler` are present with Command Line Tools (checked by `Scripts/spike-signing.sh`), but nothing has been submitted. To notarize a build signed with a Developer ID identity, using your own keychain profile:
+
+```
+ditto -c -k --keepParent build/PhantomTrace.app build/PhantomTrace.zip
+xcrun notarytool submit build/PhantomTrace.zip --keychain-profile "<profile>" --wait
+xcrun stapler staple build/PhantomTrace.app
+```
 
 ## Built with Kiro
 

@@ -1,0 +1,18 @@
+{
+  "top": 111,
+  "left": 130,
+  "bottom": 78,
+  "right": 130,
+  "interior": {
+    "x": 130,
+    "y": 111,
+    "width": 380,
+    "height": 229
+  },
+  "size1x": {
+    "width": 640,
+    "height": 418
+  },
+  "scale": 1,
+  "units": "points at 1x; origin top-left; 2x files are exactly double"
+}

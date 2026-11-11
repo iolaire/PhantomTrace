@@ -6,7 +6,8 @@ The Rules require a write-up showing how effectively Kiro was used. This documen
 
 - Master spec: `.kiro/specs/phantomtrace-volume-lock-forensics/` (requirements, design) covering mount-point path resolution, process discovery, and the safe unmount workflow.
 - Scaffolding spec: `.kiro/specs/project-scaffolding/` (requirements, design, tasks).
-- Evidence to add: how the spec shaped the implementation, and how it compared to vibe coding.
+- Evidence: the master spec's `tasks.md` (about 19 top-level tasks) drove the build order, and each work-log row in `docs/ProjectLog.md` names the task and requirement numbers it implemented. Spec-level decisions (SwiftPM-only packaging, the three-window UI, the `PhantomTraceUI` split) were written into the spec before code. Requirement 18 items that the owner had not confirmed were built as labelled `// PROVISIONAL (Req 18.x)` code paths and listed in [architecture.md](architecture.md#provisional-behaviors).
+- Evidence to add: a comparison with vibe coding, if one is made.
 
 ## Steering docs
 
@@ -43,7 +44,10 @@ Four hooks in `.kiro/hooks/`, kept small on purpose. Each addresses a different 
 
 - swift-property-based, pinned to an exact version, in `Tests/PhantomTracePropertyTests`.
 - Targets: the `lsof`/`fuser` output parser against malformed paths, non-UTF8 strings, spaces, and symlinks; round-trip properties for every parser and printer.
-- Evidence to add: bugs PBT found that unit tests did not.
+- Property tests exist for the spec's properties (parser totality, round-trip, byte fidelity, validity and determinism, truncation safety, unknown fields, classification, symlink containment, mount resolution, protected volumes, safety deny-list, escalation order, identity guard, plan construction, unmount gating, fresh state, discovery idempotence, URL round-trip, truncation, ghost state, window selection, argument-array fidelity), at 500 iterations each.
+- Bug found by a property test: `ProtectedVolumeRefusalPropertyTests` (Property 10) failed on the counterexample `/private/var/vm`. `MountResolver.isProtected` used `standardizedFileURL`, which rewrites `/private/var/vm` to `/var/vm`, so the protected path was not refused. Fixed by normalizing `.`/`..` lexically and refusing both forms; `MountResolverProtectionTests` is the regression test. This is a safety rule.
+- Bug found by an integration test, not a property test: `DiskImageIntegrationTests` (a real throwaway disk image with a held file and a shell) showed that DiskArbitration reports busy as `0xC000 | EBUSY` (49168). `LiveUnmounter` treated that as a generic failure and ran the `diskutil` fallback instead of returning `unmountBusy`. Fixed in `LiveUnmounter.swift` and covered by `LiveUnmounterTests`. The mock-based tests could not have found this because the mocks encoded the wrong assumption.
+- Other properties passed without finding bugs; those are logged as "no bug found" in `docs/ProjectLog.md`. Parser fixtures in `Tests/Fixtures` are generated, not captured from real `lsof`.
 
 ## Other Kiro features
 

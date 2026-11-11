@@ -7,3 +7,4 @@ DerivedData/
 # Python tooling
 .venv/
 __pycache__/
+build/

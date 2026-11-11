@@ -1,0 +1,225 @@
+import Foundation
+
+/// Runs the resolution stages (Requirements 6, 7, 8, 9, 10, 11, 14.3).
+///
+/// This is the only place that reaches the signal, quit, shell-egress and unmount adapters, and only for
+/// actions it approved itself in `plan(_:on:)` (Requirement 6.7). `execute` runs nothing that was not in
+/// the last plan it built for that stage, and each approval is used once.
+public actor ResolutionPipeline: StageRunning {
+    /// Requirement 8.5: default grace wait, configurable from 1 to 60 seconds.
+    public static let defaultGraceSeconds: TimeInterval = 5
+    public static let graceRange: ClosedRange<TimeInterval> = 1...60
+    /// Requirement 11.3: pause before the post-stage rescan.
+    public static let settleSeconds: TimeInterval = 0.5
+    static let gracePollSeconds: TimeInterval = 0.25
+
+    private struct Approval {
+        let actions: [ProposedAction]
+        let names: [ProcessIdentity: String]
+    }
+
+    private let scanner: TimedScanner
+    private let builder: StagePlanBuilder
+    private let history: AttemptHistory
+    private let inspector: any ProcessInspecting
+    private let signals: any SignalSending
+    private let quitter: any AppQuitting
+    private let egress: EgressShellPerformer
+    private let handoff: CleanHandoffPerformer
+    private let clock: any Sleeping
+    private let graceSeconds: TimeInterval
+    private var approvals: [ResolutionStage: Approval] = [:]
+
+    /// `policy` and `history` must be wired together by the caller (`SafetyPolicy(history:)`), so the
+    /// attempts this pipeline records are the ones the policy checks before a `SIGKILL`.
+    public init(
+        discovery: any LockDiscovering,
+        policy: any SafetyPolicying,
+        history: AttemptHistory,
+        inspector: any ProcessInspecting,
+        signals: any SignalSending,
+        quitter: any AppQuitting,
+        terminal: any TerminalScripting,
+        unmounter: any Unmounting,
+        clock: any Sleeping,
+        graceSeconds: TimeInterval = ResolutionPipeline.defaultGraceSeconds
+    ) {
+        scanner = TimedScanner(discovery: discovery, clock: clock)
+        builder = StagePlanBuilder(policy: policy)
+        self.history = history
+        self.inspector = inspector
+        self.signals = signals
+        self.quitter = quitter
+        egress = EgressShellPerformer(inspector: inspector, terminal: terminal, clock: clock)
+        handoff = CleanHandoffPerformer(discovery: discovery, policy: policy, unmounter: unmounter, clock: clock)
+        self.clock = clock
+        self.graceSeconds = min(max(graceSeconds, Self.graceRange.lowerBound), Self.graceRange.upperBound)
+    }
+
+    // MARK: - StageRunning
+
+    public func plan(_ stage: ResolutionStage, on volume: MountInfo) async throws -> ResolutionPlan {
+        approvals[stage] = nil
+        guard stage != .cleanHandoff else {
+            return ResolutionPlan(stage: stage, actions: [], skipped: [])
+        }
+        // Requirement 11.1: a failed or timed-out scan means no plan.
+        let scan = try await scanner.scan(volume).get()
+        let completedAt = clock.now()
+        let input = StagePlanInput(
+            locks: scan.locks,
+            scanCompletedAt: completedAt,
+            now: clock.now(),
+            ownerUserIDs: ownerIDs(for: scan.locks),
+            guiPIDs: Set(scan.locks.map(\.pid).filter { quitter.isGUIApplication(pid: Int32(truncatingIfNeeded: $0)) })
+        )
+        let plan = await builder.plan(stage, input: input)
+        var names: [ProcessIdentity: String] = [:]
+        for lock in scan.locks {
+            if let identity = lock.identity { names[identity] = lock.processName }
+        }
+        approvals[stage] = Approval(actions: plan.actions, names: names)
+        return plan
+    }
+
+    public func execute(_ plan: ResolutionPlan, on volume: MountInfo) async throws -> StageOutcome {
+        let approval = approvals.removeValue(forKey: plan.stage)
+        let runnable = plan.actions.filter { approval?.actions.contains($0) == true }
+        var succeeded: [ProposedAction] = []
+        var failed: [FailedAction] = []
+        for action in runnable {
+            let result = await run(action, stage: plan.stage, volume: volume, names: approval?.names ?? [:])
+            switch result {
+            case .success: succeeded.append(action)
+            case .failure(let error): failed.append(FailedAction(action: action, error: error))
+            case .skipped: break
+            }
+        }
+        if plan.stage == .gracefulRequest {
+            await waitForGrace(succeeded.compactMap(\.target))
+        }
+        return await rescan(plan.stage, volume: volume, succeeded: succeeded, failed: failed)
+    }
+
+    public func cleanHandoff(on volume: MountInfo, force: Bool) async -> CleanHandoffResult {
+        await handoff.perform(on: volume, force: force)
+    }
+
+    // MARK: - Running one action
+
+    private enum ActionResult {
+        case success
+        case failure(PhantomTraceError)
+        /// Not delivered and not a failure the user must see, such as a shell that needs a manual `cd ~`.
+        case skipped
+    }
+
+    private func run(
+        _ action: ProposedAction,
+        stage: ResolutionStage,
+        volume: MountInfo,
+        names: [ProcessIdentity: String]
+    ) async -> ActionResult {
+        guard let target = action.target else { return .skipped }
+        // Requirements 8.7, 9.6: identity is checked right before anything is sent.
+        guard identityHolds(target, expectedName: stage == .banishLocks ? names[target] : nil) else {
+            return .failure(.processIdentityChanged(pid: target.pid))
+        }
+        switch action.kind {
+        case .resetShellCwd:
+            return await runEgress(action, volume: volume)
+        case .quitApplication:
+            await history.recordGracefulAttempt(for: target)  // recorded even if delivery fails
+            let delivered = await quitter.requestQuit(pid: Int32(truncatingIfNeeded: target.pid))
+            return delivered ? .success : .failure(.commandLaunchFailed(command: "quitApplication"))
+        case .sendSIGTERM:
+            await history.recordGracefulAttempt(for: target)
+            return send(.terminate, to: target)
+        case .sendSIGKILL:
+            return send(.kill, to: target)
+        case .unmount:
+            return .skipped  // only Clean Handoff unmounts
+        }
+    }
+
+    private func runEgress(_ action: ProposedAction, volume: MountInfo) async -> ActionResult {
+        switch await egress.perform(action, volumeMountPoint: volume.mountPoint) {
+        case .succeeded:
+            return .success
+        case .manual:
+            return .skipped
+        case .failed(.processIdentityChanged(let pid)):
+            return .failure(.processIdentityChanged(pid: pid))
+        case .failed(.invalidAction), .failed(.stillOnVolume):
+            return .failure(.commandLaunchFailed(command: "resetShellCwd"))
+        }
+    }
+
+    private func send(_ signal: ProcessSignal, to target: ProcessIdentity) -> ActionResult {
+        do {
+            try signals.send(signal, to: Int32(truncatingIfNeeded: target.pid))
+            return .success
+        } catch let error as PhantomTraceError {
+            // Requirement 14.3: EPERM arrives as permissionDenied(pid:); record it and carry on.
+            return .failure(error)
+        } catch {
+            return .failure(.commandLaunchFailed(command: "kill"))
+        }
+    }
+
+    private func identityHolds(_ target: ProcessIdentity, expectedName: String?) -> Bool {
+        guard let details = inspector.inspect(pid: Int32(truncatingIfNeeded: target.pid)),
+              details.identity == target else { return false }
+        guard let expectedName, let path = details.executablePath else { return true }
+        let actual = path.lastPathComponent
+        // lsof truncates command names, so either side may be a prefix of the other.
+        return actual.hasPrefix(expectedName) || expectedName.hasPrefix(actual)
+    }
+
+    private func ownerIDs(for locks: [LockRecord]) -> [UInt32: UInt32] {
+        var owners: [UInt32: UInt32] = [:]
+        for lock in locks where owners[lock.pid] == nil {
+            if let details = inspector.inspect(pid: Int32(truncatingIfNeeded: lock.pid)) {
+                owners[lock.pid] = details.ownerUserID
+            }
+        }
+        return owners
+    }
+
+    // MARK: - Grace wait and rescan
+
+    /// Waits up to the grace period, ending early once every target has exited (Requirement 8.5).
+    /// Zero targets means no wait (Requirement 8.4).
+    private func waitForGrace(_ targets: [ProcessIdentity]) async {
+        guard !targets.isEmpty else { return }
+        var waited: TimeInterval = 0
+        while waited < graceSeconds {
+            let alive = targets.contains { target in
+                inspector.inspect(pid: Int32(truncatingIfNeeded: target.pid))?.identity == target
+            }
+            guard alive else { return }
+            do {
+                try await clock.sleep(seconds: Self.gracePollSeconds)
+            } catch {
+                return
+            }
+            waited += Self.gracePollSeconds
+        }
+    }
+
+    private func rescan(
+        _ stage: ResolutionStage,
+        volume: MountInfo,
+        succeeded: [ProposedAction],
+        failed: [FailedAction]
+    ) async -> StageOutcome {
+        try? await clock.sleep(seconds: Self.settleSeconds)
+        // A partial or failed rescan verifies nothing, so it is reported as timed out with no locks.
+        if case .success(let result) = await scanner.scan(volume), !result.partial {
+            return StageOutcome(stage: stage, succeeded: succeeded, failed: failed, remainingLocks: result.locks)
+        }
+        return StageOutcome(
+            stage: stage, succeeded: succeeded, failed: failed, remainingLocks: [], rescanTimedOut: true
+        )
+    }
+}

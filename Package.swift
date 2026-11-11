@@ -16,7 +16,9 @@ let package = Package(
     platforms: [.macOS("27.2.1")],
     products: [
         .library(name: "PhantomTraceCore", targets: ["PhantomTraceCore"]),
-        .executable(name: "phantomtrace", targets: ["phantomtrace"])
+        .library(name: "PhantomTraceUI", targets: ["PhantomTraceUI"]),
+        .executable(name: "phantomtrace", targets: ["phantomtrace"]),
+        .executable(name: "PhantomTraceApp", targets: ["PhantomTraceApp"])
     ],
     dependencies: [
         .package(url: "https://github.com/x-sheep/swift-property-based.git", exact: "2.0.1")
@@ -24,15 +26,35 @@ let package = Package(
     targets: [
         .target(name: "PhantomTraceCore"),
         .executableTarget(name: "phantomtrace", dependencies: ["PhantomTraceCore"]),
+        // AppKit UI. Sprites under Resources/ are plain files copied into the app bundle by the
+        // bundling script and read from Bundle.main.resourceURL, so SwiftPM must not process them.
+        .target(
+            name: "PhantomTraceUI",
+            dependencies: ["PhantomTraceCore"],
+            exclude: ["Resources"]
+        ),
+        .executableTarget(name: "PhantomTraceApp", dependencies: ["PhantomTraceUI", "PhantomTraceCore"]),
+        // Shared hand-written mocks for the test targets. Not a product.
+        .target(
+            name: "PhantomTraceTestSupport",
+            dependencies: ["PhantomTraceCore"],
+            path: "Tests/PhantomTraceTestSupport"
+        ),
         .testTarget(
             name: "PhantomTraceCoreTests",
-            dependencies: ["PhantomTraceCore"],
+            dependencies: ["PhantomTraceCore", "PhantomTraceTestSupport"],
+            swiftSettings: testingSettings
+        ),
+        .testTarget(
+            name: "PhantomTraceUITests",
+            dependencies: ["PhantomTraceUI", "PhantomTraceCore"],
             swiftSettings: testingSettings
         ),
         .testTarget(
             name: "PhantomTracePropertyTests",
             dependencies: [
                 "PhantomTraceCore",
+                "PhantomTraceTestSupport",
                 .product(name: "PropertyBased", package: "swift-property-based")
             ],
             swiftSettings: testingSettings

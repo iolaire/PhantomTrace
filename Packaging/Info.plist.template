@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Info.plist template for PhantomTrace.app. Scripts/make-app.sh substitutes:
+    @BUNDLE_IDENTIFIER@  reverse-DNS bundle id
+    @VERSION@            marketing version (CFBundleShortVersionString)
+    @BUILD_NUMBER@       build number (CFBundleVersion)
+  No other placeholders. Requirements 16.3, 16.4.
+-->
+<plist version="1.0">
+<dict>
+  <key>CFBundleExecutable</key>
+  <string>PhantomTrace</string>
+  <key>CFBundleIdentifier</key>
+  <string>@BUNDLE_IDENTIFIER@</string>
+  <key>CFBundleIconFile</key>
+  <string>AppIcon</string>
+  <key>CFBundleName</key>
+  <string>PhantomTrace</string>
+  <key>CFBundleDisplayName</key>
+  <string>PhantomTrace</string>
+  <key>CFBundlePackageType</key>
+  <string>APPL</string>
+  <key>CFBundleInfoDictionaryVersion</key>
+  <string>6.0</string>
+  <key>CFBundleShortVersionString</key>
+  <string>@VERSION@</string>
+  <key>CFBundleVersion</key>
+  <string>@BUILD_NUMBER@</string>
+  <key>LSMinimumSystemVersion</key>
+  <string>27.2.1</string>
+  <key>NSPrincipalClass</key>
+  <string>NSApplication</string>
+  <key>NSHighResolutionCapable</key>
+  <true/>
+  <key>NSAppleEventsUsageDescription</key>
+  <string>PhantomTrace asks Terminal or iTerm to run "cd ~" in a shell that is holding a volume open, only when you choose Egress Shells.</string>
+  <key>CFBundleURLTypes</key>
+  <array>
+    <dict>
+      <key>CFBundleURLName</key>
+      <string>@BUNDLE_IDENTIFIER@.inspect</string>
+      <key>CFBundleTypeRole</key>
+      <string>Viewer</string>
+      <key>CFBundleURLSchemes</key>
+      <array>
+        <string>phantomtrace</string>
+      </array>
+    </dict>
+  </array>
+  <key>NSServices</key>
+  <array>
+    <dict>
+      <key>NSMenuItem</key>
+      <dict>
+        <key>default</key>
+        <string>Inspect Volume Locks</string>
+      </dict>
+      <key>NSMessage</key>
+      <string>inspectVolumeLocks</string>
+      <key>NSPortName</key>
+      <string>PhantomTrace</string>
+      <key>NSSendFileTypes</key>
+      <array>
+        <string>public.item</string>
+      </array>
+    </dict>
+  </array>
+</dict>
+</plist>

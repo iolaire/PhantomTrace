@@ -356,6 +356,85 @@ public protocol Unmounting {
 - Desktop drop target: a small, non-menu-bar window/Dock icon accepting dropped volume icons or folders
 - URL scheme: the app bundle's `Info.plist` declares `CFBundleURLTypes` for `phantomtrace`; the handler runs in `AppDelegate` (`application(_:open:)`)
 - `phantomtrace` CLI for scripting and for end-to-end tests
+- App main menu and volume picker (added; see Component 8a below and Requirement 19)
+
+**Clarification of "no menu-bar widget"**: the phrase "no menu-bar item" in this document means no status-bar extra: the app never creates an `NSStatusItem` or any system menu-bar widget. It does not mean the app has no main menu. The app has a normal programmatic main menu (App, File, Window) shown while it is the active application.
+
+### Component 8a: App Main Menu and Volume Picker (Requirement 19)
+
+**Purpose**: Give the user a way to choose a disk from inside the app (previously only Quick Action, URL, and drop worked), and provide the standard Quit/Close/Hide commands that were missing because the app set no main menu.
+
+**Layering**: `VolumeLister` and `VolumeListEntry` live in `PhantomTraceCore/Mounts` (pure, no I/O). `MountedVolumeEnumerating` and its live adapter live in `PhantomTraceCore/System`. The menu builder, volume list view, and notification observers live in the AppKit app/UI targets (`Sources/PhantomTraceApp`, `Sources/PhantomTraceUI`). Dependencies still point App/UI -> Core.
+
+**Main menu (programmatic `NSMenu`, set via `NSApplication.mainMenu` in `AppDelegate`; no `.xib`)**:
+
+| Menu | Items |
+|------|-------|
+| PhantomTrace | About PhantomTrace; separator; Hide PhantomTrace (Cmd-H); Hide Others (Opt-Cmd-H); Show All; separator; Quit PhantomTrace (Cmd-Q) |
+| File | Inspect... (Cmd-O); Inspect Volume (submenu of mounted volumes); separator; Close Window (Cmd-W) |
+| Window | Minimize (Cmd-M); Bring All to Front |
+
+- Standard actions use the responder-chain selectors (`orderFrontStandardAboutPanel:`, `hide:`, `hideOtherApplications:`, `unhideAllApplications:`, `terminate:`, `performClose:`, `performMiniaturize:`, `arrangeInFront:`). `NSApplication.windowsMenu` is set to the Window menu so AppKit maintains it.
+- Inspect... opens an `NSOpenPanel` with `canChooseFiles`, `canChooseDirectories` both true, `allowsMultipleSelection` false, and `showsHiddenFiles` default. The chosen URL is passed to `InspectRequestRouter.handle(url:)`; cancelling does nothing. The panel only selects; it performs no scan itself.
+- Inspect Volume submenu is rebuilt from the current `[VolumeListEntry]` (same data as the window list). Each item title is the volume name with the mount point as a secondary line (`NSMenuItem.toolTip` and `attributedTitle`) and a removable/ejectable marker. An empty list shows one disabled item "No volumes to inspect". The item's `representedObject` is the mount-point path string.
+- Menu validation (`validateMenuItem`): Close Window is disabled when no window is key. Inspect... and Inspect Volume stay enabled except while the router has a request in flight.
+- No `NSStatusItem` is created anywhere.
+
+**Volume list in the drop window**: the drop window (shown when the Dock icon is clicked with no windows open, and at launch when the app was opened directly with no URL or file input) shows, beside the drop target, a list of mounted volumes. Each row shows:
+- Volume name and mount point (middle-truncated per Property 19, full path in tooltip and accessibility value)
+- A removable/ejectable indicator (text label "Removable" / "Internal" plus a small glyph; never color alone)
+- An "Inspect" button
+
+Selecting Inspect on a row, double-clicking the row, or pressing Return on a selected row calls `InspectRequestRouter.handle(path: entry.mountPoint.path)`, the same call a drop of that mount point makes. The list view and the menu never call adapters, never invoke `MountResolver` directly, and start no scan except the normal inspect flow that the router triggers after `InspectURLParser` accepts the request. A rejection (for example the volume disappeared) is reported through the router's existing `onRejected` path.
+
+**Refresh**: the app target observes `NSWorkspace.didMountNotification`, `NSWorkspace.didUnmountNotification`, and `NSWorkspace.didRenameVolumeNotification` on `NSWorkspace.shared.notificationCenter`. Each notification triggers one off-main-actor enumeration (`MountedVolumeEnumerating.enumerate()`), then `VolumeLister.list` runs on the result and the main actor swaps the list and rebuilds the submenu. Notifications are coalesced (a short debounce via an injected clock/scheduler) so a burst causes one refresh. The list also refreshes when the drop window is shown. Enumeration failure leaves the previous list in place and shows "Couldn't read the list of volumes" in the window; the drop target keeps working.
+
+**Accessibility**: each row is one accessibility element with label "<name>, <mount point>, <removable|internal>"; the Inspect button has label "Inspect <name>"; the list supports arrow-key navigation, Tab reaches the list and the buttons, Space/Return activates the focused button. All menu items have standard key equivalents. Reduce Motion is honored (no animated list updates).
+
+**Interface**:
+```swift
+// Core/System (protocol) - live adapter uses FileManager.mountedVolumeURLs(includingResourceValuesForKeys:options: .skipHiddenVolumes)
+// with resource values volumeNameKey, volumeIsRemovableKey, volumeIsEjectableKey, or the existing getmntinfo-based mount table provider.
+public protocol MountedVolumeEnumerating: Sendable {
+    func enumerate() throws -> [MountInfo]
+}
+
+// Core/Mounts (pure)
+public struct VolumeListEntry: Equatable, Hashable, Sendable {
+    public let mountPoint: URL        // canonical
+    public let displayName: String    // MountInfo.volumeName, never empty
+    public let isRemovable: Bool      // removable or ejectable
+    public let isDiskImage: Bool
+}
+
+public enum VolumeLister {
+    /// Pure. No I/O.
+    public static func list(_ mounts: [MountInfo]) -> [VolumeListEntry]
+}
+```
+
+**VolumeLister.list rules** (pure; applies in this order):
+1. Drop any mount for which `MountResolver.isProtected(mountPoint)` is true (`/`, `/System/Volumes/...`, `/private/var/vm`, and any mount point that is empty or unverifiable). The same function the resolver uses is reused, not reimplemented.
+2. Drop hidden/system mounts: file system type in `{devfs, autofs, nullfs, fdesc, procfs}`; device node not beginning with `/dev/` (for example `map auto_home`); mount point whose last component is `com.apple.TimeMachine.localsnapshots` or that lies under such a directory; mount points under `/private/var`; and mount points whose last component begins with `.`.
+3. De-duplicate by canonical mount point (lexically normalized; first occurrence by sorted order wins, so the result does not depend on input order; when duplicates differ, the one with the lexicographically smallest `(volumeName, deviceNode)` wins).
+4. Map to `VolumeListEntry`, with `isRemovable = mount.isRemovable` (disk images carry their own `isDiskImage` flag; the live adapter sets `isRemovable` from `volumeIsRemovableKey || volumeIsEjectableKey`) and `displayName` falling back to the last path component when `volumeName` is empty.
+5. Sort by `displayName` (case-insensitive, then case-sensitive, using byte-wise comparison of the NFC string, so locale does not matter), then by `mountPoint.path` bytes.
+
+**Failure behavior**: unknown or undeterminable attributes mean exclude (consistent with the deny-by-default rule in safety.md). Listing a volume is not approval to act on it; `SafetyPolicy` and `MountResolver` still gate everything after the request is routed.
+
+**Requirement 19 placeholder ("Volume picker and app menu")**: the numbers below are provisional and will be defined in `requirements.md` next; Properties 23-29 cite them.
+- 19.1 The app SHALL set a main menu (PhantomTrace, File, Window) and SHALL NOT create an `NSStatusItem`.
+- 19.2 File > Inspect... (Cmd-O) SHALL open a panel choosing files, folders, or volumes and route the choice through `InspectRequestRouter`.
+- 19.3 The drop window SHALL show a list of mounted volumes, each with name, mount point, removable indicator, and an Inspect button; the same list SHALL feed File > Inspect Volume.
+- 19.4 The list SHALL exclude protected volumes per Requirement 2.
+- 19.5 The list SHALL exclude hidden and system mounts.
+- 19.6 The list SHALL contain each mount point at most once and every non-excluded mount.
+- 19.7 The list order SHALL be deterministic (display name, then mount point) and independent of input order.
+- 19.8 Selecting a list or menu entry SHALL behave exactly like dropping that mount point, with no adapter calls and no extra scan.
+- 19.9 The list and submenu SHALL refresh on volume mount, unmount, and rename.
+- 19.10 List rows and buttons SHALL have VoiceOver labels and be keyboard operable.
+
+**Testing notes** (per `testing.md`): `VolumeLister` gets unit tests and the property tests above in `PhantomTracePropertyTests` (generators: mount tables with duplicates, protected paths, hidden types, shuffled order; 500+ iterations). `MountedVolumeEnumerating` is mocked; the live adapter is not tested against the real mount table. Property 28 uses a recording router/closure pair in `PhantomTraceCoreTests` or the UI test target, and Property 29 inspects the built `NSMenu` structure in the app/UI target without launching the app. Menu building and notification wiring are manual-QA items in `docs/` (Cmd-Q, Cmd-W, Cmd-O, mount/unmount refresh with a throwaway `.dmg`, VoiceOver, keyboard navigation).
 
 ### Component 9: Platinum UI Layer
 
@@ -365,6 +444,7 @@ public protocol Unmounting {
 - Programmatic AppKit only: views, windows, and menus are built in code (no `.xib`/`.storyboard`, no SwiftUI previews)
 - Custom-drawn window chrome: pinstripe title bar, 1px beveled frames, platinum gray (#DDDDDD) background, square close/zoom boxes. Where reference art frames the window, it is drawn as a 9-slice or with a content cutout (see Asset Pipeline)
 - Typography (see `docs/Assets.md`): table cells use Monaco, loaded by name from the system with `NSFont(name: "Monaco", size:)`, falling back to Menlo, then the system monospaced font. Monaco is never bundled. Titles use an optional bundled open-licensed bitmap title font (Chicago-style; not yet chosen), registered at launch from a bundle file with `CTFontManagerRegisterFontsForURL`. If that font file is absent or registration fails, titles use a system font. Apple font files (Monaco, Menlo, SF, Chicago) are never committed or bundled
+- The drop window's mounted-volume list (Component 8a) uses the same Platinum styling as the rest of the window: Monaco rows, beveled 1px list frame, platinum selection highlight, square-edged Inspect buttons
 - Table columns: Process Name, PID, User, Lock Category, File Path (with middle truncation and tooltip for full path)
 - Three window states (CANNOT PUT AWAY, PHANTOM TRACE, VOLUME RELEASED), selected by `selectWindow` from the discovery state (see Window States). One window is on screen at a time; a state change swaps the illustration, ghost, title plaque, and content
 - In PHANTOM TRACE: a choice control (PhantomTrace acts with stage 1, 2, or 3 / I'll handle it myself) and one proceed button with a progress state; stage choices that do not apply are disabled. Clean Handoff is not a choice here; it is the Eject button in VOLUME RELEASED
@@ -1035,6 +1115,48 @@ For any discovery state, `proceeded` flag, and current window: Clean, Unmounting
 For any path (including spaces, quotes, and shell metacharacters), the subprocess argument passed to the process runner equals the path verbatim as a single argument.
 
 **Validates: Requirements 15.1**
+
+### Property 23: Volume list exclusion
+
+For any mount table `M`, `VolumeLister.list(M)` contains no entry whose mount point is protected (`MountResolver.isProtected`, including `/`, anything under `/System/Volumes`, `/private/var/vm`, and unverifiable or empty mount points) and no hidden or system mount (types `devfs`/`autofs`/`nullfs`/`fdesc`/`procfs`, non-`/dev/` device nodes, `com.apple.TimeMachine.localsnapshots`, mount points under `/private/var`, dot-prefixed names).
+
+**Validates: Requirements 19.4, 19.5, 2.1, 2.5**
+
+### Property 24: Volume list completeness
+
+For any mount table `M`, every mount in `M` that is not excluded by Property 23 appears in `list(M)` (matched by canonical mount point), and every entry in `list(M)` comes from some mount in `M`.
+
+**Validates: Requirements 19.3, 19.6**
+
+### Property 25: Volume list idempotence
+
+For any mount table `M`, re-listing the mounts that the entries represent yields the same entries: `list(mounts(list(M))) == list(M)`, and `list(M + M) == list(M)`.
+
+**Validates: Requirements 19.6**
+
+### Property 26: Volume list order independence and determinism
+
+For any mount table `M` and any permutation `P` of `M`, `list(P) == list(M)`, and the result is sorted by `(displayName, mountPoint.path)` under the locale-independent comparison defined in Component 8a.
+
+**Validates: Requirements 19.7**
+
+### Property 27: Volume list de-duplication
+
+For any mount table `M`, no two entries in `list(M)` share a mount point, even when `M` contains several mounts with the same mount point (for example differing only by trailing slash or `.` components).
+
+**Validates: Requirements 19.6**
+
+### Property 28: Picker selection equals drop
+
+For any volume list entry `e`, selecting `e` from the drop-window list, the Inspect Volume submenu, or the Inspect... open panel (choosing `e.mountPoint`) delivers to `InspectRequestRouter` the same input as dropping `e.mountPoint`, namely `handle(path: e.mountPoint.path)` (equivalently `handle(url: e.mountPoint)`), so `InspectURLParser` produces the identical `Result`. Selection calls no adapter and performs no scan itself; a mocked router records exactly one request per selection.
+
+**Validates: Requirements 19.2, 19.8, 12.1, 12.3**
+
+### Property 29: No status-bar item
+
+The app's menu and window setup creates a main menu with App, File, and Window menus and creates no `NSStatusItem`.
+
+**Validates: Requirements 19.1, 19.9**
 
 ## Error Handling
 
