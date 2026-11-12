@@ -418,6 +418,30 @@ Conventions that apply to every task:
 - [x] 22. Final checkpoint - Volume picker and app menu
   - Ensure all tests pass, ask the user if questions arise.
 
+- [x] 23. Art dialogs, art start window, and shared window size (Requirements 12.12, 13.20-13.24; design Components 8, 8a, 9)
+  - [x] 23.1 Add `PlatinumWindow` and `ArtChrome`
+    - Public borderless `PlatinumWindow` that can become key/main and handles `performClose:` and `performMiniaturize:`; `ArtChrome.make(title:resourceDirectory:titleSize:)` builds the shared frame-art chrome; the lock window uses it instead of its private window class
+    - _Requirements: 13.15, 13.20, 19.15_
+  - [x] 23.2 Replace every `NSAlert` with `PhantomDialog`
+    - Pure `PhantomDialogSpec` plus the art-framed modal `PhantomDialog`; `StageDialogs` builds the plan preview, Banish confirmation, force-unmount confirmation, and notice specs; `AppDelegate` shows inspect rejections as a `PhantomDialog`
+    - Confirm titles name the action ("Send Shells Home", "Ask to Quit", "Continue...", "Eject"); Banish and force-unmount confirmations default to Cancel
+    - Unit tests: `PhantomDialogTests` and updated `StageDialogTextTests`
+    - _Requirements: 2.4, 8.4, 8.7, 13.21, 13.22, 13.23_
+  - [x] 23.3 Draw the start (Drop_Target) window in the frame art
+    - `DropWindowContentView` uses the art chrome with plaque "PHANTOMTRACE", the yellow ghost overhang, the drop area (100 pt) above the volume list, and a close box that hides the window; `DropTargetView` is clear at rest with a tint while a drag hovers; launch with no input waits 300 ms so URL or file launches suppress the window; Inspect menu items are disabled while an inspection is running
+    - `VolumeListViewTests` checks the drop window chrome and title
+    - _Requirements: 13.24, 19.3, 19.13, 19.14, 19.15_
+  - [x] 23.4 Use the start window's 720x520 chrome for every window
+    - `LockWindowContentView.chromeSize` = 720x520 shared by the drop window, lock windows, and `PhantomDialog`; lock table minimum height 90 pt; Banish warning width 310 pt; offscreen renders reviewed for all three states and the dialog
+    - _Requirements: 13.16, 13.17, 13.19, 13.20_
+  - [x] 23.5 Fix the disk-image integration test hang
+    - `DiskImageFixture.stopHelpers()` polls `isRunning` with a deadline (SIGKILL only for its own helpers) instead of `Process.waitUntilExit()`, which hung on a Swift concurrency thread and left throwaway images attached
+    - _Requirements: 15.1_
+  - [x] 23.6 Document the Quick Action enable step
+    - `Scripts/install-quick-action.sh` prints the Quick Actions > Customize... step; README and `docs/ManualQA.md` describe it and the sidebar limitation; installer shell test still passes
+    - _Requirements: 12.8, 12.11, 12.12_
+- [x] 24. Final checkpoint - Art dialogs and shared window size
+  - Ensure all tests pass, ask the user if questions arise.
 ## Notes
 
 - Tasks marked with `*` are optional and can be skipped for a faster MVP
@@ -449,7 +473,10 @@ Conventions that apply to every task:
     { "id": 13, "tasks": ["21.3", "21.4", "21.5", "21.6", "21.7", "21.8", "21.9", "21.11"] },
     { "id": 14, "tasks": ["21.10"] },
     { "id": 15, "tasks": ["21.12"] },
-    { "id": 16, "tasks": ["21.13", "21.14", "21.15"] }
+    { "id": 16, "tasks": ["21.13", "21.14", "21.15"] },
+    { "id": 17, "tasks": ["23.1", "23.5", "23.6"] },
+    { "id": 18, "tasks": ["23.2", "23.3"] },
+    { "id": 19, "tasks": ["23.4"] }
   ]
 }
 ```

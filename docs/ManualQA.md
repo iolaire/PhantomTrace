@@ -79,7 +79,8 @@ Workflow path:
 - [ ] `Scripts/install-quick-action.sh` exits 0 and prints no error; `~/Library/Services/Why Can't I Eject?.workflow` exists (12.8, 12.11).
 - [ ] Run it a second time: still exits 0 and the action is still present.
 - [ ] Failure case: make `~/Library/Services` unwritable in a temporary `HOME` (see `Tests/Scripts/install-quick-action-tests.sh`), or set `PHANTOMTRACE_QUICK_ACTION_SOURCE` to a missing folder. Exit non-zero, a cause on standard error, and an existing installed action is left unchanged (12.9).
-- [ ] In Finder, right-click the mounted `PTQA` volume (Desktop or sidebar) and find "Why Can't I Eject?" under Quick Actions or Services. If it is not visible, check System Settings > Keyboard > Keyboard Shortcuts > Services and Extensions > Finder, and log out and in once. Note the result.
+- [ ] Enable the action once: right-click any item in Finder, choose Quick Actions > Customize..., and tick "Why Can't I Eject?". A fresh install is hidden until this is done (seen on macOS 27.2.1, 2026-11-12).
+- [ ] In Finder, right-click the mounted `PTQA` volume on the Desktop or in the Computer window (the sidebar menu never shows Quick Actions) and find "Why Can't I Eject?" under Quick Actions. If it is still not visible, also tick it in System Settings > Keyboard > Keyboard Shortcuts > Services > Files and Folders. Note the result.
 - [ ] Choosing it opens the app with the volume inspected within 2 seconds.
 - [ ] Also try on a folder and a file inside the volume: the owning volume is resolved.
 

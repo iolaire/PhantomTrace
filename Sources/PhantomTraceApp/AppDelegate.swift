@@ -92,12 +92,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
     private func reject(_ error: InspectURLError) {
         dropContent?.volumeList.showRejection(error.reason)
-        let alert = NSAlert()
-        alert.messageText = "PhantomTrace could not inspect that item"
-        alert.informativeText = error.reason
-        alert.alertStyle = .warning
-        alert.addButton(withTitle: "OK")
-        alert.runModal()
+        let spec = StageDialogs.notice(message: "PhantomTrace could not inspect that item", detail: error.reason)
+        _ = PhantomDialog(spec: spec).runModal(over: dropWindow)
     }
     private func showDropWindow() {
         if dropWindow == nil {
@@ -106,17 +102,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // Same call a drop of the mount point makes. Requirement 19.8.
             content.volumeList.onInspect = { [weak self] entry in self?.router?.handle(path: entry.mountPoint.path) }
             content.volumeList.update(state: volumeState)
-            let window = NSWindow(
-                contentRect: content.frame,
-                styleMask: [.titled, .closable, .miniaturizable],
-                backing: .buffered,
-                defer: false
-            )
+            // Same frame art as the lock windows; Cmd-W and the close box hide it, and it is kept so
+            // reopening is instant and nothing is cancelled.
+            let window = PlatinumWindow.make(size: DropWindowContentView.contentSize)
             window.title = "PhantomTrace"
             window.contentView = content
-            // Cmd-W hides the window; it is kept so reopening is instant and nothing is cancelled.
-            window.isReleasedWhenClosed = false
             window.autorecalculatesKeyViewLoop = true
+            content.onClose = { [weak window] in window?.performClose(nil) }
             window.center()
             dropContent = content
             dropWindow = window

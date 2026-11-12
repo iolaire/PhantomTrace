@@ -95,9 +95,10 @@ struct VolumeListViewTests {
         view.showRejection(nil)
         #expect(view.rejectionLabel.isHidden)
     }
-    @Test func dropWindowHoldsTheDropTargetBesideTheList() {
-        let content = DropWindowContentView()
-        #expect(content.dropTarget.superview === content)
-        #expect(content.volumeList.superview === content)
+    @Test func dropWindowHoldsTheDropTargetAndTheListInsideTheFrame() {
+        let content = DropWindowContentView(resourceDirectory: nil)
+        #expect(content.dropTarget.superview === content.chrome.contentView)
+        #expect(content.volumeList.superview === content.chrome.contentView)
+        #expect(content.chrome.titleLabel.stringValue == "PHANTOMTRACE")
     }
 }

@@ -69,45 +69,69 @@ public enum StageDialogText {
     }
 }
 
-/// Builds the modal dialogs. Callers run them; nothing here acts on a process or volume.
+/// Describes the modal dialogs. Callers present them with `PhantomDialog`; nothing here acts on a
+/// process or volume.
 @MainActor
 public enum StageDialogs {
-    /// Plan preview shown before a stage runs. The first button confirms (Requirement 9.5).
-    public static func planPreview(_ plan: ResolutionPlan, locks: [LockRecord]) -> NSAlert {
-        let alert = NSAlert()
-        alert.alertStyle = .informational
-        alert.messageText = "\(PhantomChoiceControl.title(for: plan.stage)): review the plan"
-        alert.informativeText = StageDialogText.planPreview(plan, locks: locks)
-        alert.addButton(withTitle: "Run Stage")
-        alert.addButton(withTitle: "Cancel")
-        return alert
+    /// The confirm button names what the stage does, not just "Run" (Requirement 9.5).
+    public static func confirmTitle(for stage: ResolutionStage) -> String {
+        switch stage {
+        case .egressShells: return "Send Shells Home"
+        case .gracefulRequest: return "Ask to Quit"
+        // A second confirmation listing every target follows (Requirement 11.5).
+        case .banishLocks: return "Continue\u{2026}"
+        case .cleanHandoff: return "Eject"
+        }
     }
-
+    /// Plan preview shown before a stage runs. Button 0 confirms and is the default (Requirement 9.5).
+    public static func planPreview(_ plan: ResolutionPlan, locks: [LockRecord]) -> PhantomDialogSpec {
+        let stage = PhantomChoiceControl.title(for: plan.stage)
+        return PhantomDialogSpec(
+            plaque: stage.uppercased(),
+            message: "\(stage): review the plan",
+            detail: StageDialogText.planPreview(plan, locks: locks),
+            buttons: [confirmTitle(for: plan.stage), "Cancel"],
+            defaultButton: 0,
+            cancelButton: 1
+        )
+    }
     /// Banish Locks confirmation listing each target by name and pid. Cancel is the default
     /// button so Return never confirms a forced stop (Requirement 11.5).
-    public static func banishConfirmation(_ plan: ResolutionPlan, locks: [LockRecord]) -> NSAlert {
-        let alert = NSAlert()
-        alert.alertStyle = .critical
-        alert.messageText = "Force these processes to stop?"
-        alert.informativeText = """
-            Unsaved work in these processes may be lost, including changes to files open on this volume.
-
-            \(StageDialogText.banishTargets(plan, locks: locks))
-            """
-        alert.addButton(withTitle: "Cancel")
-        alert.addButton(withTitle: "Banish Locks")
-        return alert
+    public static func banishConfirmation(_ plan: ResolutionPlan, locks: [LockRecord]) -> PhantomDialogSpec {
+        PhantomDialogSpec(
+            plaque: "BANISH LOCKS",
+            message: "Force these processes to stop?",
+            detail: """
+                Unsaved work in these processes may be lost, including changes to files open on this volume.
+                \(StageDialogText.banishTargets(plan, locks: locks))
+                """,
+            buttons: ["Cancel", "Banish Locks"],
+            defaultButton: 0,
+            cancelButton: 0,
+            severity: .critical
+        )
     }
-
     /// Advanced force-unmount confirmation (Requirement 10.8). Cancel is the default button.
-    public static func forceUnmountConfirmation(volumeName: String) -> NSAlert {
-        let alert = NSAlert()
-        alert.alertStyle = .critical
-        alert.messageText = "Force unmount \(volumeName)?"
-        alert.informativeText = "Forcing can lose data that is still being written. Use it only if a normal "
-            + "eject keeps failing."
-        alert.addButton(withTitle: "Cancel")
-        alert.addButton(withTitle: "Force Unmount")
-        return alert
+    public static func forceUnmountConfirmation(volumeName: String) -> PhantomDialogSpec {
+        PhantomDialogSpec(
+            plaque: "FORCE UNMOUNT",
+            message: "Force unmount \(volumeName)?",
+            detail: "Forcing can lose data that is still being written. Use it only if a normal eject keeps failing.",
+            buttons: ["Cancel", "Force Unmount"],
+            defaultButton: 0,
+            cancelButton: 0,
+            severity: .critical
+        )
+    }
+    /// A dismiss-only notice, for example why an item cannot be inspected (Requirements 2.4, 2.5, 12.4).
+    public static func notice(message: String, detail: String) -> PhantomDialogSpec {
+        PhantomDialogSpec(
+            plaque: "PHANTOMTRACE",
+            message: message,
+            detail: detail,
+            buttons: ["Dismiss"],
+            defaultButton: 0,
+            cancelButton: 0
+        )
     }
 }

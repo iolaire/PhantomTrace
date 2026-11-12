@@ -89,19 +89,34 @@ final class DiskImageFixture {
     }
 
     /// Terminates and reaps only the helpers this fixture spawned.
-    func stopHelpers() {
+    ///
+    /// Polls `isRunning` instead of calling `waitUntilExit()`: that call spins the current run loop for a
+    /// termination notification, and on a Swift concurrency thread it can block forever after the child has
+    /// already been reaped. A helper still alive after the SIGTERM grace gets SIGKILL.
+    func stopHelpers() async {
         for helper in helpers where helper.isRunning {
             helper.terminate()
         }
-        for helper in helpers {
-            helper.waitUntilExit()
+        if await !waitForHelpersToExit(seconds: 5) {
+            for helper in helpers where helper.isRunning {
+                kill(helper.processIdentifier, SIGKILL)
+            }
+            _ = await waitForHelpersToExit(seconds: 5)
         }
         helpers.removeAll()
     }
 
+    private func waitForHelpersToExit(seconds: Int) async -> Bool {
+        for _ in 0..<(seconds * 20) {
+            if !helpers.contains(where: \.isRunning) { return true }
+            try? await Task.sleep(for: .milliseconds(50))
+        }
+        return !helpers.contains(where: \.isRunning)
+    }
+
     /// Always safe to call: stops helpers, detaches the whole image device, deletes the temp directory.
     func cleanUp() async {
-        stopHelpers()
+        await stopHelpers()
         _ = try? await runner.run(
             executable: Self.hdiutil, arguments: ["detach", "-force", wholeDiskNode], timeout: 30
         )

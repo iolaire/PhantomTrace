@@ -6,8 +6,9 @@ import PhantomTraceCore
 /// Requirements 2.4, 2.5, 18.6, 18.10, 18.11, 18.13, 18.15, 18.20, 18.21, 18.23, 18.24.
 @MainActor
 public final class LockWindowContentView: NSView {
-    /// Size of the Platinum window itself (the frame art and everything inside it).
-    public static let chromeSize = NSSize(width: 760, height: 600)
+    /// Size of the Platinum window itself (the frame art and everything inside it). Shared by the
+    /// start (drop) window, the three lock windows, and the dialogs so they all match.
+    public static let chromeSize = NSSize(width: 720, height: 520)
     /// Ghost size; the sprite is 115 x 128 at 1x and ships a 2x file, so this stays sharp.
     static let ghostSize = NSSize(width: 153, height: 170)
     /// About a third of the ghost hangs past the window's right edge, over transparency.
@@ -59,20 +60,9 @@ public final class LockWindowContentView: NSView {
     private weak var contentStack: NSStackView?
 
     public init(resourceDirectory: URL? = Bundle.main.resourceURL) {
-        let fonts = FontProvider(resourceDirectory: resourceDirectory)
         sprites = SpriteLoader(resourceDirectory: resourceDirectory)
-        lockTable = LockTableView(fontProvider: fonts)
-        let frame = sprites.load(named: "window-frame")
-        let insets = resourceDirectory.flatMap {
-            NineSliceInsets.load(from: $0.appendingPathComponent("window-frame.insets.json"))
-        }
-        let useArt = !frame.isSubstitute && insets != nil
-        chrome = PlatinumWindowChromeView(
-            title: "",
-            frameArt: useArt ? frame.image : nil,
-            insets: useArt ? insets : nil,
-            titleFont: fonts.titleFont(size: 14)
-        )
+        lockTable = LockTableView(fontProvider: FontProvider(resourceDirectory: resourceDirectory))
+        chrome = ArtChrome.make(title: "", resourceDirectory: resourceDirectory)
         super.init(frame: NSRect(origin: .zero, size: Self.preferredSize))
         build()
     }
@@ -277,7 +267,7 @@ public final class LockWindowContentView: NSView {
         footer.setContentHuggingPriority(.required, for: .vertical)
         needsUpdateConstraints = true
         NSLayoutConstraint.activate([
-            lockTable.heightAnchor.constraint(greaterThanOrEqualToConstant: 140),
+            lockTable.heightAnchor.constraint(greaterThanOrEqualToConstant: 90),
             failedList.heightAnchor.constraint(lessThanOrEqualToConstant: 70)
         ])
         return stack

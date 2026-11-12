@@ -79,7 +79,7 @@ public final class PhantomChoiceControl: NSView {
         }
         stack.setCustomSpacing(12, after: indent)
         // Narrow enough to wrap before the lower-right illustration.
-        banishWarningLabel.preferredMaxLayoutWidth = 340
+        banishWarningLabel.preferredMaxLayoutWidth = 310
     }
 
     /// Title shown for a stage option.

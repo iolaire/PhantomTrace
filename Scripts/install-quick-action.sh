@@ -87,4 +87,6 @@ if [ "${PHANTOMTRACE_SKIP_PBS_FLUSH:-}" != "1" ]; then
 fi
 
 echo "Installed: $DEST"
+# macOS does not show a newly installed Quick Action until the user enables it once (verified on 27.2.1).
+echo "Next: right-click any item in Finder, choose Quick Actions > Customize..., and tick \"Why Can't I Eject?\"."
 exit 0

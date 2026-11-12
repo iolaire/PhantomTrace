@@ -113,13 +113,23 @@ struct StageDialogTextTests {
 
     @MainActor
     @Test
-    func planPreviewAlertConfirmsFirstAndNamesTheStage() {
+    func planPreviewConfirmsFirstAndNamesTheStage() {
         let plan = ResolutionPlan(stage: .gracefulRequest, actions: [], skipped: [])
-        let alert = StageDialogs.planPreview(plan, locks: [])
-        #expect(alert.buttons.map(\.title) == ["Run Stage", "Cancel"])
-        #expect(alert.messageText.contains("Graceful Request"))
+        let spec = StageDialogs.planPreview(plan, locks: [])
+        #expect(spec.buttons == ["Ask to Quit", "Cancel"])
+        #expect(spec.defaultButton == 0)
+        #expect(spec.cancelButton == 1)
+        #expect(spec.message.contains("Graceful Request"))
+        #expect(spec.plaque == "GRACEFUL REQUEST")
     }
-
+    @MainActor
+    @Test
+    func confirmButtonSaysWhatEachStageDoes() {
+        #expect(StageDialogs.confirmTitle(for: .egressShells) == "Send Shells Home")
+        #expect(StageDialogs.confirmTitle(for: .gracefulRequest) == "Ask to Quit")
+        #expect(StageDialogs.confirmTitle(for: .banishLocks) == "Continue\u{2026}")
+        #expect(StageDialogs.confirmTitle(for: .cleanHandoff) == "Eject")
+    }
     @MainActor
     @Test
     func destructiveConfirmationsHaveCancelAsTheDefaultButton() {
@@ -129,11 +139,13 @@ struct StageDialogTextTests {
             skipped: []
         )
         let banish = StageDialogs.banishConfirmation(plan, locks: [UITestData.lock(pid: 5, name: "Preview")])
-        #expect(banish.buttons.map(\.title) == ["Cancel", "Banish Locks"])
-        #expect(banish.informativeText.contains("Preview (pid 5)"))
-
+        #expect(banish.buttons == ["Cancel", "Banish Locks"])
+        #expect(banish.defaultButton == 0 && banish.cancelButton == 0)
+        #expect(banish.severity == .critical)
+        #expect(banish.detail.contains("Preview (pid 5)"))
         let force = StageDialogs.forceUnmountConfirmation(volumeName: "Backup")
-        #expect(force.buttons.map(\.title) == ["Cancel", "Force Unmount"])
-        #expect(force.messageText.contains("Backup"))
+        #expect(force.buttons == ["Cancel", "Force Unmount"])
+        #expect(force.defaultButton == 0 && force.cancelButton == 0)
+        #expect(force.message.contains("Backup"))
     }
 }

@@ -37,6 +37,7 @@ PhantomTrace is a retro-themed macOS utility that identifies which processes pre
 - **Phantom_Choice**: The control in the `phantomTrace` window that offers either "Let PhantomTrace act" with one selectable Resolution_Stage among Egress Shells, Graceful Request, and Banish Locks, or "I'll deal with these processes myself".
 - **Proceed_Button**: The single primary button of the `cannotPutAway` and `phantomTrace` windows.
 - **Eject_Button**: The button of the `volumeReleased` window that performs the Clean Handoff stage.
+- **Phantom_Dialog**: The borderless, art-framed modal window (title plaque, Window_Frame_Art, no Ghost_Mascot) used for every plan preview, confirmation, notice, and rejection message in place of a system alert.
 - **Go_Back_Button**: The button of the `phantomTrace` window, labeled "Retreat to the Shadows", at the leading edge of the footer, that returns the Diagnostic_Sheet to the `cannotPutAway` window without a scan.
 - **Scanning_Overlay**: A progress indication drawn inside the current Diagnostic_Sheet while a scan is running, which does not change the Window_State or the Ghost_Mascot sprite.
 - **Failure_Banner**: The banner shown in the `phantomTrace` window when discovery fails or returns partial results, containing the description, Parse_Warnings, and the Rescan button.
@@ -93,8 +94,8 @@ PhantomTrace is a retro-themed macOS utility that identifies which processes pre
 1. IF the resolved mount is a Protected_Volume, THEN THE Mount_Resolver SHALL return the error `protectedVolume` within 500 milliseconds of receiving the path, and SHALL NOT return a mount result for that path.
 2. IF the resolved path is not a mount point, THEN THE Mount_Resolver SHALL return the error `notAMountPoint` within 500 milliseconds of receiving the path.
 3. IF the Mount_Resolver returns `protectedVolume` or `notAMountPoint`, THEN THE PhantomTrace SHALL perform no lock scan, SHALL NOT unmount, eject, or modify any volume, and SHALL leave all files and volumes unchanged.
-4. IF the Mount_Resolver returns `protectedVolume` or `notAMountPoint`, THEN THE Diagnostic_Sheet SHALL display, within 1 second, an alert stating that the selected item is not a removable volume, with a single dismiss control, and SHALL NOT display lock scan results or any eject action for that item.
-5. IF the Mount_Resolver cannot determine whether the resolved path is a mount point or a Protected_Volume (for example, the path no longer exists or cannot be read), THEN THE Mount_Resolver SHALL return an error, THE PhantomTrace SHALL treat the path as protected by performing no lock scan and no system mutation, and THE Diagnostic_Sheet SHALL display an alert stating that the item could not be verified as a removable volume.
+4. IF the Mount_Resolver returns `protectedVolume` or `notAMountPoint`, THEN THE Diagnostic_Sheet SHALL display, within 1 second, a Phantom_Dialog stating that the selected item is not a removable volume, with a single dismiss control, and SHALL NOT display lock scan results or any eject action for that item.
+5. IF the Mount_Resolver cannot determine whether the resolved path is a mount point or a Protected_Volume (for example, the path no longer exists or cannot be read), THEN THE Mount_Resolver SHALL return an error, THE PhantomTrace SHALL treat the path as protected by performing no lock scan and no system mutation, and THE Diagnostic_Sheet SHALL display a Phantom_Dialog stating that the item could not be verified as a removable volume.
 
 ### Requirement 3: Discover Locks
 
@@ -262,6 +263,7 @@ The 30-second scan limits in this requirement apply to the general stage-start s
 9. IF the Quick_Action installation script fails, THEN THE PhantomTrace SHALL print an error message indicating the cause, exit with a non-zero status, and leave any previously installed Quick_Action unchanged.
 10. THE PhantomTrace SHALL implement the Quick_Action as a hand-written `.workflow` bundle composed of plain property list files, as an `NSServices` entry in the App_Bundle `Info.plist`, or as both, and SHALL NOT use App Intents.
 11. WHEN the Quick_Action installation script succeeds, THE PhantomTrace SHALL have copied the `.workflow` bundle to `~/Library/Services` and refreshed the Services list.
+12. WHEN the Quick_Action installation script succeeds, THE script SHALL print an instruction telling the user to enable the Quick_Action once in Finder (Quick Actions > Customize...), because macOS 27.2.1 hides a newly installed Quick_Action from every context menu until it is enabled.
 
 ### Requirement 13: Diagnostic Sheet and Ghost Mascot
 
@@ -288,6 +290,11 @@ The 30-second scan limits in this requirement apply to the general stage-start s
 17. THE Diagnostic_Sheet SHALL position the illustration of the current Window_State at the lower right inside the frame, and SHALL keep the lock table clear of the illustration.
 18. WHEN the lock window is opened, THE PhantomTrace SHALL place it to the right of the main window with the tops aligned and a 10 pt gap, SHALL center it IF the main window is not visible, and SHALL keep it within the visible frame of the screen.
 19. THE Diagnostic_Sheet SHALL fit all five lock table columns (Process Name, PID, User, Lock Category, and File Path) within the window width, giving File Path the remaining width and truncating File Path in the middle.
+20. THE PhantomTrace SHALL draw the Drop_Target window, all three Window_States, and every Phantom_Dialog with the same 720 x 520 pt window chrome; the Ghost_Mascot overhang of criterion 16 lies outside that chrome.
+21. THE PhantomTrace SHALL present every plan preview, Banish Locks confirmation, force-unmount confirmation, stage notice, and inspect rejection as a Phantom_Dialog and SHALL NOT use a system alert for them.
+22. THE Phantom_Dialog of a plan preview SHALL label its confirm button with the action it performs: "Send Shells Home" for Egress Shells, "Ask to Quit" for Graceful Request, "Continue..." for Banish Locks (followed by the explicit confirmation of Requirement 8), and "Eject" for Clean Handoff.
+23. THE Phantom_Dialog of the Banish Locks confirmation and of the force-unmount confirmation SHALL make Cancel both the default button and the cancel button, so that pressing Return or Escape never confirms the destructive action.
+24. THE Drop_Target window SHALL be drawn with the Window_Frame_Art, the title plaque "PHANTOMTRACE", and the `yellow` Ghost_Mascot overhang, SHALL show the drop area above the Volume_List, and SHALL hide (not quit) when its close box is activated.
 
 ### Requirement 14: Error Reporting
 

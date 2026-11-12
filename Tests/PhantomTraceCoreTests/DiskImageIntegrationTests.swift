@@ -68,7 +68,7 @@ struct DiskImageIntegrationTests {
         }
         #expect(try resolver.allMounts().contains { $0.mountPoint.path == fixture.mountPoint.path })
 
-        fixture.stopHelpers()
+        await fixture.stopHelpers()
         let remaining = try await pollLocks(engine, volume) { $0.isEmpty }
         #expect(remaining.isEmpty)
 

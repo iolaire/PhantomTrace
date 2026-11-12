@@ -33,7 +33,8 @@ public final class DropTargetView: NSView {
     }
 
     override public func draw(_ dirtyRect: NSRect) {
-        (highlighted ? NSColor.selectedContentBackgroundColor : NSColor(white: 0.867, alpha: 1)).setFill()
+        // Clear at rest so the frame art's gray shows through; tinted while a drag hovers.
+        (highlighted ? NSColor.selectedContentBackgroundColor.withAlphaComponent(0.35) : NSColor.clear).setFill()
         bounds.fill()
         NSColor.black.setStroke()
         let border = NSBezierPath(rect: bounds.insetBy(dx: 8, dy: 8))

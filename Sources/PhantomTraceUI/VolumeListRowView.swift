@@ -121,7 +121,10 @@ public final class VolumeListRowView: NSView {
         text.orientation = .vertical
         text.alignment = .leading
         text.spacing = 1
-        let row = NSStackView(views: [text, markerLabel, inspectButton])
+        // The spacer takes the slack so the marker and Inspect button line up at the right edge.
+        let spacer = NSView()
+        spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        let row = NSStackView(views: [text, spacer, markerLabel, inspectButton])
         row.orientation = .horizontal
         row.spacing = 8
         row.edgeInsets = NSEdgeInsets(top: 2, left: 6, bottom: 2, right: 6)

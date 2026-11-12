@@ -1,11 +1,5 @@
 import AppKit
 import PhantomTraceCore
-
-/// A borderless window that can take focus; the Platinum chrome draws the title bar and close box.
-private final class PlatinumWindow: NSWindow {
-    override var canBecomeKey: Bool { true }
-}
-
 /// Owns the one lock-forensics window and wires it to a `DiagnosticCoordinator`.
 ///
 /// The controller is the only UI object that calls coordinator actions. It also acts as the
@@ -24,6 +18,7 @@ public final class LockWindowController: StageReviewing {
     public static let anchorGap: CGFloat = 10
 
     private let coordinator: DiagnosticCoordinator
+    private let resourceDirectory: URL?
     private let contentView: LockWindowContentView
     private let window: NSWindow
     private var latestModel = WindowModel()
@@ -32,21 +27,12 @@ public final class LockWindowController: StageReviewing {
 
     public init(coordinator: DiagnosticCoordinator, resourceDirectory: URL? = Bundle.main.resourceURL) {
         self.coordinator = coordinator
+        self.resourceDirectory = resourceDirectory
         contentView = LockWindowContentView(resourceDirectory: resourceDirectory)
-        window = PlatinumWindow(
-            contentRect: NSRect(origin: .zero, size: LockWindowContentView.preferredSize),
-            styleMask: [.borderless],
-            backing: .buffered,
-            defer: false
-        )
-        window.contentView = contentView
-        window.isReleasedWhenClosed = false
-        window.isMovableByWindowBackground = true
         // Clear and non-opaque so the ghost can hang past the frame; clicks on fully
         // transparent pixels fall through to whatever is behind the window.
-        window.backgroundColor = .clear
-        window.isOpaque = false
-        window.hasShadow = true
+        window = PlatinumWindow.make(size: LockWindowContentView.preferredSize)
+        window.contentView = contentView
         window.center()
         connectActions()
     }
@@ -86,10 +72,14 @@ public final class LockWindowController: StageReviewing {
     /// Plan preview, then for Banish Locks the explicit confirmation (Requirements 9.5, 11.5).
     public func review(_ plan: ResolutionPlan) async -> Bool {
         let locks = latestModel.locks
-        let preview = StageDialogs.planPreview(plan, locks: locks).runModal()
-        guard preview == .alertFirstButtonReturn else { return false }
+        let preview = present(StageDialogs.planPreview(plan, locks: locks))
+        guard preview == 0 else { return false }
         guard plan.stage == .banishLocks else { return true }
-        return StageDialogs.banishConfirmation(plan, locks: locks).runModal() == .alertSecondButtonReturn
+        return present(StageDialogs.banishConfirmation(plan, locks: locks)) == 1
+    }
+    /// Runs a dialog in the frame art over the lock window and returns the pressed button index.
+    private func present(_ spec: PhantomDialogSpec) -> Int {
+        PhantomDialog(spec: spec, resourceDirectory: resourceDirectory).runModal(over: window)
     }
 
     // MARK: - Model
@@ -131,13 +121,12 @@ public final class LockWindowController: StageReviewing {
         }
         guard error != alertedError else { return }
         alertedError = error
-        Task { @MainActor in
-            let alert = NSAlert()
-            alert.alertStyle = .warning
-            alert.messageText = "PhantomTrace cannot inspect that item"
-            alert.informativeText = WindowAppearance.resolveErrorText(error)
-            alert.addButton(withTitle: "Dismiss")
-            alert.runModal()
+        let spec = StageDialogs.notice(
+            message: "PhantomTrace cannot inspect that item",
+            detail: WindowAppearance.resolveErrorText(error)
+        )
+        Task { @MainActor [weak self] in
+            _ = self?.present(spec)
         }
     }
 
@@ -160,8 +149,7 @@ public final class LockWindowController: StageReviewing {
             Task { await coordinator.eject(force: false) }
             return
         }
-        let alert = StageDialogs.forceUnmountConfirmation(volumeName: volumeName)
-        guard alert.runModal() == .alertSecondButtonReturn else { return }
+        guard present(StageDialogs.forceUnmountConfirmation(volumeName: volumeName)) == 1 else { return }
         Task { await coordinator.eject(force: true) }
     }
 }

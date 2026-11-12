@@ -98,7 +98,9 @@ Opened with no file or URL, the app shows the drop window: drop a volume or fold
 Scripts/install-quick-action.sh
 ```
 
-Copies `Packaging/QuickAction/Why Can't I Eject?.workflow` into `~/Library/Services` and refreshes Services. It prints an error and exits non-zero on failure, and leaves any existing installation untouched. The shell test for the installer passes, but the real `pbs -flush` path and the action's behavior in Finder have not been exercised.
+Copies `Packaging/QuickAction/Why Can't I Eject?.workflow` into `~/Library/Services` and refreshes Services. It prints an error and exits non-zero on failure, and leaves any existing installation untouched. The shell test for the installer passes, but it has since been installed and seen in Finder on macOS 27.2.1.
+
+After installing, enable it once: right-click any item in Finder, choose Quick Actions > Customize..., and tick "Why Can't I Eject?" (or go to System Settings > General > Login Items & Extensions > Finder). Until then macOS hides it from every right-click menu, including the drive's. Quick Actions do not appear in the Finder sidebar's menu; right-click the volume on the Desktop or in the Computer window.
 
 ### Optional manual notarization
 
