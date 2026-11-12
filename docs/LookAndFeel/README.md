@@ -30,6 +30,6 @@ Building blocks used to compose the mockups: the window frame, the CRT diagnosti
 - Ghost states map to the discovery state machine: idle and scanning, haunting (Blocked), banished (clean and unmounted). Reduce Motion means a static sprite with no glow animation.
 - File names contain spaces and one has a double extension (`base-crt diagnostic portal.png.jpg`). Rename them to kebab-case when they move into the app assets.
 
-## Provenance and licensing (to confirm)
+## Provenance and licensing
 
-All images were generated with Google Gemini. Source, prompts, terms, and open questions are recorded in [../Assets.md](../Assets.md). Still to confirm before submission: the exact Gemini terms and generation dates, and a side-by-side check that the Kiro-inspired ghost is clearly different from the official Kiro ghost.
+All images were generated with Google Gemini. Source, prompts, terms, and open questions are recorded in [../Assets.md](../Assets.md). Closed 2026-11-12 (owner statements): images were generated on 2026-11-11, no terms limit their use, and the ghost and its colors are Kiro-inspired and were checked side by side as distinct from the official Kiro ghost. The model was Gemini 3.8 Flash.

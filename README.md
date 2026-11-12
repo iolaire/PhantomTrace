@@ -35,10 +35,11 @@ Platinum Retro Gothic: a System 7 / Mac OS 9 platinum alert window (pinstripe ti
 The code for every task in the master spec's build order is written (Core library, live adapters, `phantomtrace` CLI, AppKit app, Quick Action bundle, bundling script). What has and has not been checked:
 
 - Verified on macOS during development: `swift build`, targeted `swift test` runs (unit and property tests), `swiftlint --strict`, the bundler (`Scripts/make-app.sh`) and its shell test, the Quick Action installer shell test, and a local-only integration test that attaches a throwaway disk image. See [docs/ProjectLog.md](docs/ProjectLog.md) for what was run for each change.
-- The app has been launched by the owner and the lock windows were checked as offscreen renders. The app now has a main menu (Quit Cmd-Q, Close Window Cmd-W, Inspect... Cmd-O, File > Inspect Volume) and a drop window that lists mounted volumes with an Inspect button each (Requirement 19); these are covered by unit and property tests.
-- **Not verified:** the new drop window with its volume list has not been seen on screen. The three-window flow end to end, the Finder Quick Action in Finder, the drop target, VoiceOver, and Reduce Motion are untested. The 100 ms main-actor bound is not measured. Notarization has not been attempted.
+- Manual end-to-end pass by the owner on 2026-11-12 (owner-reported, on a throwaway disk image; the step-by-step record in [docs/ManualQA.md](docs/ManualQA.md) is not filled in yet): the "Why Can't I Eject?" Quick Action was added to Finder's right-click menu and used; the full window flow works with the forward and back buttons and the images in the right places; the menus work (including Quit); force-quitting apps works; and a two-stage quit works, where an agent (`agy`) running in the terminal is quit first, the rescan then shows `zsh` still locking the drive, and quitting that releases it.
+- Also covered by unit and property tests: the main menu (Quit Cmd-Q, Close Window Cmd-W, Inspect... Cmd-O, File > Inspect Volume) and the drop window that lists mounted volumes with an Inspect button each (Requirement 19).
+- **Not verified:** VoiceOver and Reduce Motion have not been tested. The drop-target path (dragging onto the window or Dock icon) and the drop window's volume list were not named in the owner's report, so treat them as unconfirmed until ticked in `docs/ManualQA.md`. The 100 ms main-actor bound is not measured. Notarization has not been attempted.
 - Several behaviors are provisional and await the owner's confirmation; see [docs/architecture.md](docs/architecture.md#provisional-behaviors) and the known gaps in [docs/SubmissionChecklist.md](docs/SubmissionChecklist.md).
-- No screenshots, demo video, or app icon exist yet.
+- No screenshots or demo video exist yet. The app icon exists (`Packaging/AppIcon.icns`).
 
 ## Platform
 
@@ -127,6 +128,7 @@ See [docs/KiroUsage.md](docs/KiroUsage.md) for how each Kiro feature was used.
 - [Submission checklist](docs/SubmissionChecklist.md)
 - [Demo script](docs/demo-script.md)
 - Pre-existing code: none. The project was created during the Submission Period.
+- Prior work disclosure: the only carry-over from the owner's 2025 Kiroween entry, West of House, is the idea of an image-prompt style (dark-fantasy woodcut pen-and-ink with crosshatching). That prompt was run fresh on Google Gemini to generate new art for this project. No West of House code, image files, or other assets are in this repository. See [docs/Assets.md](docs/Assets.md).
 - Runtime dependencies: none. swift-property-based and SwiftLint are development tools only.
 
 ## Documentation

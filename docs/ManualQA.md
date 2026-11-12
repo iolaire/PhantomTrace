@@ -1,6 +1,6 @@
 # Manual QA Checklist
 
-Checks that automated tests cannot cover: the real app bundle, Finder, VoiceOver, and the real `lsof` and DiskArbitration stack. Run it on the target Mac (macOS 27.2.1). Nothing here has been run yet unless a result is filled in; tick a box only when you did the step.
+Checks that automated tests cannot cover: the real app bundle, Finder, VoiceOver, and the real `lsof` and DiskArbitration stack. Run it on the target Mac (macOS 27.2.1). The owner reported a full manual pass on 2026-11-12 (see the Pass record at the bottom), but individual boxes are ticked only when the step is recorded here. Tick a box only when you did the step.
 
 Spec: [requirements](../.kiro/specs/phantomtrace-volume-lock-forensics/requirements.md) (Requirements 12, 13, 16, 17, 18), [tasks](../.kiro/specs/phantomtrace-volume-lock-forensics/tasks.md) (task 19.4). Design notes: [architecture](architecture.md#provisional-behaviors). Asset records: [Assets.md](Assets.md).
 
@@ -267,4 +267,4 @@ Open question for the owner: the Failure_Banner kind (failed versus partial) is 
 
 | Date | Tester | macOS build | App version | Sections run | Failures or notes |
 |---|---|---|---|---|---|
-| Not run yet | | | | | |
+| 2026-11-12 | Project owner (owner-reported; step boxes above not individually ticked) | macOS 27.2.1 (build 26B131) | Local `build/PhantomTrace.app` | Quick Action in Finder, three-window flow with back and forward buttons, image placement, menus and Quit, force quit, two-stage quit (`agy` then `zsh`) | All worked as intended. Not covered: VoiceOver, Reduce Motion |

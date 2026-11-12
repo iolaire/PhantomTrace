@@ -18,10 +18,10 @@ For the product pitch see [ProjectOverview.md](ProjectOverview.md). For the rule
 | Live adapters (`LiveProcessRunner`, mount table, `.dmg` mapping, signal sender, process inspector, `LiveUnmounter`, terminal scripting) | Written. Unit tested with injected calls. The unmount and discovery path was exercised once by the local-only disk image integration test; signals and terminal scripting were not run for real |
 | `phantomtrace` CLI (read-only inspect) | Written, unit tested. Not run by hand against a real locked volume |
 | Presentation model (`WindowModel`, `selectWindow`, `DiagnosticCoordinator`, `PathTruncation`) | Written, unit and property tested |
-| `PhantomTraceUI` AppKit views, `PhantomTraceApp`, drop target, URL handler, Services entry, accessibility labels | Written, app-side logic unit tested. **The app has never been launched**, so layout, drawing, VoiceOver, and Reduce Motion are unverified |
-| Sprites (1x/2x export from `docs/LookAndFeel/use/`) | Exported and checked by `Scripts/verify-sprites.sh`. Not seen in the app |
-| Quick Action `.workflow` and `Scripts/install-quick-action.sh` | Written. Installer shell test passes with a temporary `HOME`. Not tried in Finder |
-| `Scripts/make-app.sh` bundler | Built, signed ad-hoc with hardened runtime, and verified; shell test passes. Not notarized, not launched |
+| `PhantomTraceUI` AppKit views, `PhantomTraceApp`, drop target, URL handler, Services entry, accessibility labels | Written, app-side logic unit tested. Run by hand: the owner's manual pass on 2026-11-12 covered the three-window flow, forward and back buttons, image placement, menus, and Quit. VoiceOver and Reduce Motion are unverified |
+| Sprites (1x/2x export from `docs/LookAndFeel/use/`) | Exported and checked by `Scripts/verify-sprites.sh`. Seen in the running app in the right places (owner-reported, 2026-11-12) |
+| Quick Action `.workflow` and `Scripts/install-quick-action.sh` | Written. Installer shell test passes with a temporary `HOME`. Run by hand: installed, enabled in Finder's Quick Actions, and used from the right-click menu (owner-reported, 2026-11-12) |
+| `Scripts/make-app.sh` bundler | Built, signed ad-hoc with hardened runtime, and verified; shell test passes. Launched by hand. Not notarized |
 | App icon, Title_Font, screenshots, demo video | Not created |
 
 Update this table in the same commit that changes it.
@@ -176,7 +176,7 @@ Recorded so nothing reads as finished that is not:
 - `ResolutionPipeline` does not pass user-confirmed system daemons through to plan building, so the "user-confirmed `systemDaemon`" exception for `SIGKILL` cannot be exercised from the pipeline.
 - `StageOutcome` cannot represent a manual Egress Shells result (terminal automation denied or unsupported, shell left for the user to handle), so those cases are not reported as manual.
 - `Banner` has no field for partial vs failed. The window controller infers the kind from the coordinator's message prefix, which is fragile.
-- The app has not been launched. Layout, the end-to-end flow, the Quick Action in Finder, the drop target, VoiceOver, and Reduce Motion are unverified, and `windowAnnouncement` is not posted yet.
+- The owner ran the end-to-end flow by hand on 2026-11-12 (Quick Action, window flow, force quit, and a two-stage quit of `agy` then `zsh`). VoiceOver, Reduce Motion, and the drop target are still unverified, and `windowAnnouncement` is not posted yet.
 - `swiftlint` needs `DYLD_FRAMEWORK_PATH=/Library/Developer/CommandLineTools/usr/lib` on this machine.
 - The disk image integration test covers discover then unmount; it does not drive the full pipeline.
 - Parser fixtures are generated, not captured from real `lsof` output.

@@ -2,7 +2,7 @@
 
 Record of every non-code asset in this repository: where it came from, who made it, and the terms it is used under. The Kiroween 2026 Rules require submissions to be original work, owned by the entrant, and free of unauthorized third-party material. See [Hackathon/Rules.md](Hackathon/Rules.md) (Intellectual Property) and [SubmissionChecklist.md](SubmissionChecklist.md).
 
-Rows marked **To confirm** need a fact only the project owner can supply. Fill them in before submission.
+All owner-supplied facts were recorded by 2026-11-12. These are owner statements and have not been independently verified.
 
 ## Images
 
@@ -10,12 +10,12 @@ Rows marked **To confirm** need a fact only the project owner can supply. Fill t
 
 - All look-and-feel images were generated with Google Gemini (image generation).
 - The prompts adapt the prompt system from the owner's 2025 entry, West of House: a dark-fantasy woodcut pen-and-ink style with crosshatching, applied to a Mac OS 9 / System 7 Platinum window, an app icon, and a cloaked ghost mascot with a violet aura and an amber lantern.
-- The prompt text was drafted with an AI assistant. Only the style direction was reused. No West of House image files are included in this repository (**To confirm**).
+- The prompt text was drafted with an AI assistant. Only the style direction was reused. Owner statement, 2026-11-12: the only thing carried over from West of House (the 2025 entry) is an AI image prompt. That prompt was run fresh on Gemini to generate new art files for PhantomTrace. No old art files, code, or other West of House assets were used, and none are in this repository.
 - Prompt templates used (the scene variables changed per image):
   - Diagnostic window scene: Platinum dialog window artifact, gothic border of SCSI cables, chains and skulls, bitmap-style title banner, 1-bit dithered crosshatched illustration, small cloaked ghost with violet aura and amber lantern. Scenes: `CANNOT PUT AWAY` (chained drive and floppy), `PHANTOM TRACE` (CRT as x-ray portal), `VOLUME RELEASED` (broken chains, open portcullis).
   - App icon / badge: circular or squircle emblem, same style, with a text-free minimal variant for small sizes.
   - Negative prompt: photorealistic, 3D render, glossy glassmorphism, modern macOS squircle gradients, anime, cyberpunk, rainbow neon, Helvetica, lens flare, flat corporate vector art.
-- Generation date, Gemini model/version, and the account used: **To confirm**.
+- Generation date: 2026-11-11. Model: Gemini 3.8 Flash. Account: a personal gmail.com account owned by the project owner, with a Google AI Pro plan (the address is deliberately not recorded, for privacy). All owner-supplied, not independently verified.
 
 ### Provenance and license statement (owner-supplied)
 
@@ -26,7 +26,7 @@ Recorded 2026-11-11 from facts the project owner gave, for task 19.1. Nothing he
 | Provenance | AI-generated using Google Gemini |
 | Author / prompting | The project owner wrote the prompts and directed the generation. No individual is named here |
 | License | None stated by the owner. The owner states that no license is needed for this art. No license or legal claim is made in this file beyond that statement |
-| Generation date, Gemini model/version, account | **To confirm** |
+| Generation date, Gemini model/version, account | Generated 2026-11-11 with Gemini 3.8 Flash, on the owner's personal gmail.com account with a Google AI Pro plan (address not recorded, for privacy). Owner-supplied |
 | Kiro ghost side-by-side result | Owner states OK / distinct, 2026-11-11 (owner-supplied, not verified; see Ghost mascot) |
 
 Note: this is the owner's statement, not legal advice or a legal conclusion. The Google terms summarized below still apply to the Gemini output.
@@ -40,9 +40,9 @@ Note: this is the owner's statement, not legal advice or a legal conclusion. The
   - Users may not mislead others into thinking generative AI content was created by a human. This file and the README disclose that the images are AI-generated.
   - Users may not use AI-generated content from the services to develop machine learning models. These images are not used for that.
   - Google provides the services "as is" and disclaims warranties, including non-infringement. Google does not promise that an output is free of third-party rights, so the risk of a lookalike (for example the Kiro ghost) stays with the user.
-- The terms in force when each image was generated may differ from the version above. Confirm that the Gemini app or API used did not add service-specific terms: **To confirm**.
+- The terms in force when each image was generated may differ from the version above. Owner statement, 2026-11-12: there are no terms limiting the use of the Gemini-generated art for this project, and no service-specific terms applied. Not independently verified.
 - Copyright in AI-generated images is legally unsettled in many jurisdictions. The project owner does not claim more than the rights Google's terms grant, and does not claim exclusive copyright over the generated images. The MIT license in `LICENSE` covers the source code; it is not a statement about the generated images.
-- Gemini images may carry an invisible provenance watermark (SynthID). It is not removed.
+- Gemini images may carry an invisible provenance watermark (SynthID). It is not removed, and the project does not hide that the art is AI-generated (owner decision, 2026-11-12). The README and this file disclose it.
 
 ### Files
 
@@ -57,7 +57,7 @@ Note: this is the owner's statement, not legal advice or a legal conclusion. The
 
 ### Ghost mascot
 
-The ghost is an original, Kiro-inspired character. It is not the Kiro ghost, and it is not a copy or a recolor of it. It shares the general idea of a friendly ghost, but the design is clearly different (cloaked, violet aura, amber lantern, woodcut crosshatch style).
+The ghost and its color palette are Kiro-inspired (owner statement, 2026-11-12). The ghost is an original character. It is not the Kiro ghost, and it is not a copy or a recolor of it. It shares the general idea of a friendly ghost, but the design is clearly different (cloaked, violet aura, amber lantern, woodcut crosshatch style).
 
 - The prompts asked for "a cloaked ghost spirit" and did not name or describe the Kiro ghost.
 - The project does not use the Kiro logo or the Kiro ghost artwork anywhere in the app, icon, or docs.
@@ -93,8 +93,8 @@ Runtime third-party dependencies: none (see [ProjectLog.md](ProjectLog.md), Tool
 
 ## Open items before submission
 
-- [ ] Fill in each remaining **To confirm** field above. Done so far: provenance, author, and license statement (owner-supplied, 2026-11-11). Still open: generation date, Gemini model/version, account, service-specific terms, West of House file check.
-- [x] Read and record Google's current terms for Gemini output (done 2026-11-11, see Terms). Still confirm no Gemini service-specific terms applied.
+- [x] Fill in each **To confirm** field above (closed 2026-11-12): provenance, author, and license statement; West of House check (prompt reused fresh on Gemini, no old files); generation date 2026-11-11; Gemini 3.8 Flash on the owner's Google AI Pro account; no terms limiting use of the art.
+- [x] Read and record Google's current terms for Gemini output (done 2026-11-11, see Terms). Owner confirmed on 2026-11-12 that no service-specific terms limit use.
 - [x] Do a side-by-side check of the ghost against the official Kiro ghost and record the result (owner's check 2026-11-11: OK / distinct, owner-supplied; repo search found no Kiro logo or ghost artwork in bundled resources or packaging, see Ghost mascot).
 - [x] Title font: owner chose the system font fallback; nothing bundled (task 19.3).
 - [x] App icon row added (task 19.3).

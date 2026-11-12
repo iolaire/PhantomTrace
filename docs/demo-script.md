@@ -1,6 +1,6 @@
 # Demo Script
 
-The demo length target is at most 3 minutes (180 seconds). The Rules require a public YouTube video, under 3 minutes, that shows the app running on a Mac. This is a plan: nothing below exists yet, so do not record until the app, Quick Action, and UI work.
+The demo length target is at most 3 minutes (180 seconds). The Rules require a public YouTube video, under 3 minutes, that shows the app running on a Mac. This is a plan and the video has not been recorded. The app, Quick Action, and window flow passed the owner's manual end-to-end test on 2026-11-12, so recording can start once the setup below is rehearsed.
 
 Source flow: [ProjectOverview.md](ProjectOverview.md). Visual targets: [LookAndFeel](LookAndFeel/README.md).
 
