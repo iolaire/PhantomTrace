@@ -12,7 +12,7 @@ public final class PlatinumWindowChromeView: NSView {
 
     /// Host for the table, buttons, and sprites.
     public let contentView = NSView()
-    public let closeBox = PlatinumCloseBox()
+    public let closeBox: PlatinumCloseBox
     public let titleLabel: NSTextField
 
     private let frameArt: NinePartImageView?
@@ -25,6 +25,8 @@ public final class PlatinumWindowChromeView: NSView {
     ///   - titleFont: from `FontProvider.titleFont(size:)`.
     public init(title: String, frameArt: NSImage?, insets: NineSliceInsets?, titleFont: NSFont) {
         titleLabel = NSTextField(labelWithString: title)
+        // With art the close box is a transparent hit area on the X painted in the art.
+        closeBox = PlatinumCloseBox(overlay: frameArt != nil && insets != nil)
         if let frameArt, let insets {
             self.frameArt = NinePartImageView(image: frameArt, insets: insets)
             self.insets = insets
@@ -78,9 +80,21 @@ public final class PlatinumWindowChromeView: NSView {
             titleLabel.centerXAnchor.constraint(equalTo: centerXAnchor),
             titleLabel.centerYAnchor.constraint(equalTo: topAnchor, constant: titleCenterOffset(barHeight)),
             titleLabel.widthAnchor.constraint(lessThanOrEqualTo: widthAnchor, multiplier: 0.6),
-            closeBox.leadingAnchor.constraint(equalTo: leadingAnchor, constant: edge == nil ? 8 : 12),
-            closeBox.centerYAnchor.constraint(equalTo: topAnchor, constant: edge == nil ? barHeight / 2 : 14)
+            closeBox.widthAnchor.constraint(equalToConstant: closeBox.intrinsicContentSize.width),
+            closeBox.heightAnchor.constraint(equalToConstant: closeBox.intrinsicContentSize.height)
         ])
+        if edge == nil {
+            NSLayoutConstraint.activate([
+                closeBox.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 8),
+                closeBox.centerYAnchor.constraint(equalTo: topAnchor, constant: barHeight / 2)
+            ])
+        } else {
+            // The top-left corner slice is drawn unscaled, so the art's X stays at this offset.
+            NSLayoutConstraint.activate([
+                closeBox.leadingAnchor.constraint(equalTo: leadingAnchor, constant: PlatinumCloseBox.artSquare.minX),
+                closeBox.topAnchor.constraint(equalTo: topAnchor, constant: PlatinumCloseBox.artSquare.minY)
+            ])
+        }
     }
 
     /// Art frames carry a tall plaque area; the plaque text sits in its upper part.

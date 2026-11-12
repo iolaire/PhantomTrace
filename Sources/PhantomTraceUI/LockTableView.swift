@@ -74,9 +74,13 @@ public final class LockTableView: NSView {
         tableView.dataSource = dataSource
         tableView.delegate = dataSource
         tableView.usesAlternatingRowBackgroundColors = false
+        // Clear, so the rows sit on the same gray as the rest of the frame interior.
+        tableView.backgroundColor = .clear
         tableView.allowsColumnReordering = false
         tableView.allowsMultipleSelection = false
         tableView.columnAutoresizingStyle = .lastColumnOnlyAutoresizingStyle
+        // No opaque white corner square beside the header on the clear table.
+        tableView.cornerView = nil
         tableView.rowHeight = 18
         tableView.setAccessibilityLabel("Locks holding the volume")
     }
@@ -86,6 +90,8 @@ public final class LockTableView: NSView {
         scrollView.hasVerticalScroller = true
         scrollView.hasHorizontalScroller = false
         scrollView.borderType = .lineBorder
+        scrollView.drawsBackground = false
+        scrollView.contentView.drawsBackground = false
         scrollView.translatesAutoresizingMaskIntoConstraints = false
 
         emptyLabel.font = fontProvider.tableFont(size: 11)
@@ -124,15 +130,16 @@ enum LockTableColumn: CaseIterable {
 
     var width: CGFloat {
         switch self {
-        case .processName: 120
+        // Sized so all five columns fit the 760 pt chrome; File Path takes the rest.
+        case .processName: 90
         case .pid: 50
-        case .user: 120
-        case .category: 110
-        case .path: 260
+        case .user: 64
+        case .category: 84
+        case .path: 140
         }
     }
 
-    var minWidth: CGFloat { self == .path ? 120 : 40 }
+    var minWidth: CGFloat { self == .path ? 100 : 40 }
 }
 
 /// Plain-language category names for display.

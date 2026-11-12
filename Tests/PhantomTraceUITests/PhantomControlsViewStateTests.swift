@@ -31,12 +31,12 @@ struct PhantomControlsViewStateTests {
         let button = ActionButton.proceed(target: nil, action: nil)
         button.apply(enabled: true, busy: true)
         #expect(!button.isEnabled)
-        #expect(button.title == "Working...")
-        #expect(button.accessibilityLabel() == "Working...")
+        #expect(button.title == ActionButton.proceedBusyTitle)
+        #expect(button.accessibilityLabel() == ActionButton.proceedBusyTitle)
         button.apply(enabled: true, busy: false)
         #expect(button.isEnabled)
-        #expect(button.title == "Proceed")
-        #expect(button.accessibilityLabel() == "Proceed")
+        #expect(button.title == ActionButton.summonTitle)
+        #expect(button.accessibilityLabel() == ActionButton.summonTitle)
         button.apply(enabled: false, busy: false)
         #expect(!button.isEnabled)
     }
@@ -56,9 +56,37 @@ struct PhantomControlsViewStateTests {
         button.updateProceed(from: model(window: .phantomTrace, controls: enabled))
         #expect(button.isEnabled && !button.isHidden)
         button.updateProceed(from: model(window: .phantomTrace, controls: enabled, stageRunning: true))
-        #expect(!button.isEnabled && button.title == "Working...")
+        #expect(!button.isEnabled && button.title == ActionButton.proceedBusyTitle)
         button.updateProceed(from: model(window: .cannotPutAway, controls: PhantomControls()))
         #expect(!button.isEnabled && !button.isHidden)
+    }
+
+    @Test
+    func proceedTextFollowsTheWindowAndHelpSaysWhatItDoes() {
+        let button = ActionButton.proceed(target: nil, action: nil)
+        button.updateProceed(from: model(window: .cannotPutAway))
+        #expect(button.title == ActionButton.summonTitle)
+        #expect(button.accessibilityHelp()?.isEmpty == false)
+        button.updateProceed(from: model(window: .phantomTrace))
+        #expect(button.title == ActionButton.proceedTitle)
+        #expect(button.accessibilityHelp()?.contains("scans the volume again") == true)
+    }
+
+    @Test
+    func goBackShowsOnlyInPhantomTraceAndHidesWhileAStageRuns() {
+        let button = ActionButton.goBack(target: nil, action: nil)
+        #expect(button.title == ActionButton.goBackTitle)
+        let enabled = PhantomControls(goBackEnabled: true)
+        button.updateGoBack(from: model(window: .phantomTrace, controls: enabled))
+        #expect(!button.isHidden && button.isEnabled)
+        button.updateGoBack(from: model(window: .phantomTrace, controls: PhantomControls()))
+        #expect(!button.isHidden && !button.isEnabled)
+        button.updateGoBack(from: model(window: .phantomTrace, controls: enabled, stageRunning: true))
+        #expect(button.isHidden)
+        for window in [WindowState.cannotPutAway, .volumeReleased] {
+            button.updateGoBack(from: model(window: window, controls: enabled))
+            #expect(button.isHidden)
+        }
     }
 
     @Test
@@ -128,6 +156,13 @@ struct PhantomControlsViewStateTests {
         #expect(control.optionButtons[.gracefulRequest]?.accessibilityLabel() == "Graceful Request")
         #expect(control.optionButtons[.egressShells]?.accessibilityHelp() != nil)
         #expect(control.optionButtons[.gracefulRequest]?.accessibilityHelp() == nil)
+        #expect(control.optionButtons[.banishLocks]?.accessibilityHelp() == PhantomChoiceControl.banishWarning)
+    }
+
+    @Test
+    func banishWarningNamesFileLossInWordsNotColorAlone() {
+        #expect(PhantomChoiceControl.banishWarning.hasPrefix("Beware:"))
+        #expect(PhantomChoiceControl.banishWarning.contains("Unsaved changes to open files may be lost"))
     }
 
     @Test

@@ -157,13 +157,14 @@ All sprites ship as `name.png` plus `name@2x.png`; the window frame also has `wi
 
 ## Provisional behaviors
 
-These follow the design's provisional proposals and are marked `// PROVISIONAL (Req 18.x)` in the code. They await the owner's confirmation and are easy to change.
+18.15 is no longer provisional: the owner chose a Go Back button ("Retreat to the Shadows") in `phantomTrace` only, which returns to `cannotPutAway` without scanning or signalling (D-019).
+
+The rest follow the design's provisional proposals and are marked `// PROVISIONAL (Req 18.x)` in the code. They await the owner's confirmation and are easy to change.
 
 | Req | Behavior |
 |---|---|
 | 18.6 | No window content during Idle, Resolving, or a resolve failure (alert only) |
 | 18.7 | First scan shows the frame with a Scanning_Overlay only after 500 ms |
-| 18.15 | No control returns from `phantomTrace` to `cannotPutAway` |
 | 18.16 | "I'll deal with these processes myself" plus Proceed does a fresh rescan only and sends no signal |
 | 18.21, 18.23 | Eject plus a Finder-retry note while the volume is mounted; message only once unmounted |
 | 18.26 | A failed or partial scan shows `phantomTrace` with a banner and Rescan, with stage options disabled |

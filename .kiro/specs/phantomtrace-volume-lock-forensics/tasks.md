@@ -334,12 +334,96 @@ Conventions that apply to every task:
 - [x] 20. Final checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
+- [x] 21. Volume picker and app menu (Requirement 19, design Component 8a)
+  - [x] 21.1 Implement `VolumeListEntry` and pure `VolumeLister.list`
+    - In `Sources/PhantomTraceCore/Mounts/`: `VolumeListEntry` (canonical `mountPoint`, non-empty `displayName`, `isRemovable`, `isDiskImage`; `Equatable`, `Hashable`, `Sendable`) and `VolumeLister.list(_ mounts: [MountInfo]) -> [VolumeListEntry]` with no I/O
+    - Apply the design rules in order: drop `MountResolver.isProtected` mounts (reuse, do not reimplement); drop hidden/system mounts (types `devfs`/`autofs`/`nullfs`/`fdesc`/`procfs`, device nodes not starting with `/dev/`, `com.apple.TimeMachine.localsnapshots` and anything under it, mount points under `/private/var`, dot-prefixed last components); de-duplicate by lexically normalized mount point with the smallest `(volumeName, deviceNode)` winning; map with `displayName` falling back to the last path component; sort by display name (case-insensitive, then case-sensitive, byte-wise NFC) then mount point bytes
+    - Unknown or undeterminable attributes mean exclude; no force unwraps or unchecked indexing
+    - _Requirements: 19.3, 19.4, 19.5, 19.6, 19.7, 2.1, 2.5_
+
+  - [x] 21.2 Add `MountedVolumeEnumerating`, its live adapter, and a mock
+    - In `Sources/PhantomTraceCore/System/`: protocol `MountedVolumeEnumerating: Sendable` with `func enumerate() throws -> [MountInfo]`, in its own file
+    - Live adapter in a separate file using `FileManager.mountedVolumeURLs(includingResourceValuesForKeys:options: .skipHiddenVolumes)` with `volumeNameKey`, `volumeIsRemovableKey`, `volumeIsEjectableKey` (`isRemovable` is removable OR ejectable), or the existing mount table provider; any failure throws a `PhantomTraceError` and never traps
+    - Add a hand-written, deterministic, call-recording mock to `PhantomTraceTestSupport` that returns a canned list or throws
+    - _Requirements: 19.3, 19.9, 19.11_
+
+  - [x]* 21.3 Write property test for volume list exclusion
+    - **Property 23: Volume list exclusion**
+    - Generators: mount tables with protected paths, hidden types, non-`/dev/` nodes, snapshot directories, `/private/var` and dot-name mounts; at least 500 iterations
+    - **Validates: Requirements 19.4, 19.5, 2.1, 2.5**
+
+  - [x]* 21.4 Write property test for volume list completeness
+    - **Property 24: Volume list completeness**
+    - **Validates: Requirements 19.3, 19.6**
+
+  - [x]* 21.5 Write property test for volume list idempotence
+    - **Property 25: Volume list idempotence** (`list(mounts(list(M))) == list(M)` and `list(M + M) == list(M)`)
+    - **Validates: Requirements 19.6**
+
+  - [x]* 21.6 Write property test for order independence and determinism
+    - **Property 26: Volume list order independence and determinism** (shuffled permutations equal, result sorted by `(displayName, mountPoint.path)`)
+    - **Validates: Requirements 19.7**
+
+  - [x]* 21.7 Write property test for de-duplication
+    - **Property 27: Volume list de-duplication** (same mount point differing by trailing slash or `.` components)
+    - **Validates: Requirements 19.6**
+
+  - [x]* 21.8 Write unit tests for `VolumeLister`
+    - Cases: a Flash1GB-like removable volume is listed with `isRemovable == true`; a Time Machine local snapshot mount is excluded; a network share (`smbfs`/`nfs` with a non-`/dev/` node) is handled per the rules; a dot-name mount is excluded; `/`, `/System/Volumes/Data`, `/private/var/vm` excluded; empty `volumeName` falls back to the last path component; disk image flag preserved; empty input yields an empty list
+    - Add the enumerator mock cases (success and throwing)
+    - _Requirements: 19.3, 19.4, 19.5, 19.6, 19.7, 19.11_
+
+  - [x] 21.9 Build the App main menu in `PhantomTraceUI`
+    - Menu builder producing the PhantomTrace, File, and Window menus per the design table with responder-chain selectors and key equivalents (Cmd-H, Opt-Cmd-H, Cmd-Q, Cmd-O, Cmd-W, Cmd-M); set `NSApplication.windowsMenu`; no `.xib`
+    - File > Inspect... opens an `NSOpenPanel` (`canChooseFiles` and `canChooseDirectories` true, multiple selection false) and passes the chosen URL to `InspectRequestRouter.handle(url:)`; cancel does nothing; the panel performs no scan
+    - File > Inspect Volume submenu rebuilt from `[VolumeListEntry]` (same order as the window list; `representedObject` is the mount point path; tooltip and attributed secondary line; removable marker); empty list shows one disabled "No volumes available to inspect"
+    - `validateMenuItem`: Close Window disabled when no window is key; Inspect items disabled only while the router has a request in flight
+    - Keep the structure-building logic separate from the panel presentation so it is testable without launching the app; never create an `NSStatusItem`
+    - _Requirements: 19.1, 19.2, 19.3, 19.8, 19.10, 19.13, 19.15_
+
+  - [x] 21.10 Add the volume list view to the drop window
+    - Platinum-styled list beside the drop target: Monaco rows, 1px beveled frame, platinum selection highlight, square-edged Inspect buttons; each row shows volume name, middle-truncated mount point (full path in tooltip and accessibility value), and a text "Removable"/"Internal" label with a glyph (never color alone)
+    - Inspect button, double-click, and Return on a selected row call `InspectRequestRouter.handle(path: entry.mountPoint.path)`; the view never calls adapters or `MountResolver`
+    - VoiceOver: one element per row labelled "<name>, <mount point>, <removable|internal>", button label "Inspect <name>"; arrow keys navigate, Tab reaches list and buttons, Space/Return activates; Reduce Motion honored (no animated updates)
+    - Empty list shows "No volumes available to inspect" with the drop area and File > Inspect... still operable; enumeration failure keeps the previous list and shows "Couldn't read the list of volumes", cleared by the next successful enumeration; a router rejection shows its reason through `onRejected` and starts no scan
+    - _Requirements: 19.3, 19.8, 19.10, 19.11, 19.12, 19.13, 13.2_
+
+  - [x] 21.11 Implement the volume refresh controller
+    - In the UI/app layer: observe `NSWorkspace.didMountNotification`, `didUnmountNotification`, and `didRenameVolumeNotification` on `NSWorkspace.shared.notificationCenter`; coalesce with a 500 ms debounce that restarts on each event, using an injected clock/scheduler (no real sleeps in tests)
+    - Each refresh runs `MountedVolumeEnumerating.enumerate()` off the main actor, then `VolumeLister.list`, then swaps the list and rebuilds the submenu on the main actor, completing within 1000 ms of the last event; also refresh when the drop window is shown; on failure keep the previous list and report the failure state
+    - Provide a testable seam so the debounce logic can be driven by a fake clock and a fake notification source
+    - _Requirements: 19.9, 19.11_
+
+  - [x] 21.12 Wire the menu, list, and refresh into `AppDelegate`
+    - Set the main menu at launch, create the refresh controller with the live enumerator and clock, feed one list to both the window view and the submenu
+    - Launch with no input (no `phantomtrace://` URL, no opened file, no dropped item): show the drop window with the current list within 2000 ms of launch completing and start no scan
+    - Cmd-W closes the drop window without quitting and without cancelling a running inspect flow; File > Inspect... or reactivation with no visible window shows it again; Quit, Hide, and Minimize use the standard selectors
+    - _Requirements: 19.1, 19.2, 19.3, 19.9, 19.14, 19.15_
+
+  - [x]* 21.13 Write property test for picker selection equals drop
+    - **Property 28: Picker selection equals drop**
+    - Use a recording router/closure pair; for generated entries, selecting from the window list, the submenu item, and the open panel result each deliver the same `handle(path: e.mountPoint.path)` as a drop, exactly one request per selection, no adapter calls, no scan; at least 500 iterations
+    - **Validates: Requirements 19.2, 19.8, 12.1, 12.3**
+
+  - [x]* 21.14 Write unit and UI tests for the menu and picker
+    - **Property 29: No status-bar item**: inspect the built `NSMenu` structure (App, File, Window menus, key equivalents, Inspect Volume submenu, empty-state item) and assert no `NSStatusItem` is created by menu and window setup, without launching the app
+    - Test refresh debounce with the fake clock (burst yields one refresh; restart on each event), failure message set and cleared, empty-list message, router rejection reporting, Close Window validation
+    - **Validates: Requirements 19.1**
+    - _Requirements: 19.1, 19.9, 19.10, 19.11, 19.12, 19.13, 19.15_
+
+  - [x] 21.15 Update documentation and ProjectLog
+    - README: Status and usage for the volume picker and main menu; `docs/ManualQA.md`: Cmd-Q, Cmd-W, Cmd-O, Inspect Volume submenu, mount/unmount/rename refresh with a throwaway `.dmg`, VoiceOver and keyboard navigation, launch with no input, empty and failure messages; `docs/architecture.md`: summarize Component 8a and link to the design; `docs/ProjectLog.md`: work-log row (valid Kiro surface, "not verified on macOS" where true) plus a `D-NNN` decision entry clarifying that "no menu-bar item" means no `NSStatusItem`, not no main menu
+    - _Requirements: 19.1, 19.14, 19.15_
+
+- [x] 22. Final checkpoint - Volume picker and app menu
+  - Ensure all tests pass, ask the user if questions arise.
+
 ## Notes
 
 - Tasks marked with `*` are optional and can be skipped for a faster MVP
 - Each task references specific requirements for traceability
 - Checkpoints ensure incremental validation
-- Property tests validate the universal correctness properties from the design (Properties 1 to 22)
+- Property tests validate the universal correctness properties from the design (Properties 1 to 29)
 - Unit tests validate specific examples and edge cases
 - Provisional Requirement 18 criteria are labelled in code and listed in `docs/ManualQA.md` so they can be revised after user confirmation
 - Tasks 19.1 to 19.3 need information only the user can supply; record it when available and mark unknowns explicitly
@@ -360,7 +444,12 @@ Conventions that apply to every task:
     { "id": 8, "tasks": ["15.3"] },
     { "id": 9, "tasks": ["15.8", "15.9"] },
     { "id": 10, "tasks": ["18.1", "18.2"] },
-    { "id": 11, "tasks": ["19.1", "19.2", "19.3", "19.4"] }
+    { "id": 11, "tasks": ["19.1", "19.2", "19.3", "19.4"] },
+    { "id": 12, "tasks": ["21.1", "21.2"] },
+    { "id": 13, "tasks": ["21.3", "21.4", "21.5", "21.6", "21.7", "21.8", "21.9", "21.11"] },
+    { "id": 14, "tasks": ["21.10"] },
+    { "id": 15, "tasks": ["21.12"] },
+    { "id": 16, "tasks": ["21.13", "21.14", "21.15"] }
   ]
 }
 ```

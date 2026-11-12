@@ -54,6 +54,8 @@ let package = Package(
             name: "PhantomTracePropertyTests",
             dependencies: [
                 "PhantomTraceCore",
+                // For Property 28 (picker selection equals drop), which drives the AppKit list and menu.
+                "PhantomTraceUI",
                 "PhantomTraceTestSupport",
                 .product(name: "PropertyBased", package: "swift-property-based")
             ],

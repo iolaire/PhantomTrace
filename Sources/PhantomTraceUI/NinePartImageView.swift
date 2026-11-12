@@ -6,6 +6,10 @@ import AppKit
 public final class NinePartImageView: NSView {
     public static let platinum = NSColor(srgbRed: 0xDD / 255, green: 0xDD / 255, blue: 0xDD / 255, alpha: 1)
 
+    /// The gray at the center of the `window-frame` art (average of the center of
+    /// `window-frame@2x.png`, RGB 193/193/188), so the content area blends into the frame.
+    public static let artCenterGray = NSColor(srgbRed: 193 / 255, green: 193 / 255, blue: 188 / 255, alpha: 1)
+
     public var image: NSImage? {
         didSet { needsDisplay = true }
     }
@@ -14,7 +18,9 @@ public final class NinePartImageView: NSView {
         didSet { needsDisplay = true }
     }
 
-    /// Fill the interior with #DDDDDD (the art is opaque there, so the center is never drawn).
+    /// Paint the interior from the art's own center (stretched, smoothly interpolated) so the
+    /// content background is the same gray as the frame design with no visible seam. When the
+    /// center slice is unusable it falls back to a flat `artCenterGray` fill.
     public var fillsCenterWithPlatinum = true {
         didSet { needsDisplay = true }
     }
@@ -48,9 +54,11 @@ public final class NinePartImageView: NSView {
             bounds.fill()
             return
         }
-        if fillsCenterWithPlatinum {
-            Self.platinum.setFill()
+        if fillsCenterWithPlatinum, let center = slices.last {
+            Self.artCenterGray.setFill()
             interiorRect.fill()
+            image.draw(in: center.destination, from: center.source, operation: .sourceOver,
+                       fraction: 1, respectFlipped: true, hints: [.interpolation: NSImageInterpolation.high])
         }
         for slice in slices.dropLast() {
             image.draw(in: slice.destination, from: slice.source, operation: .sourceOver,

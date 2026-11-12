@@ -2278,6 +2278,168 @@
         "chatSessionId": "sess_f7177d78-73e8-4dc8-ba10-914d4a02ad5b",
         "timestamp": 1794430711029
       }
+    ],
+    "21.1 Implement `VolumeListEntry` and pure `VolumeLister.list`": [
+      {
+        "executionId": "37b6540e-e3ed-4885-bb8f-fc86b74673d5",
+        "chatSessionId": "sess_f7177d78-73e8-4dc8-ba10-914d4a02ad5b",
+        "timestamp": 1794432353259
+      },
+      {
+        "executionId": "37b6540e-e3ed-4885-bb8f-fc86b74673d5",
+        "chatSessionId": "sess_f7177d78-73e8-4dc8-ba10-914d4a02ad5b",
+        "timestamp": 1794432369509
+      },
+      {
+        "executionId": "077bd165-352c-4b51-ab27-05d7fb9e34b3",
+        "chatSessionId": "sess_f7177d78-73e8-4dc8-ba10-914d4a02ad5b",
+        "timestamp": 1794432390133
+      },
+      {
+        "executionId": "077bd165-352c-4b51-ab27-05d7fb9e34b3",
+        "chatSessionId": "sess_f7177d78-73e8-4dc8-ba10-914d4a02ad5b",
+        "timestamp": 1794432447668
+      }
+    ],
+    "21.2 Add `MountedVolumeEnumerating`, its live adapter, and a mock": [
+      {
+        "executionId": "37b6540e-e3ed-4885-bb8f-fc86b74673d5",
+        "chatSessionId": "sess_f7177d78-73e8-4dc8-ba10-914d4a02ad5b",
+        "timestamp": 1794432353335
+      },
+      {
+        "executionId": "37b6540e-e3ed-4885-bb8f-fc86b74673d5",
+        "chatSessionId": "sess_f7177d78-73e8-4dc8-ba10-914d4a02ad5b",
+        "timestamp": 1794432370605
+      },
+      {
+        "executionId": "077bd165-352c-4b51-ab27-05d7fb9e34b3",
+        "chatSessionId": "sess_f7177d78-73e8-4dc8-ba10-914d4a02ad5b",
+        "timestamp": 1794432448720
+      },
+      {
+        "executionId": "077bd165-352c-4b51-ab27-05d7fb9e34b3",
+        "chatSessionId": "sess_f7177d78-73e8-4dc8-ba10-914d4a02ad5b",
+        "timestamp": 1794432507756
+      }
+    ],
+    "21.9 Build the App main menu in `PhantomTraceUI`": [
+      {
+        "executionId": "37b6540e-e3ed-4885-bb8f-fc86b74673d5",
+        "chatSessionId": "sess_f7177d78-73e8-4dc8-ba10-914d4a02ad5b",
+        "timestamp": 1794432353400
+      },
+      {
+        "executionId": "077bd165-352c-4b51-ab27-05d7fb9e34b3",
+        "chatSessionId": "sess_f7177d78-73e8-4dc8-ba10-914d4a02ad5b",
+        "timestamp": 1794432512174
+      },
+      {
+        "executionId": "077bd165-352c-4b51-ab27-05d7fb9e34b3",
+        "chatSessionId": "sess_f7177d78-73e8-4dc8-ba10-914d4a02ad5b",
+        "timestamp": 1794433570849
+      }
+    ],
+    "21.10 Add the volume list view to the drop window": [
+      {
+        "executionId": "37b6540e-e3ed-4885-bb8f-fc86b74673d5",
+        "chatSessionId": "sess_f7177d78-73e8-4dc8-ba10-914d4a02ad5b",
+        "timestamp": 1794432353448
+      }
+    ],
+    "21.11 Implement the volume refresh controller": [
+      {
+        "executionId": "37b6540e-e3ed-4885-bb8f-fc86b74673d5",
+        "chatSessionId": "sess_f7177d78-73e8-4dc8-ba10-914d4a02ad5b",
+        "timestamp": 1794432353468
+      },
+      {
+        "executionId": "077bd165-352c-4b51-ab27-05d7fb9e34b3",
+        "chatSessionId": "sess_f7177d78-73e8-4dc8-ba10-914d4a02ad5b",
+        "timestamp": 1794432513194
+      },
+      {
+        "executionId": "077bd165-352c-4b51-ab27-05d7fb9e34b3",
+        "chatSessionId": "sess_f7177d78-73e8-4dc8-ba10-914d4a02ad5b",
+        "timestamp": 1794433571581
+      }
+    ],
+    "21.12 Wire the menu, list, and refresh into `AppDelegate`": [
+      {
+        "executionId": "37b6540e-e3ed-4885-bb8f-fc86b74673d5",
+        "chatSessionId": "sess_f7177d78-73e8-4dc8-ba10-914d4a02ad5b",
+        "timestamp": 1794432353488
+      }
+    ],
+    "21.15 Update documentation and ProjectLog": [
+      {
+        "executionId": "37b6540e-e3ed-4885-bb8f-fc86b74673d5",
+        "chatSessionId": "sess_f7177d78-73e8-4dc8-ba10-914d4a02ad5b",
+        "timestamp": 1794432353524
+      }
+    ],
+    "22. Final checkpoint - Volume picker and app menu": [
+      {
+        "executionId": "37b6540e-e3ed-4885-bb8f-fc86b74673d5",
+        "chatSessionId": "sess_f7177d78-73e8-4dc8-ba10-914d4a02ad5b",
+        "timestamp": 1794432353545
+      }
+    ],
+    "21.3 Write property test for volume list exclusion": [
+      {
+        "executionId": "37b6540e-e3ed-4885-bb8f-fc86b74673d5",
+        "chatSessionId": "sess_f7177d78-73e8-4dc8-ba10-914d4a02ad5b",
+        "timestamp": 1794432357901
+      }
+    ],
+    "21.4 Write property test for volume list completeness": [
+      {
+        "executionId": "37b6540e-e3ed-4885-bb8f-fc86b74673d5",
+        "chatSessionId": "sess_f7177d78-73e8-4dc8-ba10-914d4a02ad5b",
+        "timestamp": 1794432358732
+      }
+    ],
+    "21.5 Write property test for volume list idempotence": [
+      {
+        "executionId": "37b6540e-e3ed-4885-bb8f-fc86b74673d5",
+        "chatSessionId": "sess_f7177d78-73e8-4dc8-ba10-914d4a02ad5b",
+        "timestamp": 1794432359908
+      }
+    ],
+    "21.6 Write property test for order independence and determinism": [
+      {
+        "executionId": "37b6540e-e3ed-4885-bb8f-fc86b74673d5",
+        "chatSessionId": "sess_f7177d78-73e8-4dc8-ba10-914d4a02ad5b",
+        "timestamp": 1794432361184
+      }
+    ],
+    "21.7 Write property test for de-duplication": [
+      {
+        "executionId": "37b6540e-e3ed-4885-bb8f-fc86b74673d5",
+        "chatSessionId": "sess_f7177d78-73e8-4dc8-ba10-914d4a02ad5b",
+        "timestamp": 1794432361920
+      }
+    ],
+    "21.8 Write unit tests for `VolumeLister`": [
+      {
+        "executionId": "37b6540e-e3ed-4885-bb8f-fc86b74673d5",
+        "chatSessionId": "sess_f7177d78-73e8-4dc8-ba10-914d4a02ad5b",
+        "timestamp": 1794432363100
+      }
+    ],
+    "21.13 Write property test for picker selection equals drop": [
+      {
+        "executionId": "37b6540e-e3ed-4885-bb8f-fc86b74673d5",
+        "chatSessionId": "sess_f7177d78-73e8-4dc8-ba10-914d4a02ad5b",
+        "timestamp": 1794432364297
+      }
+    ],
+    "21.14 Write unit and UI tests for the menu and picker": [
+      {
+        "executionId": "37b6540e-e3ed-4885-bb8f-fc86b74673d5",
+        "chatSessionId": "sess_f7177d78-73e8-4dc8-ba10-914d4a02ad5b",
+        "timestamp": 1794432365107
+      }
     ]
   }
 }

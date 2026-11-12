@@ -12,13 +12,18 @@ public struct PhantomControls: Equatable, Sendable {
     /// Eject plus the Finder note, shown while the volume is still mounted (PROVISIONAL, Req 18.21, 18.23).
     public var ejectVisible: Bool
     public var ejectEnabled: Bool
+    /// Go Back in `phantomTrace`, returning to `cannotPutAway` (owner decision 2026-11-12,
+    /// replacing the provisional "no way back" of Req 18.15). Only while the volume is Blocked by
+    /// a complete scan and nothing is running.
+    public var goBackEnabled: Bool
     public init(
         enabledStages: Set<ResolutionStage> = [],
         handleMyselfEnabled: Bool = false,
         proceedEnabled: Bool = false,
         rescanEnabled: Bool = false,
         ejectVisible: Bool = false,
-        ejectEnabled: Bool = false
+        ejectEnabled: Bool = false,
+        goBackEnabled: Bool = false
     ) {
         self.enabledStages = enabledStages
         self.handleMyselfEnabled = handleMyselfEnabled
@@ -26,6 +31,7 @@ public struct PhantomControls: Equatable, Sendable {
         self.rescanEnabled = rescanEnabled
         self.ejectVisible = ejectVisible
         self.ejectEnabled = ejectEnabled
+        self.goBackEnabled = goBackEnabled
     }
     /// Stages that have a possible target among the current user's own locks.
     ///
@@ -67,6 +73,7 @@ public struct PhantomControls: Equatable, Sendable {
                 controls.enabledStages = applicableStages(locks: model.locks, currentUser: currentUser)
                 controls.handleMyselfEnabled = true
                 controls.proceedEnabled = isSelectable(model.choice, in: controls)
+                controls.goBackEnabled = !model.locks.isEmpty && !model.isStageRunning
             }
         case .volumeReleased:
             controls.ejectVisible = model.volumeStillMounted

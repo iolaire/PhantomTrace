@@ -35,7 +35,8 @@ Platinum Retro Gothic: a System 7 / Mac OS 9 platinum alert window (pinstripe ti
 The code for every task in the master spec's build order is written (Core library, live adapters, `phantomtrace` CLI, AppKit app, Quick Action bundle, bundling script). What has and has not been checked:
 
 - Verified on macOS during development: `swift build`, targeted `swift test` runs (unit and property tests), `swiftlint --strict`, the bundler (`Scripts/make-app.sh`) and its shell test, the Quick Action installer shell test, and a local-only integration test that attaches a throwaway disk image. See [docs/ProjectLog.md](docs/ProjectLog.md) for what was run for each change.
-- **Not verified:** the app has never been launched, so no window has been seen on screen. The three-window flow end to end, the Finder Quick Action in Finder, the drop target, VoiceOver, and Reduce Motion are untested. The 100 ms main-actor bound is not measured. Notarization has not been attempted.
+- The app has been launched by the owner and the lock windows were checked as offscreen renders. The app now has a main menu (Quit Cmd-Q, Close Window Cmd-W, Inspect... Cmd-O, File > Inspect Volume) and a drop window that lists mounted volumes with an Inspect button each (Requirement 19); these are covered by unit and property tests.
+- **Not verified:** the new drop window with its volume list has not been seen on screen. The three-window flow end to end, the Finder Quick Action in Finder, the drop target, VoiceOver, and Reduce Motion are untested. The 100 ms main-actor bound is not measured. Notarization has not been attempted.
 - Several behaviors are provisional and await the owner's confirmation; see [docs/architecture.md](docs/architecture.md#provisional-behaviors) and the known gaps in [docs/SubmissionChecklist.md](docs/SubmissionChecklist.md).
 - No screenshots, demo video, or app icon exist yet.
 
@@ -87,7 +88,9 @@ Scripts/make-app.sh
 open build/PhantomTrace.app
 ```
 
-`make-app.sh` runs `swift build` for `PhantomTraceApp`, assembles the bundle in a staging directory, signs it with the hardened runtime, runs `codesign --verify --strict`, and replaces `build/PhantomTrace.app` only if that passes. On failure it prints the failed step to standard error, exits non-zero, and leaves an existing bundle unchanged. Set `SIGN_IDENTITY` to use a real identity instead of ad-hoc. The script does not notarize. The bundle has been built and verified; it has not been launched (see Status).
+`make-app.sh` runs `swift build` for `PhantomTraceApp`, assembles the bundle in a staging directory, signs it with the hardened runtime, runs `codesign --verify --strict`, and replaces `build/PhantomTrace.app` only if that passes. On failure it prints the failed step to standard error, exits non-zero, and leaves an existing bundle unchanged. Set `SIGN_IDENTITY` to use a real identity instead of ad-hoc. The script does not notarize. The bundle has been built, verified, and launched (see Status).
+
+Opened with no file or URL, the app shows the drop window: drop a volume or folder on the left, or pick a mounted volume from the list on the right and choose Inspect (or press Return). The same volumes are under File > Inspect Volume, and File > Inspect... (Cmd-O) chooses any file, folder, or volume. Protected and system volumes are never listed. The list refreshes when a volume is mounted, unmounted, or renamed. Cmd-W closes the window without quitting; click the Dock icon to bring it back. Quit with Cmd-Q.
 
 ### Finder Quick Action
 

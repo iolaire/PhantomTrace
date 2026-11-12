@@ -11,6 +11,9 @@ public final class PhantomChoiceControl: NSView {
     public static let offeredStages: [ResolutionStage] = [.egressShells, .gracefulRequest, .banishLocks]
     public static let headerTitle = "Let PhantomTrace act"
     public static let handleMyselfTitle = "I'll deal with these processes myself"
+    /// Shown under Banish Locks at all times; the word "Beware" carries the warning, not color alone.
+    public static let banishWarning =
+        "Beware: this force-stops programs. Unsaved changes to open files may be lost forever."
 
     /// Called with the option the user clicked. Never called for a disabled option.
     public var onSelect: ((PhantomChoice) -> Void)?
@@ -18,6 +21,7 @@ public final class PhantomChoiceControl: NSView {
     private let header = NSTextField(labelWithString: PhantomChoiceControl.headerTitle)
     private var stageButtons: [ResolutionStage: NSButton] = [:]
     private let handleMyselfButton: NSButton
+    private let banishWarningLabel = NSTextField(wrappingLabelWithString: PhantomChoiceControl.banishWarning)
     private let stack = NSStackView()
 
     public init() {
@@ -40,10 +44,10 @@ public final class PhantomChoiceControl: NSView {
             stack.addArrangedSubview(button)
             stack.setCustomSpacing(6, after: button)
         }
+        addBanishWarning()
         handleMyselfButton.target = self
         handleMyselfButton.action = #selector(handleMyselfClicked(_:))
         stack.addArrangedSubview(handleMyselfButton)
-        stack.setCustomSpacing(12, after: stageButtons[.banishLocks] ?? header)
         addSubview(stack)
         NSLayoutConstraint.activate([
             stack.leadingAnchor.constraint(equalTo: leadingAnchor),
@@ -59,6 +63,23 @@ public final class PhantomChoiceControl: NSView {
     @available(*, unavailable)
     public required init?(coder: NSCoder) {
         preconditionFailure("PhantomChoiceControl is created in code only")
+    }
+
+    /// Indented under the Banish Locks option; dark red reads on the gray frame (about 7:1).
+    private func addBanishWarning() {
+        banishWarningLabel.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
+        banishWarningLabel.textColor = NSColor(srgbRed: 0.5, green: 0, blue: 0, alpha: 1)
+        banishWarningLabel.setAccessibilityLabel(Self.banishWarning)
+        let indent = NSStackView(views: [banishWarningLabel])
+        indent.edgeInsets = NSEdgeInsets(top: 0, left: 20, bottom: 0, right: 0)
+        stack.addArrangedSubview(indent)
+        if let banish = stageButtons[.banishLocks] {
+            stack.setCustomSpacing(2, after: banish)
+            banish.setAccessibilityHelp(Self.banishWarning)
+        }
+        stack.setCustomSpacing(12, after: indent)
+        // Narrow enough to wrap before the lower-right illustration.
+        banishWarningLabel.preferredMaxLayoutWidth = 340
     }
 
     /// Title shown for a stage option.
@@ -85,8 +106,9 @@ public final class PhantomChoiceControl: NSView {
             button.setAccessibilityLabel(
                 applicable ? Self.title(for: stage) : "\(Self.title(for: stage)), unavailable"
             )
+            let help = stage == .banishLocks ? Self.banishWarning : nil
             button.setAccessibilityHelp(
-                applicable ? nil : "No process you own can be handled by this stage."
+                applicable ? help : "No process you own can be handled by this stage."
             )
             button.toolTip = applicable ? nil : "Not applicable to the current locks."
         }

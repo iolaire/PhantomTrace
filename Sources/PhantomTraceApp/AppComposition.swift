@@ -19,6 +19,21 @@ final class ReviewerBridge: StageReviewing {
 /// The app opens no network connections (Requirements 15.3, 15.5).
 @MainActor
 enum AppComposition {
+    /// The volume picker's refresh: live enumerator, real clock, `NSWorkspace` events. Requirement 19.9.
+    static func makeVolumeRefresh(
+        onChange: @escaping @MainActor (VolumeRefreshState) -> Void
+    ) -> VolumeRefreshController {
+        let runner = LiveProcessRunner()
+        let fileSystem = LiveFileSystemProbe()
+        return VolumeRefreshController(
+            enumerator: LiveMountedVolumeEnumerator(
+                mountTable: LiveMountTable(runner: runner, fileSystem: fileSystem)
+            ),
+            clock: SystemClock(),
+            source: WorkspaceVolumeEventSource(),
+            onChange: onChange
+        )
+    }
     static func makeWindowController() -> LockWindowController {
         let runner = LiveProcessRunner()
         let fileSystem = LiveFileSystemProbe()

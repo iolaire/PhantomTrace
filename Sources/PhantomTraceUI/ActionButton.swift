@@ -7,7 +7,7 @@ import PhantomTraceCore
 @MainActor
 public final class ActionButton: NSButton {
     private let spinner = NSProgressIndicator()
-    private let idleTitle: String
+    private var idleTitle: String
     private let busyTitle: String
 
     public init(title: String, busyTitle: String, target: AnyObject?, action: Selector?) {
@@ -62,9 +62,23 @@ public final class ActionButton: NSButton {
         spinner.isHidden = !isBusy
     }
 
-    /// Proceed in `cannotPutAway` and `phantomTrace`. Visible text stays "Proceed".
+    /// Proceed text in `cannotPutAway`: it opens the Phantom Trace.
+    public static let summonTitle = "Summon the Phantom Trace"
+    /// Proceed text in `phantomTrace`: it runs the chosen option, then rescans.
+    public static let proceedTitle = "Proceed, if you dare"
+    public static let proceedBusyTitle = "Conjuring..."
+    public static let goBackTitle = "Retreat to the Shadows"
+
+    /// Proceed in `cannotPutAway` and `phantomTrace`; the text follows the window (`updateProceed`).
     public static func proceed(target: AnyObject?, action: Selector?) -> ActionButton {
-        ActionButton(title: "Proceed", busyTitle: "Working...", target: target, action: action)
+        ActionButton(title: summonTitle, busyTitle: proceedBusyTitle, target: target, action: action)
+    }
+
+    /// Go Back in `phantomTrace`, returning to `cannotPutAway`. It never runs a scan or a stage.
+    public static func goBack(target: AnyObject?, action: Selector?) -> ActionButton {
+        let button = ActionButton(title: goBackTitle, busyTitle: goBackTitle, target: target, action: action)
+        button.setAccessibilityHelp("Returns to the Cannot Put Away window. Nothing is scanned or stopped.")
+        return button
     }
 
     /// Eject in `volumeReleased`.
@@ -72,10 +86,24 @@ public final class ActionButton: NSButton {
         ActionButton(title: "Eject", busyTitle: "Ejecting...", target: target, action: action)
     }
 
-    /// Updates Proceed from the model (Requirements 13.5, 18.14).
+    /// Updates Proceed from the model (Requirements 13.5, 18.14). The spooky text is paired with
+    /// help text that says plainly what the button does.
     public func updateProceed(from model: WindowModel) {
+        if model.window == .phantomTrace {
+            idleTitle = Self.proceedTitle
+            setAccessibilityHelp("Runs the option you chose, then scans the volume again.")
+        } else {
+            idleTitle = Self.summonTitle
+            setAccessibilityHelp("Shows which programs are holding the volume.")
+        }
         apply(enabled: model.controls.proceedEnabled, busy: model.isStageRunning)
         isHidden = model.window == nil || model.window == .volumeReleased
+    }
+
+    /// Updates Go Back: shown only in `phantomTrace`, hidden while a stage runs.
+    public func updateGoBack(from model: WindowModel) {
+        apply(enabled: model.controls.goBackEnabled, busy: false)
+        isHidden = model.window != .phantomTrace || model.isStageRunning
     }
 
     /// Updates Eject from the model (Requirements 18.21, 18.24).

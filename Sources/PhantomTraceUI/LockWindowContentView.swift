@@ -6,9 +6,27 @@ import PhantomTraceCore
 /// Requirements 2.4, 2.5, 18.6, 18.10, 18.11, 18.13, 18.15, 18.20, 18.21, 18.23, 18.24.
 @MainActor
 public final class LockWindowContentView: NSView {
-    public static let preferredSize = NSSize(width: 620, height: 560)
+    /// Size of the Platinum window itself (the frame art and everything inside it).
+    public static let chromeSize = NSSize(width: 760, height: 600)
+    /// Ghost size; the sprite is 115 x 128 at 1x and ships a 2x file, so this stays sharp.
+    static let ghostSize = NSSize(width: 153, height: 170)
+    /// About a third of the ghost hangs past the window's right edge, over transparency.
+    static let ghostOverhang: CGFloat = 51
+    /// Ghost top, measured down from the window top: just below the title bar.
+    static let ghostTop: CGFloat = 40
+    /// Box for the window illustration (shackled volume, CRT, shattered chains).
+    static let illustrationBox: CGFloat = 150
+    /// Gap between the illustration and the inner edges of the right and bottom ribbons in the
+    /// art (those edges sit about 70 pt and 74 pt from the window's right and bottom edges).
+    static let illustrationRightInset: CGFloat = 78
+    static let illustrationBottomInset: CGFloat = 78
+    /// Right padding the footer keeps so its buttons stay left of the illustration.
+    static let footerClearance: CGFloat = 106
+    /// The NSWindow size: the chrome plus the transparent strip the ghost overhangs.
+    public static let preferredSize = NSSize(width: chromeSize.width + ghostOverhang, height: chromeSize.height)
 
     public var onProceed: (() -> Void)?
+    public var onGoBack: (() -> Void)?
     public var onEject: ((_ forced: Bool) -> Void)?
     public var onRescan: (() -> Void)?
     public var onSelect: ((PhantomChoice) -> Void)?
@@ -22,6 +40,7 @@ public final class LockWindowContentView: NSView {
     public let overlay = ScanningOverlayView()
     public let proceedButton = ActionButton.proceed(target: nil, action: nil)
     public let ejectButton = ActionButton.eject(target: nil, action: nil)
+    public let goBackButton = ActionButton.goBack(target: nil, action: nil)
     public let forceButton = NSButton(title: "Force Unmount...", target: nil, action: nil)
 
     private let sprites: SpriteLoader
@@ -30,6 +49,14 @@ public final class LockWindowContentView: NSView {
     private let ghostView = NSImageView()
     private let messageLabel = NSTextField(wrappingLabelWithString: "")
     private let noteLabel = NSTextField(wrappingLabelWithString: "")
+    /// Keeps the lock table above the illustration; re-activated whenever the table is shown,
+    /// because a stack view drops constraints of views it detaches while hidden.
+    private var tableClearance: NSLayoutConstraint?
+    /// Full-width rows of the content stack and their edge constraints, re-activated after a
+    /// hidden row is re-attached by the stack view.
+    private var rowViews: [NSView] = []
+    private var rowEdges: [ObjectIdentifier: [NSLayoutConstraint]] = [:]
+    private weak var contentStack: NSStackView?
 
     public init(resourceDirectory: URL? = Bundle.main.resourceURL) {
         let fonts = FontProvider(resourceDirectory: resourceDirectory)
@@ -71,6 +98,7 @@ public final class LockWindowContentView: NSView {
             lockTable.update(model: model)
             choiceControl.update(from: model)
         }
+        needsUpdateConstraints = true
         let banner = isTrace ? model.banner : nil
         bannerView.update(
             banner: banner,
@@ -79,6 +107,7 @@ public final class LockWindowContentView: NSView {
         )
         failedList.update(list: isTrace ? model.failedActions : FailedActionList())
         proceedButton.updateProceed(from: model)
+        goBackButton.updateGoBack(from: model)
         ejectButton.updateEject(from: model)
         let showEject = window == .volumeReleased && model.controls.ejectVisible
         forceButton.isHidden = !showEject
@@ -107,6 +136,34 @@ public final class LockWindowContentView: NSView {
         ejectButton.motion = policy
     }
 
+    override public func updateConstraints() {
+        let tableAttached = !lockTable.isHidden && lockTable.superview != nil
+        if tableAttached, tableClearance?.isActive != true {
+            let clearance = lockTable.bottomAnchor.constraint(
+                lessThanOrEqualTo: illustrationView.topAnchor, constant: -8)
+            clearance.priority = .defaultHigh
+            clearance.isActive = true
+            tableClearance = clearance
+        }
+        attachRowEdges()
+        super.updateConstraints()
+    }
+
+    /// Pins each attached row to the stack's leading and trailing edges (12 pt inside).
+    private func attachRowEdges() {
+        guard let stack = contentStack else { return }
+        for row in rowViews where row.superview === stack {
+            let key = ObjectIdentifier(row)
+            if let edges = rowEdges[key], edges.allSatisfy(\.isActive) { continue }
+            let edges = [
+                row.leadingAnchor.constraint(equalTo: stack.leadingAnchor, constant: 12),
+                row.trailingAnchor.constraint(equalTo: stack.trailingAnchor, constant: -12)
+            ]
+            NSLayoutConstraint.activate(edges)
+            rowEdges[key] = edges
+        }
+    }
+
     private func image(named name: String) -> NSImage {
         if let cached = imageCache[name] { return cached }
         let loaded = sprites.image(named: name)
@@ -115,6 +172,8 @@ public final class LockWindowContentView: NSView {
     }
 
     @objc private func proceedPressed(_ sender: Any?) { onProceed?() }
+
+    @objc private func goBackPressed(_ sender: Any?) { onGoBack?() }
 
     @objc private func ejectPressed(_ sender: Any?) {
         onEject?(NSEvent.modifierFlags.contains(.option))
@@ -127,22 +186,19 @@ public final class LockWindowContentView: NSView {
     private func build() {
         chrome.translatesAutoresizingMaskIntoConstraints = false
         addSubview(chrome)
-        pin(chrome, to: self)
-        chrome.closeBox.target = self
-        chrome.closeBox.action = #selector(closePressed(_:))
-        proceedButton.target = self
-        proceedButton.action = #selector(proceedPressed(_:))
-        ejectButton.target = self
-        ejectButton.action = #selector(ejectPressed(_:))
-        forceButton.target = self
-        forceButton.action = #selector(forcePressed(_:))
-        forceButton.setAccessibilityLabel("Force unmount, advanced")
-        bannerView.onRescan = { [weak self] in self?.onRescan?() }
-        choiceControl.onSelect = { [weak self] choice in self?.onSelect?(choice) }
+        NSLayoutConstraint.activate([
+            chrome.leadingAnchor.constraint(equalTo: leadingAnchor),
+            chrome.topAnchor.constraint(equalTo: topAnchor),
+            chrome.bottomAnchor.constraint(equalTo: bottomAnchor),
+            chrome.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -Self.ghostOverhang)
+        ])
+        connectControls()
         noteLabel.textColor = .darkGray
         for imageView in [illustrationView, ghostView] {
             imageView.imageScaling = .scaleProportionallyUpOrDown
+            imageView.translatesAutoresizingMaskIntoConstraints = false
         }
+        placeIllustration()
         let stack = makeStack()
         stack.translatesAutoresizingMaskIntoConstraints = false
         chrome.contentView.addSubview(stack)
@@ -150,35 +206,80 @@ public final class LockWindowContentView: NSView {
         chrome.contentView.addSubview(overlay)
         pin(stack, to: chrome.contentView)
         pin(overlay, to: chrome.contentView)
+        placeGhost()
+    }
+
+    private func connectControls() {
+        chrome.closeBox.target = self
+        chrome.closeBox.action = #selector(closePressed(_:))
+        proceedButton.target = self
+        proceedButton.action = #selector(proceedPressed(_:))
+        goBackButton.target = self
+        goBackButton.action = #selector(goBackPressed(_:))
+        ejectButton.target = self
+        ejectButton.action = #selector(ejectPressed(_:))
+        forceButton.target = self
+        forceButton.action = #selector(forcePressed(_:))
+        forceButton.setAccessibilityLabel("Force unmount, advanced")
+        bannerView.onRescan = { [weak self] in self?.onRescan?() }
+        choiceControl.onSelect = { [weak self] choice in self?.onSelect?(choice) }
+    }
+
+    /// Lower right, above and left of the ribbon corner, behind the content (composed reference).
+    private func placeIllustration() {
+        chrome.addSubview(illustrationView, positioned: .below, relativeTo: chrome.contentView)
+        NSLayoutConstraint.activate([
+            illustrationView.widthAnchor.constraint(equalToConstant: Self.illustrationBox),
+            illustrationView.heightAnchor.constraint(equalToConstant: Self.illustrationBox),
+            illustrationView.trailingAnchor.constraint(equalTo: chrome.trailingAnchor,
+                                                       constant: -Self.illustrationRightInset),
+            illustrationView.bottomAnchor.constraint(equalTo: chrome.bottomAnchor,
+                                                     constant: -Self.illustrationBottomInset)
+        ])
+    }
+
+    /// Top right, in front of everything, with about a third past the window's right edge.
+    private func placeGhost() {
+        addSubview(ghostView)
+        NSLayoutConstraint.activate([
+            ghostView.widthAnchor.constraint(equalToConstant: Self.ghostSize.width),
+            ghostView.heightAnchor.constraint(equalToConstant: Self.ghostSize.height),
+            ghostView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            ghostView.topAnchor.constraint(equalTo: topAnchor, constant: Self.ghostTop)
+        ])
     }
 
     private func makeStack() -> NSStackView {
-        let spacer = NSView()
-        spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        let header = NSStackView(views: [illustrationView, spacer, ghostView])
-        header.orientation = .horizontal
-        let footer = NSStackView(views: [noteLabel, forceButton, ejectButton, proceedButton])
+        let footerSpacer = NSView()
+        footerSpacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        let footer = NSStackView(
+            views: [goBackButton, noteLabel, footerSpacer, forceButton, ejectButton, proceedButton]
+        )
         footer.orientation = .horizontal
         footer.spacing = 8
-        noteLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        let stack = NSStackView(views: [header, messageLabel, lockTable, bannerView, failedList, choiceControl, footer])
+        footer.edgeInsets = NSEdgeInsets(top: 0, left: 0, bottom: 0, right: Self.footerClearance)
+        // The spacer takes the slack so the buttons stay right-aligned when the note is hidden.
+        noteLabel.setContentHuggingPriority(.defaultLow + 1, for: .horizontal)
+        // Takes the spare height so the footer sits at the bottom, beside the illustration. The
+        // lock table hugs less, so in Phantom_Trace the table grows first.
+        let bottomSpacer = NSView()
+        bottomSpacer.setContentHuggingPriority(NSLayoutConstraint.Priority(200), for: .vertical)
+        lockTable.setContentHuggingPriority(NSLayoutConstraint.Priority(150), for: .vertical)
+        let rows: [NSView] = [messageLabel, lockTable, bannerView, failedList, choiceControl, bottomSpacer, footer]
+        let stack = NSStackView(views: rows)
         stack.orientation = .vertical
         stack.alignment = .leading
+        stack.detachesHiddenViews = true
+        rowViews = [messageLabel, lockTable, bannerView, failedList, footer]
+        contentStack = stack
         stack.spacing = 8
         stack.edgeInsets = NSEdgeInsets(top: 8, left: 12, bottom: 12, right: 12)
-        var constraints = [
-            illustrationView.widthAnchor.constraint(lessThanOrEqualToConstant: 200),
-            illustrationView.heightAnchor.constraint(lessThanOrEqualToConstant: 120),
-            ghostView.widthAnchor.constraint(lessThanOrEqualToConstant: 72),
-            ghostView.heightAnchor.constraint(lessThanOrEqualToConstant: 72),
+        footer.setContentHuggingPriority(.required, for: .vertical)
+        needsUpdateConstraints = true
+        NSLayoutConstraint.activate([
             lockTable.heightAnchor.constraint(greaterThanOrEqualToConstant: 140),
             failedList.heightAnchor.constraint(lessThanOrEqualToConstant: 70)
-        ]
-        for view in [header, messageLabel, lockTable, bannerView, failedList, footer] {
-            constraints.append(view.leadingAnchor.constraint(equalTo: stack.leadingAnchor, constant: 12))
-            constraints.append(view.trailingAnchor.constraint(equalTo: stack.trailingAnchor, constant: -12))
-        }
-        NSLayoutConstraint.activate(constraints)
+        ])
         return stack
     }
 

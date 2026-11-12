@@ -42,6 +42,12 @@ rm /tmp/ptqa.dmg
 
 If detach reports busy, close the helper terminals first. Use `hdiutil detach -force` only on this throwaway image.
 
+If a test volume (such as `Flash1GB` or `PTQA`) disappears from the Finder sidebar **Locations** list after being dragged out or removed via context menu, restore it with:
+
+```
+Scripts/restore-finder-volume-sidebar.sh Flash1GB
+```
+
 ## 1. Build and bundle (Req 16)
 
 Command: `Scripts/make-app.sh` (output `build/PhantomTrace.app`).
@@ -92,6 +98,19 @@ Result to record: workflow works / NSServices works / both / neither. Decision s
 - [ ] Drag a non-file item (for example selected text): nothing happens and no crash.
 - [ ] Reopen the app from the Dock after closing the drop window: the drop window comes back.
 - [ ] VoiceOver reads a sensible label for the drop target.
+
+## 4a. Volume picker and main menu (Req 19)
+- [ ] Launch the app from Finder with no file: within 2 seconds the drop window opens with the volume list and no scan starts (19.14).
+- [ ] The list shows `PTQA` with its mount point and the word "Removable"; `/`, `/System/Volumes/...`, Time Machine snapshots, and dot-named mounts are absent (19.3 to 19.5).
+- [ ] File > Inspect Volume lists the same volumes in the same order; with no external volumes it shows one disabled "No volumes available to inspect" item (19.3, 19.13).
+- [ ] Inspect on the `PTQA` row, a double-click, and Return on the focused row each start one inspect, same as dropping the volume (19.8).
+- [ ] File > Inspect... (Cmd-O) opens a single-selection panel; Cancel does nothing; choosing `/Volumes/PTQA` starts an inspect (19.2).
+- [ ] Attach a second throwaway image, rename it in Finder, then detach it: the list and submenu update within about 1 second each time (19.9).
+- [ ] Detach `PTQA` and choose its row before the list refreshes, if you can: the rejection reason shows and no scan starts (19.12). Record "not exercised" if the refresh wins.
+- [ ] Keyboard: Tab reaches the list rows and each Inspect button, arrow keys move between rows, Space activates a focused Inspect button (19.10).
+- [ ] VoiceOver reads each row as "<name>, <mount point>, removable" or "internal", and each button as "Inspect <name>" (19.10).
+- [ ] Cmd-W closes the drop window without quitting and without stopping a running inspect; clicking the Dock icon shows it again (19.15).
+- [ ] Cmd-H hides, Cmd-M minimizes, Cmd-Q quits. No PhantomTrace item appears in the menu-bar status area (19.1).
 
 ## 5. Sprites, fonts, and the three windows (Req 13, 17, 18)
 
@@ -216,7 +235,7 @@ For each, check what the app does today and record the owner's decision. If the 
 |---|---|---|---|---|---|
 | P1 | 18.6 | During Idle, Resolving, and resolve-failed, no window content is shown; a resolve error shows only an alert | `LockWindowController.swift`, `LockWindowContentView.swift`, `DiagnosticCoordinator.swift` | Not run | Pending |
 | P2 | 18.7 | If the first scan runs longer than 500 ms, the frame with a Scanning_Overlay appears at 500 ms, not before | `ScanningOverlayView.swift`, `DiagnosticCoordinator.swift` | Not run | Pending |
-| P3 | 18.15 | The `phantomTrace` window has no control that goes back to `cannotPutAway` | no code label (by omission: no such control exists); see tasks 12.3 and 15.3 | Not run | Pending |
+| P3 | 18.15, 18.27-18.29 | "Retreat to the Shadows" in `phantomTrace` returns to `cannotPutAway` with the same locks, no scan, no signal; hidden while a stage runs | `DiagnosticCoordinator.goBack()`, `PhantomControls.goBackEnabled` | Not run | Decided 2026-11-12 (D-019): Go Back in `phantomTrace` only |
 | P4 | 18.16 | Proceed with "I'll deal with these processes myself" does a fresh rescan only and sends no signal | `DiagnosticCoordinator.swift` | Not run | Pending |
 | P5 | 18.21 | While mounted, `volumeReleased` shows an Eject button and a Finder-retry note | `PhantomControls.swift` | Not run | Pending |
 | P6 | 18.23 | After unmount, `volumeReleased` shows only the message and the Finder instruction, no Eject button | `PhantomControls.swift` | Not run | Pending |
@@ -226,7 +245,7 @@ Steps per item:
 
 - P1: Launch the app and wait: no window appears before a volume is chosen. Inspect a protected path (`/`): only the alert appears, with no empty frame. Inspect a path that does not exist via URL: same.
 - P2: Inspect a volume with a fast scan (small image): the frame should not flash before the result. For a slow scan (a volume with many files, or a debug build with an artificial delay), the frame with the overlay appears after about half a second. Note any flicker.
-- P3: In `phantomTrace`, look for any button, menu item, or shortcut that returns to the first window. There should be none. Closing the window and re-inspecting is the only way back to the start.
+- P3: In `phantomTrace`, choose "Retreat to the Shadows". The window returns to "CANNOT PUT AWAY" with no scan (no overlay) and `tail` and the shell still running. "Summon the Phantom Trace" shows the same locks again with no option selected. Start a stage and check the button is hidden while it runs. It never appears in `volumeReleased`.
 - P4: Select "I'll deal with these processes myself" and Proceed. Confirm via `ps` that `tail` and the shell are still running and the table refreshes (the rescan). Confirm the window stays in `phantomTrace` while locks remain.
 - P5: With zero locks and the volume mounted, check for the Eject button and the Finder note. Try the Finder retry as the note suggests.
 - P6: After the volume has unmounted, check that the Eject button is gone and the Finder instruction is shown.

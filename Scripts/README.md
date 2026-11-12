@@ -22,6 +22,7 @@ Scaffold verification:
 - `verify-scaffold.sh`: checks the repository against the scaffolding spec (required files, links, docs content, steering and hook shape).
 
 - `install-quick-action.sh`: installs the Finder Quick Action into `~/Library/Services`. Its shell test is `Tests/Scripts/install-quick-action-tests.sh` (temporary `HOME` only).
+- `restore-finder-volume-sidebar.sh`: restores a volume (defaults to `Flash1GB`, or pass a volume name like `Scripts/restore-finder-volume-sidebar.sh PTQA`) to the Finder sidebar **Locations** section if it was accidentally dragged out or hidden (`visibility = 1` in `com.apple.LSSharedFileList.FavoriteVolumes.sfl4`).
 
 ## Image tooling (Python)
 

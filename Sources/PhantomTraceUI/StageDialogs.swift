@@ -90,7 +90,7 @@ public enum StageDialogs {
         alert.alertStyle = .critical
         alert.messageText = "Force these processes to stop?"
         alert.informativeText = """
-            Unsaved work in these processes may be lost.
+            Unsaved work in these processes may be lost, including changes to files open on this volume.
 
             \(StageDialogText.banishTargets(plan, locks: locks))
             """

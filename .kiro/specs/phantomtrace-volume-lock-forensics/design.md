@@ -98,8 +98,10 @@ Three window states are confirmed. They are a presentation layer over the discov
 
 Content of each window (the content area of the mockups is empty; the app draws it):
 
-- `cannotPutAway`: a spooky message that the disk cannot be put away, a question asking whether to run a Phantom Trace, and one proceed button (and the close box).
-- `phantomTrace`: the lock table (Process Name, PID, User, Lock Category, File Path); a choice between "Let PhantomTrace act" (with the graduated stages Egress Shells, Graceful Request, Banish Locks to pick from) and "I'll deal with these processes myself"; and one proceed button. Proceed runs the chosen stage (if any, after the Safety_Policy preview and, for Banish Locks, explicit confirmation) and then always triggers a fresh rescan.
+- `cannotPutAway`: a spooky message that the disk cannot be put away, a question asking whether to run a Phantom Trace, and one proceed button reading "Summon the Phantom Trace" (and the close box).
+- `phantomTrace`: the lock table (Process Name, PID, User, Lock Category, File Path); a choice between "Let PhantomTrace act" (with the graduated stages Egress Shells, Graceful Request, Banish Locks to pick from) and "I'll deal with these processes myself"; one proceed button reading "Proceed, if you dare" (it reads "Conjuring..." while a stage runs); and a Go Back button reading "Retreat to the Shadows" at the footer's leading edge. Proceed runs the chosen stage (if any, after the Safety_Policy preview and, for Banish Locks, explicit confirmation) and then always triggers a fresh rescan. Under the Banish Locks option a small, indented, dark-red (sRGB 0.5, 0, 0) label reads "Beware: this force-stops programs. Unsaved changes to open files may be lost forever." The meaning is carried by the words, not by color alone, and the same text is the option's accessibility help (Requirement 18.32; the confirmation is Requirement 9.7). The Banish confirmation dialog states that unsaved changes may be lost, including changes to files open on this volume.
+- Go Back (owner decision, 2026-11-12; Requirements 18.15, 18.27, 18.28, 18.29, supersedes the earlier provisional "no control returns from `phantomTrace` to `cannotPutAway`"): appears only in the `phantomTrace` window (never in `cannotPutAway` or `volumeReleased`). Activating it returns to `cannotPutAway` with the same Lock_Records; it runs no scan, sends no signal, clears the Phantom_Choice selection, and clears the Proceeded_Flag. It is shown and enabled only when the window is `phantomTrace`, there is at least one lock, and no stage is running; it is hidden while a stage runs and ignored while any operation is in flight. Pressing Proceed in `cannotPutAway` afterwards shows `phantomTrace` again (no scan, as before). Rejected alternatives: Go Back also in `volumeReleased`; rescanning on Go Back. Implementation: Core `PhantomControls.goBackEnabled` and `DiagnosticCoordinator.goBack()`; UI `ActionButton.goBack`.
+- Button text: every button has spooky microcopy plus accessibility help that states plainly what it does (Requirement 18.31). Shipped help text: Go Back: "Returns to the Cannot Put Away window. Nothing is scanned or stopped."; Proceed in `cannotPutAway`: "Shows which programs are holding the volume."; Proceed in `phantomTrace`: "Runs the option you chose, then scans the volume again." Proceed labels are "Summon the Phantom Trace", "Proceed, if you dare", and "Conjuring..." while a stage runs (Requirement 18.30).
 - `volumeReleased`: a spooky message on how to proceed. If the volume is still mounted: an Eject button (runs Clean Handoff, Stage 4) together with a note that retrying Eject in Finder also works. If the volume is already unmounted: the message and instruction only, no Eject button.
 
 ```swift
@@ -132,6 +134,7 @@ stateDiagram-v2
     Hidden --> volumeReleased: scan finds zero locks
     Hidden --> phantomTrace: scan failed or partial (banner)
     cannotPutAway --> phantomTrace: proceed (Run Phantom Trace)
+    phantomTrace --> cannotPutAway: go back (no scan)
     phantomTrace --> phantomTrace: proceed, rescan still finds locks
     phantomTrace --> volumeReleased: proceed, rescan finds zero locks
     volumeReleased --> [*]: Eject succeeds, or closed
@@ -156,6 +159,8 @@ Mapping from discovery state to window:
 | Unmounting → Blocked (EBUSY) | `phantomTrace` | Newly found locks shown; ghost red |
 
 If the volume becomes unmounted at any time (the user ejected it in Finder, or it was removed), the next scan or mount-table check moves to `volumeReleased` with `volumeStillMounted = false`, from any window. Scan-in-progress never changes the window or ghost; it only sets `isScanning`.
+
+Go Back is an explicit user event, not a discovery transition: `DiagnosticCoordinator.goBack()` sets the window to `cannotPutAway` directly, keeps `locks`, sets `choice = nil`, and clears the Proceeded_Flag. The "current = phantomTrace" stickiness in `selectWindow` applies only to results of scans and stages, so it does not undo a Go Back. `PhantomControls.goBackEnabled` is true only when the window is `phantomTrace`, `locks` is non-empty, and no stage is running.
 
 Selection rule (pure, testable):
 
@@ -376,18 +381,18 @@ public protocol Unmounting {
 
 - Standard actions use the responder-chain selectors (`orderFrontStandardAboutPanel:`, `hide:`, `hideOtherApplications:`, `unhideAllApplications:`, `terminate:`, `performClose:`, `performMiniaturize:`, `arrangeInFront:`). `NSApplication.windowsMenu` is set to the Window menu so AppKit maintains it.
 - Inspect... opens an `NSOpenPanel` with `canChooseFiles`, `canChooseDirectories` both true, `allowsMultipleSelection` false, and `showsHiddenFiles` default. The chosen URL is passed to `InspectRequestRouter.handle(url:)`; cancelling does nothing. The panel only selects; it performs no scan itself.
-- Inspect Volume submenu is rebuilt from the current `[VolumeListEntry]` (same data as the window list). Each item title is the volume name with the mount point as a secondary line (`NSMenuItem.toolTip` and `attributedTitle`) and a removable/ejectable marker. An empty list shows one disabled item "No volumes to inspect". The item's `representedObject` is the mount-point path string.
+- Inspect Volume submenu is rebuilt from the current `[VolumeListEntry]` (same data as the window list). Each item title is the volume name with the mount point as a secondary line (`NSMenuItem.toolTip` and `attributedTitle`) and a removable/ejectable marker. An empty list shows one disabled item "No volumes available to inspect". The submenu lists the entries in the same order as the window list. The item's `representedObject` is the mount-point path string.
 - Menu validation (`validateMenuItem`): Close Window is disabled when no window is key. Inspect... and Inspect Volume stay enabled except while the router has a request in flight.
 - No `NSStatusItem` is created anywhere.
 
-**Volume list in the drop window**: the drop window (shown when the Dock icon is clicked with no windows open, and at launch when the app was opened directly with no URL or file input) shows, beside the drop target, a list of mounted volumes. Each row shows:
-- Volume name and mount point (middle-truncated per Property 19, full path in tooltip and accessibility value)
-- A removable/ejectable indicator (text label "Removable" / "Internal" plus a small glyph; never color alone)
+**Volume list in the drop window**: the drop window (shown when the Dock icon is clicked with no windows open, and at launch when the app was opened directly with no URL or file input) shows, beside the drop target, a list of mounted volumes. At launch with no input item (no `phantomtrace://` URL, no opened file, no dropped item), the window is shown with the current list within 2000 ms of launch completing and no scan starts. Cmd-W closes the window without quitting and without cancelling a running inspect flow; File > Inspect... or reactivation with no visible window can show it again. If the list is empty, the window shows "No volumes available to inspect" in place of the list and the drop area and File > Inspect... stay operable. Each row shows:
+- Volume name (the localized volume name reported by the file system for the mount point; if unavailable or empty, the last path component of the mount point) and mount point (middle-truncated per Property 19, full path in tooltip and accessibility value)
+- A removable/ejectable indicator (text label "Removable" for a mount the system reports as removable or ejectable, "Internal" otherwise, plus a small glyph; never color alone)
 - An "Inspect" button
 
 Selecting Inspect on a row, double-clicking the row, or pressing Return on a selected row calls `InspectRequestRouter.handle(path: entry.mountPoint.path)`, the same call a drop of that mount point makes. The list view and the menu never call adapters, never invoke `MountResolver` directly, and start no scan except the normal inspect flow that the router triggers after `InspectURLParser` accepts the request. A rejection (for example the volume disappeared) is reported through the router's existing `onRejected` path.
 
-**Refresh**: the app target observes `NSWorkspace.didMountNotification`, `NSWorkspace.didUnmountNotification`, and `NSWorkspace.didRenameVolumeNotification` on `NSWorkspace.shared.notificationCenter`. Each notification triggers one off-main-actor enumeration (`MountedVolumeEnumerating.enumerate()`), then `VolumeLister.list` runs on the result and the main actor swaps the list and rebuilds the submenu. Notifications are coalesced (a short debounce via an injected clock/scheduler) so a burst causes one refresh. The list also refreshes when the drop window is shown. Enumeration failure leaves the previous list in place and shows "Couldn't read the list of volumes" in the window; the drop target keeps working.
+**Refresh**: the app target observes `NSWorkspace.didMountNotification`, `NSWorkspace.didUnmountNotification`, and `NSWorkspace.didRenameVolumeNotification` on `NSWorkspace.shared.notificationCenter`. Each notification triggers one off-main-actor enumeration (`MountedVolumeEnumerating.enumerate()`), then `VolumeLister.list` runs on the result and the main actor swaps the list and rebuilds the submenu. Notifications are coalesced with a 500 ms debounce window that restarts on each event (via an injected clock/scheduler), so a burst causes one refresh, completed within 1000 ms after the last event. The list also refreshes when the drop window is shown. Enumeration failure leaves the previous list in place and shows "Couldn't read the list of volumes" in the window; the drop target keeps working; a later successful enumeration removes the message and shows the new list.
 
 **Accessibility**: each row is one accessibility element with label "<name>, <mount point>, <removable|internal>"; the Inspect button has label "Inspect <name>"; the list supports arrow-key navigation, Tab reaches the list and the buttons, Space/Return activates the focused button. All menu items have standard key equivalents. Reduce Motion is honored (no animated list updates).
 
@@ -422,7 +427,7 @@ public enum VolumeLister {
 
 **Failure behavior**: unknown or undeterminable attributes mean exclude (consistent with the deny-by-default rule in safety.md). Listing a volume is not approval to act on it; `SafetyPolicy` and `MountResolver` still gate everything after the request is routed.
 
-**Requirement 19 placeholder ("Volume picker and app menu")**: the numbers below are provisional and will be defined in `requirements.md` next; Properties 23-29 cite them.
+**Requirement 19 ("Volume picker and app menu")**: defined in `requirements.md`. Criteria 19.1-19.10 below are a summary and match the numbering there; 19.11 (enumeration failure), 19.12 (router rejection), 19.13 (empty list message), 19.14 (launch with no input), and 19.15 (Close Window) are additional criteria in `requirements.md`. Properties 23-29 cite these numbers.
 - 19.1 The app SHALL set a main menu (PhantomTrace, File, Window) and SHALL NOT create an `NSStatusItem`.
 - 19.2 File > Inspect... (Cmd-O) SHALL open a panel choosing files, folders, or volumes and route the choice through `InspectRequestRouter`.
 - 19.3 The drop window SHALL show a list of mounted volumes, each with name, mount point, removable indicator, and an Inspect button; the same list SHALL feed File > Inspect Volume.
@@ -442,7 +447,11 @@ public enum VolumeLister {
 
 **Responsibilities**:
 - Programmatic AppKit only: views, windows, and menus are built in code (no `.xib`/`.storyboard`, no SwiftUI previews)
-- Custom-drawn window chrome: pinstripe title bar, 1px beveled frames, platinum gray (#DDDDDD) background, square close/zoom boxes. Where reference art frames the window, it is drawn as a 9-slice or with a content cutout (see Asset Pipeline)
+- Custom-drawn window chrome: pinstripe title bar, 1px beveled frames, square close/zoom boxes. Flat non-art chrome keeps the pinstripe/bevel look. Where reference art frames the window, it is drawn as a 9-slice or with a content cutout (see Asset Pipeline)
+- Interior background (owner decision, 2026-11-12; replaces platinum #DDDDDD, Requirement 13.9): in art mode the content area is filled from the window art's own center slice (high-quality interpolation). When the art is missing, the fallback is a flat art-center gray, sRGB 193/193/188. The lock table is transparent (no table, scroll, or clip background, and no header corner square) so rows sit on the same gray (Requirement 13.9)
+- Close box: in art mode it is a transparent 25x25 pt overlay on the X square drawn in the frame art (at 11,11 from the window's top-left). It darkens on press and keeps a focus ring (Requirement 13.15)
+- Lock window layout (owner decision, 2026-11-12): the chrome is 760x600 pt. The NSWindow is non-opaque with a clear background and 51 pt wider than the chrome, so the Ghost_Mascot (153x170 pt, 40 pt from the top) sits near the top right with about one third outside the chrome over transparency, on all three windows. The illustration is a 150 pt box inset 78 pt from the chrome's right and bottom (above and left of the skull frame corner). The footer keeps 106 pt of right clearance and the lock table stays above the illustration. The lock window opens to the right of the main (drop) window, tops aligned, with a 10 pt gap; it is centered if the main window is not visible, and clamped to the screen's visible frame (Requirements 13.16-13.19: ghost placement, illustration placement, lock window placement, and the five-column fit)
+- Lock table columns: all five columns (Process Name, PID, User, Lock Category, File Path) fit the 760 pt chrome. File Path takes the remaining width and middle-truncates
 - Typography (see `docs/Assets.md`): table cells use Monaco, loaded by name from the system with `NSFont(name: "Monaco", size:)`, falling back to Menlo, then the system monospaced font. Monaco is never bundled. Titles use an optional bundled open-licensed bitmap title font (Chicago-style; not yet chosen), registered at launch from a bundle file with `CTFontManagerRegisterFontsForURL`. If that font file is absent or registration fails, titles use a system font. Apple font files (Monaco, Menlo, SF, Chicago) are never committed or bundled
 - The drop window's mounted-volume list (Component 8a) uses the same Platinum styling as the rest of the window: Monaco rows, beveled 1px list frame, platinum selection highlight, square-edged Inspect buttons
 - Table columns: Process Name, PID, User, Lock Category, File Path (with middle truncation and tooltip for full path)
@@ -497,7 +506,7 @@ graph LR
 - Source art stays in `docs/LookAndFeel/original/` and is never modified.
 - Transparent full-size PNGs are produced into `docs/LookAndFeel/use/` by `Scripts/make-transparent-pngs.py` (flood-fill from the border, per-image `SEAL_RADIUS_OVERRIDES`; proofs via `Scripts/make-proof-sheets.py`).
 - The app needs cropped 1x and 2x sprites exported from `use/` (full-size files are too large to ship). Naming is `name.png` and `name@2x.png`, kebab-case. Sprite loading composes an `NSImage` with both representations. The export script is a follow-up task and lives with the other Python tooling (pinned in `Scripts/requirements.txt`).
-- `window.png` is opaque inside the frame. The window frame is therefore drawn as a 9-slice (fixed corners and edges, with the center region left transparent or filled by the app with platinum `#DDDDDD`) or by a content cutout that clears the interior. Slice insets are recorded alongside the sprite and used by a `NinePartImageView` (or `NSImage.capInsets` with `resizingMode = .stretch`). Content such as the table and buttons is placed in the cutout rectangle.
+- `window.png` is opaque inside the frame. The window frame is therefore drawn as a 9-slice (fixed corners and edges, with the center region filled by the app from the art's own center slice, or flat art-center gray sRGB 193/193/188 when the art is missing; see Component 9) or by a content cutout that clears the interior. Slice insets are recorded alongside the sprite and used by a `NinePartImageView` (or `NSImage.capInsets` with `resizingMode = .stretch`). Content such as the table and buttons is placed in the cutout rectangle.
 
 ### Confirmed art-to-window mapping
 
@@ -534,7 +543,7 @@ Reduce Motion: each sprite is shown static with no glow animation. If a sprite i
   2. Which window shows a failed or partial scan (lsof error or timeout)? Provisional: PHANTOM TRACE with a failure banner, Rescan button, and stage choices disabled.
   3. When exactly does VOLUME RELEASED show the Eject button versus only the "retry in Finder" instruction? Provisional: Eject button plus a Finder-retry note while the volume is mounted; instruction only once it is unmounted.
   4. Does "I'll deal with these processes myself" need a wait or hint (for example, per-process steps)? Provisional: just the process list and a Rescan via the proceed button.
-  5. Can the user return from PHANTOM TRACE to CANNOT PUT AWAY? Provisional: no, close and reopen.
+  5. Can the user return from PHANTOM TRACE to CANNOT PUT AWAY? Resolved by owner decision (2026-11-12), superseding the earlier provisional answer ("no, close and reopen"): yes, through the Go Back button ("Retreat to the Shadows"), which runs no scan (Requirement 18.15).
 - Provenance and license of the look-and-feel art are recorded in [docs/Assets.md](../../../docs/Assets.md) (see also `docs/LookAndFeel/README.md`); its "To confirm" fields must be filled before submission.
 - Do a side-by-side check of the Kiro-inspired ghost mascot against the official Kiro ghost, and record the result and date in `docs/Assets.md`. If any pose looks too close, regenerate or replace it.
 - The Chicago-style bitmap title font is not chosen. It is optional: if one is picked, it needs an open license (for example SIL OFL), with its license file stored next to it and a row in `docs/Assets.md`. Without it, titles use a system font. Monaco is a system font and is not bundled.
@@ -1106,9 +1115,9 @@ For any window state, the ghost is yellow for `cannotPutAway`, red for `phantomT
 
 ### Property 22: Window state selection
 
-For any discovery state, `proceeded` flag, and current window: Clean, Unmounting, and Unmounted select `volumeReleased`; Blocked selects `cannotPutAway` before the user proceeds and `phantomTrace` afterwards; a failed or partial scan selects `phantomTrace`; Scanning leaves the window unchanged. `cannotPutAway` is reachable only from a first scan that found locks, and a rescan that finds locks never returns the user to `cannotPutAway`.
+For any discovery state, `proceeded` flag, and current window: Clean, Unmounting, and Unmounted select `volumeReleased`; Blocked selects `cannotPutAway` before the user proceeds and `phantomTrace` afterwards; a failed or partial scan selects `phantomTrace`; Scanning leaves the window unchanged. `cannotPutAway` is reachable from a first scan that found locks, and, by owner decision (2026-11-12), from the Go Back event in `phantomTrace` (Requirement 18.27; see Property 30). A rescan or stage result that finds locks never returns the user to `cannotPutAway`. The earlier statement that `cannotPutAway` is reachable only from a first scan is superseded for Go Back.
 
-**Validates: Requirements 10.3, 10.6, 13.6, 13.7, 13.8**
+**Validates: Requirements 10.3, 10.6, 13.6, 13.7, 13.8, 18.15, 18.27**
 
 ### Property 21: Argument-array fidelity
 
@@ -1156,7 +1165,13 @@ For any volume list entry `e`, selecting `e` from the drop-window list, the Insp
 
 The app's menu and window setup creates a main menu with App, File, and Window menus and creates no `NSStatusItem`.
 
-**Validates: Requirements 19.1, 19.9**
+**Validates: Requirements 19.1**
+
+### Property 30: Go Back
+
+For any coordinator state in which `PhantomControls.goBackEnabled` is true (window is `phantomTrace`, at least one lock, no stage running), `goBack()` makes the window `cannotPutAway`, leaves the Lock_Records unchanged, sets the Phantom_Choice to nil, clears the Proceeded_Flag, and makes no discovery call, no stage call, and no adapter call (no scan, no signal). A subsequent Proceed in `cannotPutAway` shows `phantomTrace` again without a scan. `goBackEnabled` is false in `cannotPutAway` and `volumeReleased`, when there are no locks, and while a stage runs; `goBack()` is ignored whenever it is false or any operation is in flight.
+
+**Validates: Requirements 18.15, 18.27, 18.28, 18.29**
 
 ## Error Handling
 

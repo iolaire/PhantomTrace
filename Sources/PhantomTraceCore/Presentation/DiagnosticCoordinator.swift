@@ -123,6 +123,18 @@ public actor DiagnosticCoordinator {
             return
         }
     }
+    /// The Go Back button in `phantomTrace`: returns to `cannotPutAway` with the same locks.
+    /// It runs no scan and sends no signal, and it clears the choice. Owner decision 2026-11-12,
+    /// replacing the provisional "no way back" of Req 18.15. Proceed then shows `phantomTrace`
+    /// again, and any later scan counts as proceeded, as before.
+    public func goBack() {
+        guard model.window == .phantomTrace, model.controls.goBackEnabled, !operationInFlight else { return }
+        proceeded = false
+        model.choice = nil
+        model.window = .cannotPutAway
+        refreshDerived()
+        publish()
+    }
     /// The Eject button: Clean Handoff (Requirement 18.22). `force` only after the advanced confirmation.
     public func eject(force: Bool = false) async {
         guard beginOperation() else { return }
@@ -370,25 +382,5 @@ extension DiagnosticCoordinator {
     }
     private func publish() {
         for continuation in subscribers.values { continuation.yield(model) }
-    }
-    private static func asPhantomTraceError(_ error: any Error, input: URL) -> PhantomTraceError {
-        if let known = error as? PhantomTraceError { return known }
-        return .notAMountPoint(input)  // an unknown resolver error is reported as an unresolvable input
-    }
-    /// Plain text for the Failure_Banner. Names the kind of failure and avoids paths at default detail.
-    static func describe(_ error: PhantomTraceError) -> String {
-        switch error {
-        case .notAMountPoint: return "the path is not on a mounted volume."
-        case .protectedVolume: return "this volume is protected and is never scanned."
-        case .lsofUnavailable: return "lsof is not available."
-        case .lsofTimedOut(let seconds): return "lsof did not finish within \(Int(seconds)) seconds."
-        case .commandTimedOut(let command, let seconds):
-            return "\(command) did not finish within \(Int(seconds)) seconds."
-        case .commandLaunchFailed(let command): return "\(command) could not be started."
-        case .permissionDenied(let pid): return "permission denied for pid \(pid)."
-        case .processIdentityChanged(let pid): return "pid \(pid) changed, so it was left alone."
-        case .unmountBusy: return "the volume is still busy."
-        case .unmountFailed(let code): return "the unmount failed (code \(code))."
-        }
     }
 }

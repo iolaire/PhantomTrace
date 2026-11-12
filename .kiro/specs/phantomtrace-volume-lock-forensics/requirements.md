@@ -37,6 +37,7 @@ PhantomTrace is a retro-themed macOS utility that identifies which processes pre
 - **Phantom_Choice**: The control in the `phantomTrace` window that offers either "Let PhantomTrace act" with one selectable Resolution_Stage among Egress Shells, Graceful Request, and Banish Locks, or "I'll deal with these processes myself".
 - **Proceed_Button**: The single primary button of the `cannotPutAway` and `phantomTrace` windows.
 - **Eject_Button**: The button of the `volumeReleased` window that performs the Clean Handoff stage.
+- **Go_Back_Button**: The button of the `phantomTrace` window, labeled "Retreat to the Shadows", at the leading edge of the footer, that returns the Diagnostic_Sheet to the `cannotPutAway` window without a scan.
 - **Scanning_Overlay**: A progress indication drawn inside the current Diagnostic_Sheet while a scan is running, which does not change the Window_State or the Ghost_Mascot sprite.
 - **Failure_Banner**: The banner shown in the `phantomTrace` window when discovery fails or returns partial results, containing the description, Parse_Warnings, and the Rescan button.
 - **Ghost_Mascot**: The original, Kiro-inspired, left-facing cloaked ghost sprite (not the Kiro ghost) whose Ghost_State is derived from the Window_State.
@@ -53,7 +54,14 @@ PhantomTrace is a retro-themed macOS utility that identifies which processes pre
 - **Window_Frame_Art**: The window frame image, which is opaque inside the frame and therefore rendered as a 9-slice or with a content cutout.
 - **Original_Art**: The source art in `docs/LookAndFeel/original/`.
 - **Assets_Record**: The file `docs/Assets.md`, which records the provenance, author, and license terms of every non-code asset (images, fonts, app icon).
-- **Drop_Target**: The non-menu-bar window or Dock icon that accepts dropped volumes or folders.
+- **Drop_Target**: The non-menu-bar window or Dock icon that accepts dropped volumes or folders. "Non-menu-bar" means the PhantomTrace creates no `NSStatusItem` or other status-bar extra; the App_Main_Menu is allowed.
+- **App_Main_Menu**: The standard application menu bar content (PhantomTrace, File, and Window menus) set programmatically via `NSApplication.mainMenu` and shown while PhantomTrace is the active application. It is not a status-bar extra.
+- **Volume_List**: The ordered list of Volume_List_Entries produced by the Volume_Lister from the current mount table, shown in the Drop_Target window and used to populate the Inspect_Volume_Submenu.
+- **Volume_List_Entry**: One row of the Volume_List: canonical mount point, display name (never empty), removable indicator, and disk-image flag.
+- **Volume_Lister**: The pure component (`VolumeLister`) that converts a list of Mount_Info values into a Volume_List without performing I/O.
+- **Inspect_Volume_Submenu**: The submenu of the File menu in the App_Main_Menu that lists the current Volume_List.
+- **Inspect_Request_Router**: The component (`InspectRequestRouter`) that receives a path or URL from the Quick_Action, URL scheme, Drop_Target, or volume picker and starts the inspect flow.
+- **Status_Bar_Item**: An `NSStatusItem` or any other system menu-bar extra.
 - **CLI**: The `phantomtrace` command-line executable.
 - **Blocked_State**: The state in which a fresh scan reports one or more Lock_Records.
 
@@ -200,6 +208,7 @@ PhantomTrace is a retro-themed macOS utility that identifies which processes pre
 4. WHEN a `sendSIGKILL` action is proposed, THE Diagnostic_Sheet SHALL list, for each targeted process, its process name and pid, and SHALL display this list before any `sendSIGKILL` is executed.
 5. WHILE the user has not explicitly confirmed the Banish Locks stage, THE Resolution_Pipeline SHALL execute zero `sendSIGKILL` actions.
 6. WHEN the user confirms the Banish Locks stage, THE Resolution_Pipeline SHALL re-verify that each targeted pid still exists with the same process name and, IF a pid no longer exists or its process name has changed, THEN THE Resolution_Pipeline SHALL skip that pid, send no `sendSIGKILL` to it, and report it as skipped in the Diagnostic_Sheet.
+7. THE Diagnostic_Sheet SHALL state in the Banish Locks confirmation that unsaved changes may be lost, including changes to files open on the volume (see also Requirement 18, criterion 32).
 
 ### Requirement 10: Stage 4 — Clean Handoff
 
@@ -238,7 +247,7 @@ The 30-second scan limits in this requirement apply to the general stage-start s
 
 ### Requirement 12: Entry Points
 
-**User Story:** As a Finder user, I want to start an inspection directly from Finder, so that I do not need a menu-bar widget.
+**User Story:** As a Finder user, I want to start an inspection directly from Finder, so that I do not need a menu-bar widget (no `NSStatusItem` or status-bar extra; the App_Main_Menu is allowed).
 
 #### Acceptance Criteria
 
@@ -268,12 +277,17 @@ The 30-second scan limits in this requirement apply to the general stage-start s
 6. WHILE the Window_State is `cannotPutAway`, THE Ghost_Mascot SHALL display the `yellow` sprite.
 7. WHILE the Window_State is `phantomTrace`, THE Ghost_Mascot SHALL display the `red` sprite.
 8. WHILE the Window_State is `volumeReleased`, THE Ghost_Mascot SHALL display the `green` sprite.
-9. THE Diagnostic_Sheet SHALL render pinstripe title bars, 1-pixel beveled frames, and a platinum gray (#DDDDDD) background.
+9. THE Diagnostic_Sheet SHALL render pinstripe title bars and 1-pixel beveled frames, SHALL fill the content area from the center region of the Window_Frame_Art, SHALL fill the content area with flat gray sRGB 193/193/188 WHEN the Window_Frame_Art is unavailable, and SHALL draw the lock table without its own background so that the table shares the content area gray (owner decision, 2026-11-12; replaces the platinum gray #DDDDDD background).
 10. WHERE the user has enabled Reduce Motion, THE Ghost_Mascot SHALL display its current sprite as a static image with no glow animation.
 11. THE Diagnostic_Sheet SHALL provide a non-empty VoiceOver label for every custom control, including each Resolution_Stage button and the Ghost_Mascot.
 12. WHEN a Lock_Record belongs to a process owned by a user other than the current user, THE Diagnostic_Sheet SHALL display that row as read-only with a lock icon and a visible text explanation that the process is owned by another user, and SHALL exclude that Lock_Record from the targets of every Resolution_Stage.
 13. IF the discovery state is Blocked_State and no Lock_Records are available, THEN THE Diagnostic_Sheet SHALL display an empty table with a text message stating that no lock details could be retrieved, and SHALL disable every Phantom_Choice option that selects a Resolution_Stage.
 14. THE Diagnostic_Sheet SHALL provide a non-empty VoiceOver label for the Phantom_Choice, each of its options, the Proceed_Button, the Eject_Button, the Failure_Banner, the Rescan button, and each illustration, and WHERE the user has enabled Reduce Motion, THE Diagnostic_Sheet SHALL display every sprite and illustration as a static image with no animation.
+15. THE Diagnostic_Sheet SHALL provide a close box as a transparent 25 x 25 pt overlay on the X square drawn in the Window_Frame_Art, SHALL darken it WHILE it is pressed, and SHALL keep a keyboard focus ring on it.
+16. THE Diagnostic_Sheet SHALL position the Ghost_Mascot near the top right of the window, overlapping the right edge of the window chrome with about one third of the sprite outside the chrome, in all three Window_States.
+17. THE Diagnostic_Sheet SHALL position the illustration of the current Window_State at the lower right inside the frame, and SHALL keep the lock table clear of the illustration.
+18. WHEN the lock window is opened, THE PhantomTrace SHALL place it to the right of the main window with the tops aligned and a 10 pt gap, SHALL center it IF the main window is not visible, and SHALL keep it within the visible frame of the screen.
+19. THE Diagnostic_Sheet SHALL fit all five lock table columns (Process Name, PID, User, Lock Category, and File Path) within the window width, giving File Path the remaining width and truncating File Path in the middle.
 
 ### Requirement 14: Error Reporting
 
@@ -350,7 +364,7 @@ The 30-second scan limits in this requirement apply to the general stage-start s
 
 **User Story:** As a user, I want one clear window for each phase of the investigation, so that I always know whether my disk is blocked, being traced, or released.
 
-Provisional items, pending user confirmation: criteria 6, 7, 15, 16, 21, 23, and 26 implement proposals from the design's open questions and may change after confirmation.
+Provisional items, pending user confirmation: criteria 6, 7, 16, 21, 23, and 26 implement proposals from the design's open questions and may change after confirmation. Criterion 15 (Go_Back_Button) was confirmed by the owner on 2026-11-12 and is no longer provisional; it supersedes the earlier provisional criterion that no control returns from `phantomTrace` to `cannotPutAway`.
 
 #### Acceptance Criteria
 
@@ -368,7 +382,7 @@ Provisional items, pending user confirmation: criteria 6, 7, 15, 16, 21, 23, and
 12. WHEN the user activates the Proceed_Button in the `cannotPutAway` window, THE Diagnostic_Sheet SHALL set the Proceeded_Flag and display the `phantomTrace` window.
 13. THE Diagnostic_Sheet SHALL display the title plaque "PHANTOM TRACE", the illustration `crt-diagnostic-portal`, the `red` Ghost_Mascot, the lock table, the Phantom_Choice, and one Proceed_Button in the `phantomTrace` window.
 14. WHILE no option of the Phantom_Choice is selected, THE Diagnostic_Sheet SHALL disable the Proceed_Button.
-15. THE Diagnostic_Sheet SHALL provide no control that returns from the `phantomTrace` window to the `cannotPutAway` window (provisional, pending user confirmation).
+15. THE Diagnostic_Sheet SHALL display the Go_Back_Button, labeled "Retreat to the Shadows", in the `phantomTrace` window only, and SHALL show and enable it WHILE at least one Lock_Record is shown and no Resolution_Stage is running, and SHALL hide it WHILE a Resolution_Stage is running (confirmed by the owner on 2026-11-12).
 16. WHEN the user activates the Proceed_Button with the option "I'll deal with these processes myself" selected, THE Resolution_Pipeline SHALL perform a fresh rescan, SHALL send no signal, and SHALL leave all processes unchanged (provisional, pending user confirmation).
 17. WHEN the user activates the Proceed_Button with a Resolution_Stage selected, THE Resolution_Pipeline SHALL execute that stage under Requirements 6 to 9 and 11, including the plan preview and, for Banish Locks, the explicit confirmation, and SHALL then perform a fresh rescan.
 18. WHEN a rescan started from the `phantomTrace` window finds one or more Lock_Records, THE Diagnostic_Sheet SHALL remain in the `phantomTrace` window and display the remaining Lock_Records.
@@ -380,3 +394,31 @@ Provisional items, pending user confirmation: criteria 6, 7, 15, 16, 21, 23, and
 24. WHILE the Unmounter is unmounting, THE Diagnostic_Sheet SHALL display a progress state on the Eject_Button and disable it.
 25. IF the unmount returns `kDAReturnBusy` or `EBUSY`, THEN THE Diagnostic_Sheet SHALL display the `phantomTrace` window with the newly discovered Lock_Records and the `red` Ghost_Mascot.
 26. IF a scan fails or returns partial results, THEN THE Diagnostic_Sheet SHALL display the Failure_Banner of Requirement 14.1 in the `phantomTrace` window with an enabled Rescan button, and SHALL disable the Proceed_Button and every Phantom_Choice option that selects a Resolution_Stage (provisional, pending user confirmation).
+27. WHEN the user activates the Go_Back_Button, THE Diagnostic_Sheet SHALL display the `cannotPutAway` window with the same Lock_Records, SHALL clear the Phantom_Choice selection, SHALL clear the Proceeded_Flag, SHALL perform no scan, and SHALL send no signal.
+28. IF an operation is in flight, THEN THE Diagnostic_Sheet SHALL ignore activation of the Go_Back_Button.
+29. WHEN the user activates the Proceed_Button in the `cannotPutAway` window after a Go_Back_Button activation, THE Diagnostic_Sheet SHALL display the `phantomTrace` window again without performing a scan.
+30. THE Diagnostic_Sheet SHALL label the Proceed_Button "Summon the Phantom Trace" in the `cannotPutAway` window, "Proceed, if you dare" in the `phantomTrace` window, and "Conjuring..." WHILE a Resolution_Stage is running.
+31. THE Diagnostic_Sheet SHALL provide for every button, including the Proceed_Button, the Go_Back_Button, the Eject_Button, and the Rescan button, accessibility help text that states plainly what activating the button does (for example, for the Go_Back_Button: "Return to the first screen. Nothing is scanned or stopped.").
+32. THE Diagnostic_Sheet SHALL display, under the Banish Locks option of the Phantom_Choice, the text "Beware: this force-stops programs. Unsaved changes to open files may be lost forever.", conveyed in words and not by color alone, and SHALL expose the same text as the accessibility help of that option. The confirmation required before Banish Locks is defined in Requirement 9, criterion 7.
+
+### Requirement 19: Volume picker and app menu
+
+**User Story:** As a user, I want to choose a disk from inside the app and use the standard Quit, Close, and Hide menu commands, so that I can start an inspection without Finder or a drag and drop.
+
+#### Acceptance Criteria
+
+1. THE PhantomTrace SHALL set an App_Main_Menu containing a PhantomTrace menu, a File menu, and a Window menu, and SHALL NOT create a Status_Bar_Item. The PhantomTrace menu SHALL contain Hide PhantomTrace (Cmd-H) and Quit PhantomTrace (Cmd-Q), the File menu SHALL contain Inspect... (Cmd-O), Inspect Volume, and Close Window (Cmd-W), and the Window menu SHALL contain Minimize (Cmd-M).
+2. WHEN the user chooses File > Inspect... (Cmd-O), THE PhantomTrace SHALL open a panel that accepts exactly one file, folder, or volume (multiple selection disabled), and WHEN the user confirms a selection, THE PhantomTrace SHALL pass the selected item to the Inspect_Request_Router without performing a scan itself. WHEN the user cancels the panel, THE PhantomTrace SHALL pass nothing to the Inspect_Request_Router and start no scan.
+3. THE Drop_Target window SHALL display the Volume_List, with each Volume_List_Entry showing its display name, its mount point, a removable indicator that uses text and not color alone, and an Inspect button, and THE Inspect_Volume_Submenu SHALL list the same Volume_List_Entries in the same order. The display name SHALL be the volume's localized name as reported by the file system for its mount point, and IF that name is unavailable or empty, THEN the display name SHALL be the last path component of the mount point. The removable indicator SHALL read "Removable" for a mount the system reports as removable or ejectable, and "Internal" otherwise.
+4. THE Volume_Lister SHALL exclude every mount whose mount point is a Protected_Volume or whose mount point is empty or cannot be verified.
+5. THE Volume_Lister SHALL exclude every hidden or system mount, namely mounts of file system type `devfs`, `autofs`, `nullfs`, `fdesc`, or `procfs`, mounts whose device node does not begin with `/dev/`, mounts named or located under `com.apple.TimeMachine.localsnapshots`, mounts located under `/private/var`, and mounts whose mount-point name begins with `.`.
+6. THE Volume_Lister SHALL include every mount that is not excluded under criteria 4 and 5, and SHALL include each canonical mount point at most once.
+7. THE Volume_Lister SHALL return the Volume_List sorted by display name and then by mount-point path using a byte-wise comparison of the NFC-normalized strings, so that the result is independent of the order of its input and of the locale.
+8. WHEN the user selects a Volume_List_Entry in the Drop_Target window or the Inspect_Volume_Submenu, or confirms the same mount point in the File > Inspect... panel, THE PhantomTrace SHALL deliver to the Inspect_Request_Router the same input as a drop of that mount point on the Drop_Target, and SHALL call no system adapter and start no scan other than the inspect flow that the Inspect_Request_Router starts.
+9. WHEN a volume is mounted, unmounted, or renamed, THE PhantomTrace SHALL refresh the Volume_List and the Inspect_Volume_Submenu, and WHEN a burst of such events occurs, THE PhantomTrace SHALL coalesce all events arriving within a 500 ms debounce window (the window restarting on each event) into one refresh, and SHALL complete that refresh within 1000 ms after the last event of the burst.
+10. THE PhantomTrace SHALL give each Volume_List_Entry row and each Inspect button a VoiceOver label naming the volume, and SHALL make the Volume_List and its buttons operable from the keyboard, with each Inspect button reachable by the Tab key and activated by the Space key.
+11. IF enumerating mounted volumes fails, THEN THE PhantomTrace SHALL keep the previous Volume_List, display the message "Couldn't read the list of volumes" in the Drop_Target window, and keep the Drop_Target operable. WHEN a later enumeration succeeds, THE PhantomTrace SHALL remove that message and display the new Volume_List.
+12. IF a selected Volume_List_Entry is rejected by the Inspect_Request_Router (for example because the volume has disappeared), THEN THE PhantomTrace SHALL display the rejection reason and begin no scan.
+13. IF the Volume_Lister returns an empty Volume_List, THEN THE Drop_Target window SHALL display the message "No volumes available to inspect" in place of the list and SHALL keep the drop area and File > Inspect... operable.
+14. WHEN PhantomTrace launches with no input item (no `phantomtrace://` URL, no opened file, and no dropped item), THE PhantomTrace SHALL show the Drop_Target window with the current Volume_List within 2000 ms of launch completing, and SHALL start no scan.
+15. WHEN the user chooses the Close Window command (Cmd-W) while the Drop_Target window is key, THE PhantomTrace SHALL close that window without quitting the application and without cancelling a running inspect flow, and WHEN the user chooses File > Inspect... or the application is reactivated with no visible window, THE PhantomTrace SHALL be able to show the Drop_Target window again.
