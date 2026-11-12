@@ -7,6 +7,7 @@ import Testing
 /// by lossy UTF-8 decoding of those bytes.
 ///
 /// **Validates: Requirements 4.2, 4.3**
+@Suite(.tags(.property), .timeLimit(.minutes(5)))
 struct LsofParserByteFidelityPropertyTests {
     private static let iterations = 500
 

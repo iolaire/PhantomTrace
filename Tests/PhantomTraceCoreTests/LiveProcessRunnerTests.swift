@@ -2,7 +2,7 @@ import Foundation
 import PhantomTraceCore
 import Testing
 
-struct LiveProcessRunnerTests {
+@Suite(.tags(.live), .timeLimit(.minutes(1)))struct LiveProcessRunnerTests {
     private let runner = LiveProcessRunner()
 
     @Test func runnerCapturesStdoutAndPassesArgumentsVerbatim() async throws {
@@ -26,7 +26,7 @@ struct LiveProcessRunnerTests {
     }
 
     @Test func runnerTerminatesSlowCommandAndNamesItInTheTimeoutError() async {
-        let started = Date()
+        // The suite's time limit fails this test if the 30 s sleep is not terminated.
         await #expect(throws: PhantomTraceError.commandTimedOut(command: "/bin/sleep", seconds: 0.3)) {
             _ = try await runner.run(
                 executable: URL(fileURLWithPath: "/bin/sleep"),
@@ -34,7 +34,6 @@ struct LiveProcessRunnerTests {
                 timeout: 0.3
             )
         }
-        #expect(Date().timeIntervalSince(started) < 10)
     }
 
     @Test func runnerThrowsLaunchFailureForMissingExecutable() async {

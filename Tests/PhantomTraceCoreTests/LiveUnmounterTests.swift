@@ -3,7 +3,7 @@ import PhantomTraceCore
 import PhantomTraceTestSupport
 import Testing
 
-struct LiveUnmounterTests {
+@Suite(.tags(.live), .timeLimit(.minutes(1)))struct LiveUnmounterTests {
     private let volume = MountInfo(
         mountPoint: URL(fileURLWithPath: "/Volumes/Test"),
         volumeName: "Test",

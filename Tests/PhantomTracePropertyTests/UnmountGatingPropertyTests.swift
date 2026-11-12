@@ -9,6 +9,7 @@ import Testing
 ///
 /// Drives `ResolutionPipeline.cleanHandoff` (which delegates to `CleanHandoffPerformer`) with scripted
 /// discovery and a recording unmounter. No real volume, process, or clock is involved.
+@Suite(.tags(.property), .timeLimit(.minutes(5)))
 struct UnmountGatingPropertyTests {
     private static let iterations = 500
 

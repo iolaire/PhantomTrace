@@ -4,7 +4,7 @@ import PhantomTraceTestSupport
 import Testing
 
 /// The diskutil fallback and `unmountFailed`. Requirements 10.5, 10.7, 15.1. No volume is touched.
-struct LiveUnmounterFallbackTests {
+@Suite(.tags(.live), .timeLimit(.minutes(1)))struct LiveUnmounterFallbackTests {
     private static let volume = MountInfo(
         mountPoint: URL(fileURLWithPath: "/Volumes/Test"),
         volumeName: "Test",

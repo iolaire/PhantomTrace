@@ -109,6 +109,7 @@ private func expectWellFormedResult(_ data: Data) {
     }
 }
 
+@Suite(.tags(.property), .timeLimit(.minutes(5)))
 struct LsofParserTotalityPropertyTests {
     @Test func parserReturnsForArbitraryBytesIncludingNul() async {
         await propertyCheck(count: iterations, input: arbitraryBytesGenerator(sizes: 0 ... 4096)) { data in

@@ -10,6 +10,7 @@ import Testing
 /// process runner equals the path verbatim as one argument. Only `MockProcessRunner` is used, so no process
 /// is ever launched.
 /// **Validates: Requirements 15.1**
+@Suite(.tags(.property), .timeLimit(.minutes(5)))
 struct ArgumentArrayFidelityPropertyTests {
     private static let iterations = 500
 

@@ -5,6 +5,7 @@ import Testing
 
 /// Property 12: Escalation order.
 /// **Validates: Requirements 6.3, 6.4, 8.6, 9.1**
+@Suite(.tags(.property), .timeLimit(.minutes(5)))
 struct SafetyPolicyEscalationOrderPropertyTests {
     private static let iterations = 500
     private static let ownPID: UInt32 = 1_000_000

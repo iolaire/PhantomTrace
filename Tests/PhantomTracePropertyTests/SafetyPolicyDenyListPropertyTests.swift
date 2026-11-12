@@ -5,6 +5,7 @@ import Testing
 
 /// Property 11: Safety deny-list.
 /// **Validates: Requirements 6.1, 6.2, 6.5**
+@Suite(.tags(.property), .timeLimit(.minutes(5)))
 struct SafetyPolicyDenyListPropertyTests {
     private static let iterations = 500
     private static let ownPID: UInt32 = 1_000_000

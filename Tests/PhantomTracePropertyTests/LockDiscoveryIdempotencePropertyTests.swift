@@ -6,6 +6,7 @@ import Testing
 
 /// Property 17: Discovery idempotence and merging.
 /// **Validates: Requirements 3.3, 3.4, 3.5**
+@Suite(.tags(.property), .timeLimit(.minutes(5)))
 struct LockDiscoveryIdempotencePropertyTests {
     private static let iterations = 500
 

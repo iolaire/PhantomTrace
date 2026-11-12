@@ -82,7 +82,7 @@ private final class StateRecorder {
 }
 
 @MainActor
-@Suite("VolumeRefreshController")
+@Suite("VolumeRefreshController", .timeLimit(.minutes(1)))
 struct VolumeRefreshControllerTests {
     @Test("a burst of events restarts the 500 ms debounce and refreshes once")
     func burstCausesSingleRefreshAfterDebounce() async {

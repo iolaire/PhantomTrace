@@ -7,6 +7,7 @@ import Testing
 ///
 /// Discovery states, windows, and the Proceeded_Flag are generated from small integer codes so every
 /// run is deterministic and needs no system access.
+@Suite(.tags(.property), .timeLimit(.minutes(5)))
 struct WindowSelectionPropertyTests {
     private static let iterations = 500
 

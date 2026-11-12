@@ -6,6 +6,7 @@ import Testing
 
 /// Property 7: Classification consistency.
 /// **Validates: Requirements 5.1, 5.2, 5.3, 5.6, 5.8**
+@Suite(.tags(.property), .timeLimit(.minutes(5)))
 struct LockClassifierPropertyTests {
     private static let iterations = 500
 

@@ -13,6 +13,7 @@ private enum IdentityChange: CaseIterable {
 
 /// Property 13: Identity guard.
 /// **Validates: Requirements 6.8, 6.9**
+@Suite(.tags(.property), .timeLimit(.minutes(5)))
 struct PipelineIdentityGuardPropertyTests {
     private static let iterations = 500
     private static let volume = MountInfo(

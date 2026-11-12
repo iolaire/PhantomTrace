@@ -5,6 +5,7 @@ import Testing
 @testable import PhantomTraceCore
 
 /// Property 9: Mount resolution.
+@Suite(.tags(.property), .timeLimit(.minutes(5)))
 struct MountResolverPropertyTests {
     private static let iterations = 500
 

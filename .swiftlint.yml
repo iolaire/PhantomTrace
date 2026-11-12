@@ -1,3 +1,25 @@
 included:
   - Sources
   - Tests
+
+opt_in_rules:
+  - force_unwrapping
+  - implicitly_unwrapped_optional
+  - empty_count
+  - closure_end_indentation
+
+custom_rules:
+  no_print_in_core:
+    name: "No print in Core"
+    regex: '(?<!func )(?<![\w.])print\('
+    match_kinds:
+      - identifier
+    included: "Sources/PhantomTraceCore"
+    message: "Use OSLog Logger, not print, in Core."
+    severity: error
+  no_networking:
+    name: "No networking APIs"
+    regex: '\b(URLSession|NWConnection|NWListener|CFSocket|CFStream)\b'
+    included: "Sources"
+    message: "PhantomTrace makes no network connections (safety.md)."
+    severity: error

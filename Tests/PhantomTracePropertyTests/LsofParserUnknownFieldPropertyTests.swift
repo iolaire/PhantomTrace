@@ -5,6 +5,7 @@ import Testing
 
 /// Property 6: Unknown-field tolerance.
 /// **Validates: Requirements 4.8**
+@Suite(.tags(.property), .timeLimit(.minutes(5)))
 struct LsofParserUnknownFieldPropertyTests {
     private static let iterations = 500
 

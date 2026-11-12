@@ -4,6 +4,7 @@ import Testing
 @testable import PhantomTraceCore
 
 /// Property 18: Inspect URL round-trip.
+@Suite(.tags(.property), .timeLimit(.minutes(5)))
 struct InspectURLRoundTripPropertyTests {
     private static let iterations = 500
 

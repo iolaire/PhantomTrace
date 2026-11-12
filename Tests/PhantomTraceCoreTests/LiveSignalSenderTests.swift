@@ -19,7 +19,7 @@ private final class KillRecorder: @unchecked Sendable { // Guarded by `lock`; te
     }
 }
 
-struct LiveSignalSenderTests {
+@Suite(.tags(.live), .timeLimit(.minutes(1)))struct LiveSignalSenderTests {
     private func sender(returning result: Int32) -> (LiveSignalSender, KillRecorder) {
         let recorder = KillRecorder(result: result)
         return (LiveSignalSender(killCall: { recorder.call($0, $1) }), recorder)

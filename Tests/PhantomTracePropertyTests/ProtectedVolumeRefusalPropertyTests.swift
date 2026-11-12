@@ -5,6 +5,7 @@ import Testing
 @testable import PhantomTraceCore
 
 /// Property 10: Protected volume refusal.
+@Suite(.tags(.property), .timeLimit(.minutes(5)))
 struct ProtectedVolumeRefusalPropertyTests {
     private static let iterations = 500
 

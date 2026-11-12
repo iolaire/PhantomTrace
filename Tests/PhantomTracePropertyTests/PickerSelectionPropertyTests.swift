@@ -8,6 +8,7 @@ import Testing
 /// Property 28: choosing a volume from the window list, the Inspect Volume submenu, or the
 /// File > Inspect... panel delivers the same router input as dropping that mount point, exactly
 /// once per choice, and touches nothing but the router's canonicalizer.
+@Suite(.tags(.property), .timeLimit(.minutes(5)))
 struct PickerSelectionPropertyTests {
     private static let iterations = 500
     /// **Validates: Requirements 19.2, 19.8, 12.1, 12.3**

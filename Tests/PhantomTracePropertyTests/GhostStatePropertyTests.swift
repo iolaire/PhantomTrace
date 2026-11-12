@@ -6,6 +6,7 @@ import Testing
 /// Property 20: Ghost state mapping.
 ///
 /// Windows and discovery states come from small integer codes, so runs are deterministic and touch no system.
+@Suite(.tags(.property), .timeLimit(.minutes(5)))
 struct GhostStatePropertyTests {
     private static let iterations = 500
 

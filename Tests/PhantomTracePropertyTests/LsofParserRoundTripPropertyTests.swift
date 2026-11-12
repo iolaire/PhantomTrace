@@ -6,6 +6,7 @@ import Testing
 /// Property 2: parser round-trip.
 ///
 /// **Validates: Requirements 4.4, 4.9, 4.11, 4.12**
+@Suite(.tags(.property), .timeLimit(.minutes(5)))
 struct LsofParserRoundTripPropertyTests {
     /// Fields the generator controls: everything else on the record is fixed so records compare whole.
     fileprivate struct Seed: Sendable {

@@ -6,6 +6,7 @@ import Testing
 
 /// Property 8: Symlink containment.
 /// **Validates: Requirements 5.7**
+@Suite(.tags(.property), .timeLimit(.minutes(5)))
 struct LockClassifierSymlinkPropertyTests {
     private static let iterations = 500
 

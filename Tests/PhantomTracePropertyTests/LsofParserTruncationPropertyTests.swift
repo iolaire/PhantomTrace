@@ -5,6 +5,7 @@ import Testing
 
 /// Property 5: Truncation safety.
 /// **Validates: Requirements 4.7, 4.13**
+@Suite(.tags(.property), .timeLimit(.minutes(5)))
 struct LsofParserTruncationPropertyTests {
     private static let iterations = 500
 

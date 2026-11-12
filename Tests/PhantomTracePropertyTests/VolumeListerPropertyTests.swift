@@ -3,6 +3,7 @@ import PropertyBased
 import Testing
 @testable import PhantomTraceCore
 /// Properties 23-27: the volume picker's pure lister (design Component 8a, Requirement 19).
+@Suite(.tags(.property), .timeLimit(.minutes(5)))
 struct VolumeListerPropertyTests {
     private static let iterations = 500
     /// Property 23: no protected, hidden, or system mount is ever listed.

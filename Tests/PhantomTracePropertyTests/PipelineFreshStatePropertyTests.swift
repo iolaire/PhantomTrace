@@ -7,6 +7,7 @@ import Testing
 
 /// Property 16: Fresh state per stage.
 /// **Validates: Requirements 11.1, 11.2**
+@Suite(.tags(.property), .timeLimit(.minutes(5)))
 struct PipelineFreshStatePropertyTests {
     private static let iterations = 500
     private static let volume = MountInfo(

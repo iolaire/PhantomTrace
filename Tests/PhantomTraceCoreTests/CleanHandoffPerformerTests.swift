@@ -4,7 +4,7 @@ import Testing
 @testable import PhantomTraceCore
 
 /// Clean Handoff (stage 4) against mock systems. Requirements 10.1 to 10.9.
-struct CleanHandoffPerformerTests {
+@Suite(.timeLimit(.minutes(1)))struct CleanHandoffPerformerTests {
     private static let volume = MountInfo(
         mountPoint: URL(fileURLWithPath: "/Volumes/Throwaway"),
         volumeName: "Throwaway",

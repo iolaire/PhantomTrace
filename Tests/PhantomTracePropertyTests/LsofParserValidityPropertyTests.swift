@@ -4,6 +4,7 @@ import Testing
 @testable import PhantomTraceCore
 
 /// Property 4: Record validity and determinism.
+@Suite(.tags(.property), .timeLimit(.minutes(5)))
 struct LsofParserValidityPropertyTests {
     private static let iterations = 500
 

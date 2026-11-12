@@ -5,6 +5,7 @@ import Testing
 
 /// Property 14: Stage plan construction.
 /// **Validates: Requirements 7.1, 8.1, 8.2, 8.3, 11.7**
+@Suite(.tags(.property), .timeLimit(.minutes(5)))
 struct StagePlanConstructionPropertyTests {
     private static let iterations = 500
 

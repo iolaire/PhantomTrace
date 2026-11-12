@@ -6,6 +6,7 @@ import Testing
 /// Property 19: Middle truncation.
 ///
 /// The width measure is the character count, so every run is deterministic and needs no fonts.
+@Suite(.tags(.property), .timeLimit(.minutes(5)))
 struct PathTruncationPropertyTests {
     private static let iterations = 500
 

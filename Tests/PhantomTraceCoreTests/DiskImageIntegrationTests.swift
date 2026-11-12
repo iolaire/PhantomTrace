@@ -5,6 +5,7 @@ import Testing
 /// Local-only: attaches a throwaway 10 MB disk image and unmounts it for real. Skipped when `CI` is set or
 /// `hdiutil` is missing. Only the image and helper processes created here are touched.
 /// Requirements 3.1, 3.2, 10.2, 15.1.
+@Suite(.tags(.integration), .timeLimit(.minutes(3)))
 struct DiskImageIntegrationTests {
     private static var canRun: Bool {
         ProcessInfo.processInfo.environment["CI"] == nil

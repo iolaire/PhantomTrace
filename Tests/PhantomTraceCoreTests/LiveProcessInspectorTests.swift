@@ -4,7 +4,7 @@ import Testing
 @testable import PhantomTraceCore
 
 /// Read-only checks against the test process itself. No other process is inspected or signaled.
-struct LiveProcessInspectorTests {
+@Suite(.tags(.live), .timeLimit(.minutes(1)))struct LiveProcessInspectorTests {
     @Test func inspectingOwnProcessReportsOwnIdentityAndOwner() throws {
         let inspector = LiveProcessInspector()
         let details = try #require(inspector.inspect(pid: inspector.currentProcessID))

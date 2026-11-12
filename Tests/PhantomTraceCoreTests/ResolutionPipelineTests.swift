@@ -5,7 +5,7 @@ import Testing
 @testable import PhantomTraceCore
 
 /// Stage execution against mock systems. Requirements 8.5, 8.7, 9.3 to 9.6, 11.1 to 11.4, 14.3.
-struct ResolutionPipelineTests {
+@Suite(.timeLimit(.minutes(1)))struct ResolutionPipelineTests {
     private static let volume = MountInfo(
         mountPoint: URL(fileURLWithPath: "/Volumes/Throwaway"),
         volumeName: "Throwaway",
