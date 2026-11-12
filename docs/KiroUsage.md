@@ -37,8 +37,8 @@ Four hooks in `.kiro/hooks/`, kept small on purpose. Each addresses a different 
 - `kiro-gitignore-guard.json` (PreToolUse on shell commands): blocks a commit if `.gitignore` ignores `.kiro`, a disqualification risk in the Rules.
 - Rejected on purpose: a post-task test hook (duplicates the commit gate) and a Stop hook (runs every turn, too noisy).
 - Limit: PreToolUse hooks see only commits the agent runs. Real git hooks in `Scripts/git-hooks/` (enabled with `Scripts/install-git-hooks.sh`) call the same scripts so commits typed by hand are covered too.
-- Status: scripts tested with sample payloads (commit, non-commit, empty, garbage, missing SwiftLint). Live behavior in Kiro still to confirm.
-- Evidence to add: issues the hooks actually caught during the build.
+- Status: scripts tested with sample payloads (commit, non-commit, empty, garbage, missing SwiftLint). Owner statement, 2026-11-12: the hooks were active in Kiro IDE during the build, so the agent's commits and Swift saves ran through them. This is owner-reported; no hook output was captured at the time, so there is no transcript to cite.
+- Evidence to add: a captured block message or lint output from a hook, and any issue a hook actually caught during the build.
 
 ## Property-based testing
 
@@ -54,4 +54,4 @@ Four hooks in `.kiro/hooks/`, kept small on purpose. Each addresses a different 
 - Kiro IDE, CLI, Web, Crew, or Mobile: each work-log row in `docs/ProjectLog.md` names the surface (detected by `Scripts/kiro-surface.sh`), so the log shows which surface did what. Evidence to add: how they differed.
 - Custom agents: record any created and their effect.
 - MCP: record any servers used and what they enabled.
-- Kiro powers: record any powers used.
+- Kiro powers: the `swift-expert` power is installed (`~/.kiro/powers/installed/swift-expert`, with `swift-general.md` and `swift-api-design-guidelines.md` steering files) and was used in Kiro IDE for Swift guidance. The one recorded use is the test-hardening row dated 2026-11-12 in `docs/ProjectLog.md` (general Swift Testing guidance). Its concurrency testing reference was not available, so no concurrency guidance from it is claimed. Owner statement, 2026-11-12: the power was used during the build. Evidence to add: which specific guidance changed code.

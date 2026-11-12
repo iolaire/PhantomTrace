@@ -53,7 +53,7 @@ Last reviewed 2026-11-12.
 - Provisional behaviors (Req 18.6, 18.7, 18.15, 18.16, 18.21, 18.23, 18.26) still need the owner's confirmation.
 - Notarization is optional and has not been attempted (`notarytool` and `stapler` are present).
 - `swiftlint` on this machine needs `DYLD_FRAMEWORK_PATH=/Library/Developer/CommandLineTools/usr/lib`.
-- Hooks exist (`lint-on-save`, `pre-commit-check`, `kiro-gitignore-guard`, `project-log-check`) but are not confirmed live in Kiro. Git hooks (`Scripts/install-git-hooks.sh`) are written but not enabled in every clone.
+- Hooks exist (`lint-on-save`, `pre-commit-check`, `kiro-gitignore-guard`, `project-log-check`) and the owner states (2026-11-12) they were active in Kiro IDE during the build, but no hook output was captured, so a recorded block or lint message is still to add. The `swift-expert` power was also used (owner statement; one logged use, see [KiroUsage.md](KiroUsage.md)). Git hooks (`Scripts/install-git-hooks.sh`) are written but not enabled in every clone.
 - The earlier note that `swift test` could not run on the dev machine is out of date: targeted `swift test` runs pass on macOS. A full-suite run followed by `Scripts/lint-and-test.sh` has not been recorded; do that before submission. The Kiro Web sandbox is Linux and cannot build or test macOS code.
 - [demo-script.md](demo-script.md) is a plan and cannot be recorded until the app works.
 - `docs/screenshots/` is empty. Capture the idle, haunting, and released states once the UI exists.
