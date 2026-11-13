@@ -1,0 +1,27 @@
+{
+  "name": "phantomtrace-demo-video",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Remotion project for the PhantomTrace Kiroween 2026 demo video. Separate from the Swift package; the app has no Node dependency.",
+  "license": "MIT",
+  "scripts": {
+    "sync": "node scripts/sync.mjs",
+    "vo:placeholder": "node scripts/placeholder-vo.mjs",
+    "guide": "node scripts/guide.mjs",
+    "studio": "npm run sync && remotion studio src/index.ts",
+    "render": "npm run sync && remotion render src/index.ts Demo out/phantomtrace-demo.mp4",
+    "render:scene": "npm run sync && remotion render src/index.ts",
+    "typecheck": "npm run sync && tsc --noEmit"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.543",
+    "@remotion/media": "4.0.543",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "remotion": "4.0.543"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "typescript": "5.9.3"
+  }
+}

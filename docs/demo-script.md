@@ -30,6 +30,17 @@ Use a throwaway disk image, never a real drive.
 
 Keep 10 seconds of slack. If a beat runs long, cut the old-way beat first.
 
+## Making the video (Remotion kit)
+
+The video is built from the `demo/` project, one scene per beat of the timeline above: [demo/README.md](../demo/README.md). The narration text lives in `demo/scenes.json`, and [demo/NARRATION.md](../demo/NARRATION.md) is the guide for editing it and recording your own voice.
+
+1. Set up the throwaway drive: `Scripts/demo/setup-demo.sh` (add `--headless` for no Terminal window). Reset after a take with `Scripts/demo/teardown-demo.sh`.
+2. Record each short clip (full guide: [demo/CLIPS.md](../demo/CLIPS.md)): `Scripts/demo/record-clip.sh <scene-id> 12`. Required clips: `s03-trigger`, `s06-egress`, `s09-handoff`. The others use screenshots or a terminal replay until you record them.
+3. Record your voice per scene into `demo/public/audio/<scene-id>.wav`.
+4. `cd demo && npm install && npm run studio`, then `npm run render`.
+
+Status: kit built and checked on stills only. No real clip or voice-over is recorded yet.
+
 ## Mention Kiro (judging)
 
 One quick cutaway (5 to 10 seconds, inside the budget) showing `.kiro/specs`, `.kiro/steering`, `.kiro/hooks`, and a passing property-test run, with a line on how specs and hooks shaped the build. Evidence belongs in [KiroUsage.md](KiroUsage.md).
