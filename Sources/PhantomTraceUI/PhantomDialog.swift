@@ -85,6 +85,7 @@ public final class PhantomDialog {
         let scroll = NSScrollView()
         scroll.documentView = detailView
         scroll.hasVerticalScroller = true
+        scroll.autohidesScrollers = true
         scroll.drawsBackground = false
         scroll.contentView.drawsBackground = false
         scroll.borderType = .noBorder

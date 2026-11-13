@@ -47,7 +47,15 @@ sleep 1
 # (Capture first: grep -q on a pipe can end it early and trip pipefail.)
 INFO="$(hdiutil info 2>/dev/null || true)"
 if grep -qF "$IMAGE" <<<"$INFO"; then
-    if ! hdiutil detach "$MOUNT" >/dev/null 2>&1; then
+    # After PhantomTrace's Eject the volume is unmounted but the image stays attached; detach the
+    # whole disk that backs this image (first /dev/diskN line after its image-path).
+    TARGET="$MOUNT"
+    if [ ! -d "$MOUNT" ]; then
+        TARGET="$(awk -v img="$IMAGE" '
+            /^image-path/ { found = (index($0, img) > 0) }
+            found && $1 ~ /^\/dev\/disk[0-9]+$/ { print $1; exit }' <<<"$INFO")"
+    fi
+    if [ -z "$TARGET" ] || ! hdiutil detach "$TARGET" >/dev/null 2>&1; then
         echo "The demo volume is still busy at $MOUNT." >&2
         echo "Close the demo Terminal window (cd out of the volume), then run this again." >&2
         exit 1

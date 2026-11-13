@@ -44,6 +44,7 @@ public final class FailedActionListView: NSView {
         textView.font = .monospacedSystemFont(ofSize: 11, weight: .regular)
         scrollView.documentView = textView
         scrollView.hasVerticalScroller = true
+        scrollView.autohidesScrollers = true
         scrollView.borderType = .lineBorder
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(scrollView)

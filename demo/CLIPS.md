@@ -44,6 +44,32 @@ It counts down 3 seconds, records the screen with no sound, and saves `demo/publ
 
 Run the next take by repeating the same command. It replaces only that scene's file.
 
+## Record the resolution flow hands-free (Kiro or a person)
+
+`Scripts/demo/record-flow.sh` records Egress Shells -> Graceful Request -> Eject as one clip, with no keyboard or mouse use. Kiro recorded the current `s06-egress.mp4` this way on 2026-11-13 (18.9 s, 1920x666). It drives the app through the Accessibility API with `Scripts/demo/ax-drive.swift` (built on first use into `~/PhantomTraceDemo/bin/`).
+
+What it does:
+
+- Moves the PhantomTrace start window flush right. The lock window then opens on top of it, because the app keeps it on screen, and the plan dialogs center on that. Terminal sits to the left. App placement code and requirements are unchanged.
+- Gives the demo Terminal tab a `%~ %#` prompt and an 18 pt font, so the prompt visibly changes from `/Volumes/PhantomDemo %` to `~ %`.
+- Glides the real pointer to each control and clicks it. `screencapture -C -k` shows the cursor and draws a ring on each click. (AXPress alone moves no pointer and draws no ring.)
+- Waits for each control to appear, then pauses about 1 s, so the gaps stay short. It records a screen region, then trims the clip to the measured length.
+
+Steps:
+
+1. Grant **Accessibility** and **Screen Recording** to the app that runs the script (Kiro or your terminal), then restart that app.
+2. `Scripts/make-app.sh`, then `Scripts/demo/setup-demo.sh`. You need a Terminal tab with its cwd on the drive and the `tail` lock. A `--headless` shell is classed `cliTool`, so Egress Shells is disabled for it.
+3. Clear the right part of the main screen. The clip is a region, so whatever is behind the windows shows.
+4. `PHANTOMTRACE_FLOW_TOP=235 Scripts/demo/record-flow.sh --preview` lays out the windows and saves one still to `~/PhantomTraceDemo/preview.png`. Look at it, then delete it. `PHANTOMTRACE_FLOW_TOP` sets the top edge in screen points. Leave it out to use a third of the way down.
+5. `PHANTOMTRACE_FLOW_TOP=235 Scripts/demo/record-flow.sh s06-egress`. Check frames before keeping the file.
+
+Known limits:
+
+- The first Egress Shells run on a new build can sit on "Conjuring..." for about 15 s with no message while macOS asks whether PhantomTrace may control Terminal. Allow it and run again. The app does not show the Requirement 7.5 "type `cd ~`" instruction when the send fails (open bug).
+- The start window lists every mounted volume for about 1 s at the start. Other drives' names show unless only the demo image is mounted.
+- After the flow the volume is unmounted but the image is still attached. Reset as below.
+- A glow around the cursor or clicks is not drawn. Add it in Remotion if wanted.
+
 ## Reset between takes
 
 Egress and Eject change the drive, so reset before each of those takes:
@@ -52,7 +78,7 @@ Egress and Eject change the drive, so reset before each of those takes:
 Scripts/demo/teardown-demo.sh && Scripts/demo/setup-demo.sh
 ```
 
-Then `cd /Volumes/PhantomDemo` in Terminal again. Teardown stops only the helpers the setup started and ejects only `PhantomDemo`. If it says the volume is busy, close the demo Terminal window and run it again. Undo for everything: `Scripts/demo/teardown-demo.sh`.
+Then `cd /Volumes/PhantomDemo` in Terminal again. Teardown stops only the helpers the setup started and ejects only `PhantomDemo`. After PhantomTrace's Eject the volume is gone but the image is still attached; teardown then detaches the image's own disk. If it says the volume is busy, close the demo Terminal window and run it again. Undo for everything: `Scripts/demo/teardown-demo.sh`.
 
 ## Recording without the script (QuickTime or Shift+Cmd+5)
 

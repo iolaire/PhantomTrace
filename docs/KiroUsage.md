@@ -59,6 +59,7 @@ Four hooks in `.kiro/hooks/`, kept small on purpose. Each addresses a different 
 ## Other Kiro features
 
 - Kiro IDE, CLI, Web, Crew, or Mobile: each work-log row in `docs/ProjectLog.md` names the surface (detected by `Scripts/kiro-surface.sh`), so the log shows which surface did what. Evidence to add: how they differed.
+- Kiro operating the real app (2026-11-13, Kiro IDE): with Accessibility and Screen Recording granted by the owner, Kiro drove PhantomTrace through the macOS Accessibility API and recorded the demo clip `demo/public/clips/s06-egress.mp4` (Egress Shells -> Graceful Request -> Eject in 18.9 s). It used a real pointer glide and clicks, so the clip shows the cursor and click rings. The tools are in the repo (`Scripts/demo/ax-drive.swift`, `Scripts/demo/record-flow.sh`, see `demo/CLIPS.md`). While doing this, Kiro found a real bug: the app drops `StageOutcome.manual`, so a shell that cannot be sent `cd ~` gets no on-screen instruction (Requirement 7.5). It also fixed `teardown-demo.sh` for the state after Eject. Details in `docs/ProjectLog.md`.
 - Custom agents: record any created and their effect.
 - MCP: record any servers used and what they enabled.
 - Kiro powers: the `swift-expert` power is installed (`~/.kiro/powers/installed/swift-expert`, with `swift-general.md` and `swift-api-design-guidelines.md` steering files) and was used in Kiro IDE for Swift guidance. Two uses are logged in `docs/ProjectLog.md`, both dated 2026-11-12:

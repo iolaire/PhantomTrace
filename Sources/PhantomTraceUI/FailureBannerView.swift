@@ -65,6 +65,7 @@ public final class FailureBannerView: NSView {
         warningsView.setAccessibilityLabel("Parse warnings")
         scrollView.documentView = warningsView
         scrollView.hasVerticalScroller = true
+        scrollView.autohidesScrollers = true
         scrollView.borderType = .lineBorder
         rescanButton.target = self
         rescanButton.action = #selector(rescanPressed(_:))

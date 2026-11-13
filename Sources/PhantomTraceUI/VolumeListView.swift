@@ -90,6 +90,7 @@ public final class VolumeListView: NSView {
         document.addSubview(rowStack)
         scrollView.documentView = document
         scrollView.hasVerticalScroller = true
+        scrollView.autohidesScrollers = true
         scrollView.borderType = .lineBorder
         scrollView.drawsBackground = false
         scrollView.translatesAutoresizingMaskIntoConstraints = false

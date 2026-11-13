@@ -88,6 +88,7 @@ public final class LockTableView: NSView {
     private func configureLayout() {
         scrollView.documentView = tableView
         scrollView.hasVerticalScroller = true
+        scrollView.autohidesScrollers = true
         scrollView.hasHorizontalScroller = false
         scrollView.borderType = .lineBorder
         scrollView.drawsBackground = false
