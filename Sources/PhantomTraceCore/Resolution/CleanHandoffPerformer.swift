@@ -9,10 +9,9 @@ struct CleanHandoffPerformer: Sendable {
     /// Requirement 10.1: the pre-unmount scan must finish within this many seconds.
     static let scanTimeoutSeconds: TimeInterval = 10
 
-    private let discovery: any LockDiscovering
+    private let scanner: TimedScanner
     private let policy: any SafetyPolicying
     private let unmounter: any Unmounting
-    private let clock: any Sleeping
 
     init(
         discovery: any LockDiscovering,
@@ -20,10 +19,9 @@ struct CleanHandoffPerformer: Sendable {
         unmounter: any Unmounting,
         clock: any Sleeping
     ) {
-        self.discovery = discovery
+        scanner = TimedScanner(discovery: discovery, clock: clock, limitSeconds: Self.scanTimeoutSeconds)
         self.policy = policy
         self.unmounter = unmounter
-        self.clock = clock
     }
 
     /// `force` must be true only after the advanced confirmation (Requirement 10.8).
@@ -38,6 +36,8 @@ struct CleanHandoffPerformer: Sendable {
             locks = found
         }
         guard locks.isEmpty else { return .blocked(locks) }
+        // A cancelled run must not reach the unmount call.
+        guard !Task.isCancelled else { return .failed(.cancelled) }
 
         let action = ProposedAction(
             kind: .unmount,
@@ -67,58 +67,22 @@ struct CleanHandoffPerformer: Sendable {
             }
         } catch let error as PhantomTraceError {
             return .failed(error)
+        } catch is CancellationError {
+            return .failed(.cancelled)
         } catch {
-            // Cancellation or any unexpected error: nothing is known to have unmounted.
+            // Any unexpected error: nothing is known to have unmounted.
             return .failed(.unmountFailed(code: -1))
         }
     }
 
     // MARK: - Scanning with a time limit
 
-    private enum Raced: Sendable {
-        case scan(Result<DiscoveryResult, PhantomTraceError>)
-        case timedOut
-    }
-
     /// A scan that is only trusted when it is complete. A partial result may miss locks, so it is a failure.
     private func freshScan(of volume: MountInfo) async -> Result<[LockRecord], PhantomTraceError> {
-        let seconds = Self.scanTimeoutSeconds
-        let discovery = self.discovery
-        let clock = self.clock
-        let winner = await withTaskGroup(of: Raced?.self, returning: Raced.self) { group in
-            group.addTask {
-                do {
-                    return .scan(.success(try await discovery.discover(in: volume)))
-                } catch let error as PhantomTraceError {
-                    return .scan(.failure(error))
-                } catch {
-                    return nil
-                }
-            }
-            group.addTask {
-                do {
-                    try await clock.sleep(seconds: seconds)
-                    return .timedOut
-                } catch {
-                    return nil
-                }
-            }
-            var result = Raced.timedOut
-            for await outcome in group {
-                if let outcome {
-                    result = outcome
-                    break
-                }
-            }
-            group.cancelAll()
-            return result
-        }
-        switch winner {
-        case .timedOut:
-            return .failure(.lsofTimedOut(seconds: seconds))
-        case .scan(.failure(let error)):
+        switch await scanner.scan(volume) {
+        case .failure(let error):
             return .failure(error)
-        case .scan(.success(let result)):
+        case .success(let result):
             return result.partial ? .failure(.lsofUnavailable) : .success(result.locks)
         }
     }

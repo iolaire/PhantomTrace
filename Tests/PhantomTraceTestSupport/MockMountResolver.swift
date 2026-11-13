@@ -12,7 +12,7 @@ public final class MockMountResolver: MountResolving {
     public func setMounts(_ value: [MountInfo]) {
         mounts.withLock { $0 = value }
     }
-    public func resolve(_ input: URL) throws -> MountInfo {
+    public func resolve(_ input: URL) async throws -> MountInfo {
         if let error = failure.withLock({ $0 }) { throw error }
         guard let first = mounts.withLock({ $0.first }) else { throw PhantomTraceError.notAMountPoint(input) }
         return first

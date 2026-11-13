@@ -2,7 +2,7 @@ import Foundation
 
 /// Turns user input (file, folder, volume, or `.dmg`) into the owning `MountInfo`.
 public protocol MountResolving: Sendable {
-    func resolve(_ input: URL) throws -> MountInfo
+    func resolve(_ input: URL) async throws -> MountInfo
     func allMounts() throws -> [MountInfo]
 }
 
@@ -22,7 +22,7 @@ public struct MountResolver: MountResolving {
         try mountTable.currentMounts()
     }
 
-    public func resolve(_ input: URL) throws -> MountInfo {
+    public func resolve(_ input: URL) async throws -> MountInfo {
         // Requirement 1.6: a missing path is not a mount point.
         guard fileSystem.itemExists(at: input) else {
             throw PhantomTraceError.notAMountPoint(input)
@@ -37,7 +37,7 @@ public struct MountResolver: MountResolving {
 
         let mount: MountInfo
         do {
-            mount = try owningMount(of: canonical)
+            mount = try await owningMount(of: canonical)
         } catch let error as PhantomTraceError {
             throw error
         } catch {
@@ -53,10 +53,10 @@ public struct MountResolver: MountResolving {
 
     // MARK: - Matching
 
-    private func owningMount(of canonical: URL) throws -> MountInfo {
+    private func owningMount(of canonical: URL) async throws -> MountInfo {
         if Self.isDiskImage(canonical), !fileSystem.isDirectory(at: canonical) {
             // Requirements 1.4, 1.5, 1.8: first attached volume in mount-table order.
-            guard let first = try mountTable.mounts(forDiskImage: canonical).first else {
+            guard let first = try await mountTable.mounts(forDiskImage: canonical).first else {
                 throw PhantomTraceError.notAMountPoint(canonical)
             }
             return first

@@ -14,16 +14,17 @@ struct MountResolverProtectionTests {
     }
 
     @Test(arguments: ["/private/var/vm", "/private/var/vm/swapfile0", "/var/vm", "/System/Volumes/Data", "/"])
-    func protectedPathsAreRefusedByTheirOwnSpelling(path: String) {
-        #expect(throws: PhantomTraceError.protectedVolume(URL(fileURLWithPath: path))) {
-            try resolver(target: path, canonical: path).resolve(URL(fileURLWithPath: path))
+    func protectedPathsAreRefusedByTheirOwnSpelling(path: String) async {
+        await #expect(throws: PhantomTraceError.protectedVolume(URL(fileURLWithPath: path))) {
+            try await resolver(target: path, canonical: path).resolve(URL(fileURLWithPath: path))
         }
     }
 
-    @Test func userPathCanonicalizingToPrivateVarVmIsRefused() {
+    @Test func userPathCanonicalizingToPrivateVarVmIsRefused() async {
         let canonical = URL(fileURLWithPath: "/private/var/vm")
-        #expect(throws: PhantomTraceError.protectedVolume(canonical)) {
-            try resolver(target: "/Volumes/A", canonical: "/private/var/vm").resolve(URL(fileURLWithPath: "/Volumes/A"))
+        await #expect(throws: PhantomTraceError.protectedVolume(canonical)) {
+            let sut = resolver(target: "/Volumes/A", canonical: "/private/var/vm")
+            _ = try await sut.resolve(URL(fileURLWithPath: "/Volumes/A"))
         }
     }
 

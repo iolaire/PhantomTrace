@@ -14,4 +14,6 @@ public enum PhantomTraceError: Error, Equatable, Sendable {
     case processIdentityChanged(pid: UInt32)
     case unmountBusy
     case unmountFailed(code: Int32)
+    /// The task was cancelled before the operation finished. Nothing further was sent or unmounted.
+    case cancelled
 }

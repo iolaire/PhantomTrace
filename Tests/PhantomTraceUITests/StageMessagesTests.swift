@@ -44,7 +44,8 @@ struct StageMessagesTests {
         let errors: [PhantomTraceError] = [
             .notAMountPoint(url), .protectedVolume(url), .lsofUnavailable, .lsofTimedOut(seconds: 15),
             .commandTimedOut(command: "/bin/x", seconds: 1), .commandLaunchFailed(command: "/bin/x"),
-            .permissionDenied(pid: 1), .processIdentityChanged(pid: 1), .unmountBusy, .unmountFailed(code: 5)
+            .permissionDenied(pid: 1), .processIdentityChanged(pid: 1), .unmountBusy, .unmountFailed(code: 5),
+            .cancelled
         ]
         let texts = errors.map { StageMessages.describe($0) }
         #expect(texts.allSatisfy { !$0.isEmpty })

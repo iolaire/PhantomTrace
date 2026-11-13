@@ -1,7 +1,5 @@
 import Darwin
-import Dispatch
 import Foundation
-import Synchronization
 
 /// Live `MountTableProviding`: reads the kernel mount table and maps `.dmg` files via `hdiutil`
 /// (Requirements 1.1, 1.4, 1.5, 15.1).
@@ -24,8 +22,12 @@ public struct LiveMountTable: MountTableProviding {
         try Self.readStatfsTable().map(mountInfo(from:))
     }
 
-    public func mounts(forDiskImage image: URL) throws -> [MountInfo] {
-        let output = try runHdiutilInfo()
+    public func mounts(forDiskImage image: URL) async throws -> [MountInfo] {
+        let output = try await runner.run(
+            executable: Self.hdiutil,
+            arguments: ["info", "-plist"],
+            timeout: Self.hdiutilTimeout
+        )
         // A failing or unparseable `hdiutil` means no known attachment; the resolver reports notAMountPoint.
         guard output.exitStatus == 0, let images = HdiutilInfoParser.parse(output.standardOutput) else { return [] }
         let wanted = canonicalPath(of: image.path)
@@ -44,33 +46,6 @@ public struct LiveMountTable: MountTableProviding {
                     isDiskImage: true
                 )
             }
-    }
-
-    // MARK: - hdiutil
-
-    /// `MountTableProviding` is synchronous but `ProcessRunning` is async, so block the calling thread on a
-    /// semaphore while the runner works in its own task. Callers invoke this off the main actor.
-    private func runHdiutilInfo() throws -> ProcessOutput {
-        let box = ResultBox()
-        let semaphore = DispatchSemaphore(value: 0)
-        let runner = runner
-        Task.detached {
-            let result: Result<ProcessOutput, any Error>
-            do {
-                result = .success(try await runner.run(
-                    executable: Self.hdiutil,
-                    arguments: ["info", "-plist"],
-                    timeout: Self.hdiutilTimeout
-                ))
-            } catch {
-                result = .failure(error)
-            }
-            box.state.withLock { $0 = result }
-            semaphore.signal()
-        }
-        semaphore.wait()
-        guard let result = box.state.withLock({ $0 }) else { throw POSIXError(.EIO) }
-        return try result.get()
     }
 
     // MARK: - statfs
@@ -127,9 +102,4 @@ public struct LiveMountTable: MountTableProviding {
             return String(decoding: UnsafeRawBufferPointer(rebasing: raw[..<end]), as: UTF8.self)
         }
     }
-}
-
-/// Holds the result of the detached task; `Mutex` makes the class `Sendable` without `@unchecked`.
-private final class ResultBox: Sendable {
-    let state = Mutex<Result<ProcessOutput, any Error>?>(nil)
 }

@@ -97,7 +97,10 @@ public struct LiveProcessRunner: ProcessRunning {
         let step = 0.02
         var waited = 0.0
         while process.isRunning, waited < seconds {
-            try? await Task.sleep(for: .seconds(step))
+            // Cleanup after a cancelled run still needs its grace period. A sleep in the cancelled task
+            // would throw at once and skip the wait, so the sleep runs in an unstructured task that does
+            // not inherit the cancellation.
+            await Task { try? await Task.sleep(for: .seconds(step)) }.value
             waited += step
         }
         return !process.isRunning

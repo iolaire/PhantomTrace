@@ -41,10 +41,11 @@ public actor DiagnosticCoordinator {
     // MARK: - Observation
     /// The current model.
     public var current: WindowModel { model }
-    /// A stream that yields the current model first, then every change.
+    /// A stream that yields the current model first, then changes. Each model is a full snapshot, so a slow
+    /// consumer sees the newest one and skips the older ones instead of queueing them.
     public func updates() -> AsyncStream<WindowModel> {
         let id = UUID()
-        let (stream, continuation) = AsyncStream<WindowModel>.makeStream(bufferingPolicy: .unbounded)
+        let (stream, continuation) = AsyncStream<WindowModel>.makeStream(bufferingPolicy: .bufferingNewest(1))
         subscribers[id] = continuation
         continuation.onTermination = { [weak self] _ in
             Task { await self?.removeSubscriber(id) }
@@ -62,6 +63,11 @@ public actor DiagnosticCoordinator {
     public func inspect(_ input: URL) async {
         guard beginOperation() else { return }
         defer { endOperation() }
+        await performInspect(input)
+    }
+
+    /// The body of `inspect`, for callers that already hold the in-flight flag.
+    private func performInspect(_ input: URL) async {
         lastInput = input
         proceeded = false
         degraded = false
@@ -72,7 +78,7 @@ public actor DiagnosticCoordinator {
         publish()
         let mount: MountInfo
         do {
-            mount = try resolver.resolve(input)
+            mount = try await resolver.resolve(input)
         } catch {
             // PROVISIONAL (Req 18.6): a resolve failure shows no window content, only an alert.
             state = DiscoveryReducer.reduce(state, .resolveFailed(Self.asPhantomTraceError(error, input: input)))
@@ -89,11 +95,8 @@ public actor DiagnosticCoordinator {
         guard beginOperation() else { return }
         defer { endOperation() }
         guard let mount = volume else {
-            if let input = lastInput {
-                endOperation()
-                await inspect(input)
-                _ = beginOperation()
-            }
+            // Nothing resolved yet (the last inspect failed): a rescan means inspecting the input again.
+            if let input = lastInput { await performInspect(input) }
             return
         }
         await scan(on: mount, isFirstScan: false)
@@ -223,7 +226,8 @@ extension DiagnosticCoordinator {
     }
     private func startOverlayTimer(token: Int) -> Task<Void, Never> {
         let sleeper = self.sleeper
-        return Task { [weak self] in
+        // Nothing before the first await needs the actor, so the wait starts off it and hops back to show.
+        return Task { @concurrent [weak self] in
             do { try await sleeper.sleep(seconds: Self.firstScanOverlayDelaySeconds) } catch { return }
             await self?.showFirstScanOverlay(token: token)
         }

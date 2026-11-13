@@ -14,6 +14,7 @@ public actor ResolutionPipeline: StageRunning {
     static let gracePollSeconds: TimeInterval = 0.25
 
     private struct Approval {
+        let volume: MountInfo
         let actions: [ProposedAction]
         let names: [ProcessIdentity: String]
     }
@@ -78,16 +79,19 @@ public actor ResolutionPipeline: StageRunning {
         for lock in scan.locks {
             if let identity = lock.identity { names[identity] = lock.processName }
         }
-        approvals[stage] = Approval(actions: plan.actions, names: names)
+        approvals[stage] = Approval(volume: volume, actions: plan.actions, names: names)
         return plan
     }
 
     public func execute(_ plan: ResolutionPlan, on volume: MountInfo) async throws -> StageOutcome {
         let approval = approvals.removeValue(forKey: plan.stage)
-        let runnable = plan.actions.filter { approval?.actions.contains($0) == true }
+        // An approval is for the volume it was planned on; executing against another mount sends nothing.
+        let runnable = plan.actions.filter { approval?.volume == volume && approval?.actions.contains($0) == true }
         var succeeded: [ProposedAction] = []
         var failed: [FailedAction] = []
         for action in runnable {
+            // Requirement 6: a cancelled stage must not send another signal.
+            try Task.checkCancellation()
             let result = await run(action, stage: plan.stage, volume: volume, names: approval?.names ?? [:])
             switch result {
             case .success: succeeded.append(action)
@@ -96,9 +100,9 @@ public actor ResolutionPipeline: StageRunning {
             }
         }
         if plan.stage == .gracefulRequest {
-            await waitForGrace(succeeded.compactMap(\.target))
+            try await waitForGrace(succeeded.compactMap(\.target))
         }
-        return await rescan(plan.stage, volume: volume, succeeded: succeeded, failed: failed)
+        return try await rescan(plan.stage, volume: volume, succeeded: succeeded, failed: failed)
     }
 
     public func cleanHandoff(on volume: MountInfo, force: Bool) async -> CleanHandoffResult {
@@ -150,6 +154,8 @@ public actor ResolutionPipeline: StageRunning {
             return .skipped
         case .failed(.processIdentityChanged(let pid)):
             return .failure(.processIdentityChanged(pid: pid))
+        case .failed(.cancelled):
+            return .failure(.cancelled)
         case .failed(.invalidAction), .failed(.stillOnVolume):
             return .failure(.commandLaunchFailed(command: "resetShellCwd"))
         }
@@ -190,7 +196,7 @@ public actor ResolutionPipeline: StageRunning {
 
     /// Waits up to the grace period, ending early once every target has exited (Requirement 8.5).
     /// Zero targets means no wait (Requirement 8.4).
-    private func waitForGrace(_ targets: [ProcessIdentity]) async {
+    private func waitForGrace(_ targets: [ProcessIdentity]) async throws {
         guard !targets.isEmpty else { return }
         var waited: TimeInterval = 0
         while waited < graceSeconds {
@@ -198,11 +204,7 @@ public actor ResolutionPipeline: StageRunning {
                 inspector.inspect(pid: Int32(truncatingIfNeeded: target.pid))?.identity == target
             }
             guard alive else { return }
-            do {
-                try await clock.sleep(seconds: Self.gracePollSeconds)
-            } catch {
-                return
-            }
+            try await clock.sleep(seconds: Self.gracePollSeconds)
             waited += Self.gracePollSeconds
         }
     }
@@ -212,10 +214,12 @@ public actor ResolutionPipeline: StageRunning {
         volume: MountInfo,
         succeeded: [ProposedAction],
         failed: [FailedAction]
-    ) async -> StageOutcome {
-        try? await clock.sleep(seconds: Self.settleSeconds)
+    ) async throws -> StageOutcome {
+        try await clock.sleep(seconds: Self.settleSeconds)
+        let scan = await scanner.scan(volume)
+        if case .failure(.cancelled) = scan { throw CancellationError() }
         // A partial or failed rescan verifies nothing, so it is reported as timed out with no locks.
-        if case .success(let result) = await scanner.scan(volume), !result.partial {
+        if case .success(let result) = scan, !result.partial {
             return StageOutcome(stage: stage, succeeded: succeeded, failed: failed, remainingLocks: result.locks)
         }
         return StageOutcome(

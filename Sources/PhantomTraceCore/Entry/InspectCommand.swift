@@ -42,7 +42,7 @@ public struct InspectCommand: Sendable {
             return Self.failure("invalid path: \(error.reason)")
         }
         do {
-            let mount = try resolver.resolve(URL(fileURLWithPath: path))
+            let mount = try await resolver.resolve(URL(fileURLWithPath: path))
             let result = try await discovery.discover(in: mount)
             return Self.success(result)
         } catch let error as PhantomTraceError {
@@ -130,6 +130,8 @@ public struct InspectCommand: Sendable {
             return "\(command) timed out after \(Int(seconds)) seconds"
         case let .commandLaunchFailed(command):
             return "could not launch \(command)"
+        case .cancelled:
+            return "cancelled"
         case .permissionDenied, .processIdentityChanged, .unmountBusy, .unmountFailed:
             return "could not inspect the volume"
         }

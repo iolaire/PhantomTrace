@@ -27,7 +27,7 @@ public final class MockMountTableProvider: MountTableProviding {
         return try currentScript.next().get()
     }
 
-    public func mounts(forDiskImage image: URL) throws -> [MountInfo] {
+    public func mounts(forDiskImage image: URL) async throws -> [MountInfo] {
         log.record(.mounts(forDiskImage: image))
         return try imageScript.next().get()
     }

@@ -51,9 +51,9 @@ struct DiskImageIntegrationTests {
         )
 
         // Resolve both from the mount point and from the .dmg file (Requirements 1.4, 3.1).
-        let volume = try resolver.resolve(fixture.mountPoint)
+        let volume = try await resolver.resolve(fixture.mountPoint)
         #expect(volume.mountPoint.path == fixture.mountPoint.path)
-        #expect(try resolver.resolve(fixture.imageURL).mountPoint.path == fixture.mountPoint.path)
+        #expect(try await resolver.resolve(fixture.imageURL).mountPoint.path == fixture.mountPoint.path)
 
         let pids = try fixture.spawnHelpers()
         let locks = try await pollLocks(engine, volume) { found in

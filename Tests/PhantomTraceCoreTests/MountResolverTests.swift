@@ -37,95 +37,95 @@ struct MountResolverTests {
         return (MountResolver(fileSystem: probe, mountTable: table), table)
     }
 
-    @Test func fileUnderLongerNamedSiblingVolumeResolvesToThatSibling() throws {
+    @Test func fileUnderLongerNamedSiblingVolumeResolvesToThatSibling() async throws {
         let volumeA = mount("/Volumes/A")
         let volumeAB = mount("/Volumes/AB")
         let (sut, _) = resolver(existing: ["/Volumes/AB/file"], mounts: [volumeA, volumeAB])
-        #expect(try sut.resolve(url("/Volumes/AB/file")) == volumeAB)
+        #expect(try await sut.resolve(url("/Volumes/AB/file")) == volumeAB)
     }
 
-    @Test func nameSharingOnlyACharacterPrefixDoesNotMatch() {
+    @Test func nameSharingOnlyACharacterPrefixDoesNotMatch() async {
         let (sut, _) = resolver(existing: ["/Volumes/AB/file"], mounts: [mount("/Volumes/A")])
-        #expect(throws: PhantomTraceError.notAMountPoint(url("/Volumes/AB/file"))) {
-            try sut.resolve(url("/Volumes/AB/file"))
+        await #expect(throws: PhantomTraceError.notAMountPoint(url("/Volumes/AB/file"))) {
+            try await sut.resolve(url("/Volumes/AB/file"))
         }
     }
 
-    @Test func nestedMountWinsOverItsParent() throws {
+    @Test func nestedMountWinsOverItsParent() async throws {
         let parent = mount("/Volumes/A")
         let nested = mount("/Volumes/A/Inner")
         let (sut, _) = resolver(existing: ["/Volumes/A/Inner/x"], mounts: [parent, nested])
-        #expect(try sut.resolve(url("/Volumes/A/Inner/x")) == nested)
+        #expect(try await sut.resolve(url("/Volumes/A/Inner/x")) == nested)
     }
 
-    @Test func nonexistentPathIsNotAMountPointAndReadsNoMounts() {
+    @Test func nonexistentPathIsNotAMountPointAndReadsNoMounts() async {
         let (sut, table) = resolver(existing: [], mounts: [mount("/Volumes/A")])
-        #expect(throws: PhantomTraceError.notAMountPoint(url("/Volumes/A/gone"))) {
-            try sut.resolve(url("/Volumes/A/gone"))
+        await #expect(throws: PhantomTraceError.notAMountPoint(url("/Volumes/A/gone"))) {
+            try await sut.resolve(url("/Volumes/A/gone"))
         }
         #expect(table.calls.isEmpty)
     }
 
-    @Test func attachedDiskImageResolvesToItsVolume() throws {
+    @Test func attachedDiskImageResolvesToItsVolume() async throws {
         let attached = mount("/Volumes/Disk", isDiskImage: true)
         let (sut, table) = resolver(existing: ["/Users/u/disk.dmg"], imageMounts: [attached])
-        #expect(try sut.resolve(url("/Users/u/disk.dmg")) == attached)
+        #expect(try await sut.resolve(url("/Users/u/disk.dmg")) == attached)
         #expect(table.calls == [.mounts(forDiskImage: url("/Users/u/disk.dmg"))])
     }
 
-    @Test func unattachedDiskImageIsNotAMountPoint() {
+    @Test func unattachedDiskImageIsNotAMountPoint() async {
         let (sut, _) = resolver(existing: ["/Users/u/disk.dmg"], imageMounts: [])
-        #expect(throws: PhantomTraceError.notAMountPoint(url("/Users/u/disk.dmg"))) {
-            try sut.resolve(url("/Users/u/disk.dmg"))
+        await #expect(throws: PhantomTraceError.notAMountPoint(url("/Users/u/disk.dmg"))) {
+            try await sut.resolve(url("/Users/u/disk.dmg"))
         }
     }
 
-    @Test func multiVolumeImageResolvesToFirstVolumeInTableOrder() throws {
+    @Test func multiVolumeImageResolvesToFirstVolumeInTableOrder() async throws {
         let first = mount("/Volumes/One", isDiskImage: true)
         let second = mount("/Volumes/Two", isDiskImage: true)
         let (sut, _) = resolver(existing: ["/Users/u/multi.DMG"], imageMounts: [first, second])
-        #expect(try sut.resolve(url("/Users/u/multi.DMG")) == first)
+        #expect(try await sut.resolve(url("/Users/u/multi.DMG")) == first)
     }
 
-    @Test func directoryNamedLikeAnImageIsMatchedByMountPrefix() throws {
+    @Test func directoryNamedLikeAnImageIsMatchedByMountPrefix() async throws {
         let volume = mount("/Volumes/A")
         let (sut, table) = resolver(existing: [], directories: ["/Volumes/A/folder.dmg"], mounts: [volume])
-        #expect(try sut.resolve(url("/Volumes/A/folder.dmg")) == volume)
+        #expect(try await sut.resolve(url("/Volumes/A/folder.dmg")) == volume)
         #expect(table.calls == [.currentMounts])
     }
 
-    @Test func emptyVolumeNameFallsBackToMountPointName() throws {
+    @Test func emptyVolumeNameFallsBackToMountPointName() async throws {
         let (sut, _) = resolver(existing: ["/Volumes/Untitled/f"], mounts: [mount("/Volumes/Untitled", name: "")])
-        #expect(try sut.resolve(url("/Volumes/Untitled/f")).volumeName == "Untitled")
+        #expect(try await sut.resolve(url("/Volumes/Untitled/f")).volumeName == "Untitled")
     }
 
-    @Test func unresolvablePathIsTreatedAsProtected() {
+    @Test func unresolvablePathIsTreatedAsProtected() async {
         let missingCanonical = url("/Volumes/A/odd")
         let probe = MockFileSystemProbe(existing: [missingCanonical], canonical: [:])
         let table = MockMountTableProvider(mounts: [mount("/Volumes/A")])
         let sut = MountResolver(fileSystem: probe, mountTable: table)
-        #expect(throws: PhantomTraceError.protectedVolume(missingCanonical)) {
-            try sut.resolve(missingCanonical)
+        await #expect(throws: PhantomTraceError.protectedVolume(missingCanonical)) {
+            try await sut.resolve(missingCanonical)
         }
         #expect(table.calls.isEmpty)
     }
 
-    @Test func owningMountThatIsProtectedIsRefused() {
+    @Test func owningMountThatIsProtectedIsRefused() async {
         // The path itself is unprotected, but the only mount that owns it is the root volume (Req 2.2).
         let (sut, _) = resolver(existing: ["/Users/u/f"], mounts: [mount("/")])
-        #expect(throws: PhantomTraceError.protectedVolume(url("/"))) {
-            try sut.resolve(url("/Users/u/f"))
+        await #expect(throws: PhantomTraceError.protectedVolume(url("/"))) {
+            try await sut.resolve(url("/Users/u/f"))
         }
     }
 
-    @Test func mountTableFailureKeepsItsError() {
+    @Test func mountTableFailureKeepsItsError() async {
         let file = url("/Volumes/A/f")
         let probe = MockFileSystemProbe(existing: [file], canonical: [file: file])
         let table = MockMountTableProvider()
         table.currentScript.setFallback(.failure(.notAMountPoint(file)))
         let sut = MountResolver(fileSystem: probe, mountTable: table)
-        #expect(throws: PhantomTraceError.notAMountPoint(url("/Volumes/A/f"))) {
-            try sut.resolve(url("/Volumes/A/f"))
+        await #expect(throws: PhantomTraceError.notAMountPoint(url("/Volumes/A/f"))) {
+            try await sut.resolve(url("/Volumes/A/f"))
         }
     }
 }

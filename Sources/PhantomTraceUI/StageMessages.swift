@@ -41,10 +41,22 @@ enum StageMessages {
             return "\(URL(fileURLWithPath: command).lastPathComponent) timed out after \(Int(seconds)) s"
         case .commandLaunchFailed(let command):
             return "\(URL(fileURLWithPath: command).lastPathComponent) could not be started"
+        case .permissionDenied, .processIdentityChanged, .unmountBusy, .unmountFailed, .cancelled:
+            return describeOperation(error)
+        }
+    }
+
+    /// The errors of stages and unmounts. Split from `describe` to keep each switch small.
+    private static func describeOperation(_ error: PhantomTraceError) -> String {
+        switch error {
         case .permissionDenied: return "permission denied"
         case .processIdentityChanged: return "process changed since the scan"
         case .unmountBusy: return "volume is busy"
         case .unmountFailed(let code): return "unmount failed (code \(code))"
+        case .cancelled: return "cancelled before it finished"
+        case .notAMountPoint, .protectedVolume, .lsofUnavailable, .lsofTimedOut, .commandTimedOut,
+             .commandLaunchFailed:
+            return ""  // handled by `describe`, which never forwards these
         }
     }
 

@@ -15,7 +15,8 @@ struct ProtectedVolumeRefusalPropertyTests {
         await propertyCheck(count: Self.iterations, input: input) { path, userMounts in
             let target = URL(fileURLWithPath: path)
             let resolver = makeResolver(target: target, canonical: target, mounts: userMounts)
-            #expect(isProtectedVolumeError { try resolver.resolve(target) }, "Not refused: \(path)")
+            let refused = await isProtectedVolumeError { try await resolver.resolve(target) }
+            #expect(refused, "Not refused: \(path)")
         }
     }
 
@@ -26,7 +27,8 @@ struct ProtectedVolumeRefusalPropertyTests {
             let target = URL(fileURLWithPath: path)
             let canonical = URL(fileURLWithPath: protectedPath)
             let resolver = makeResolver(target: target, canonical: canonical, mounts: [])
-            #expect(isProtectedVolumeError { try resolver.resolve(target) }, "Not refused: \(path) -> \(protectedPath)")
+            let refused = await isProtectedVolumeError { try await resolver.resolve(target) }
+            #expect(refused, "Not refused: \(path) -> \(protectedPath)")
         }
     }
 
@@ -38,7 +40,8 @@ struct ProtectedVolumeRefusalPropertyTests {
             // The only mount that owns the target is `/`, so the owning mount is protected.
             let root = makeMount(URL(fileURLWithPath: "/"), index: 0)
             let resolver = makeResolver(target: target, canonical: target, mounts: [root])
-            #expect(isProtectedVolumeError { try resolver.resolve(target) }, "Not refused: \(path) via \(mountPath)")
+            let refused = await isProtectedVolumeError { try await resolver.resolve(target) }
+            #expect(refused, "Not refused: \(path) via \(mountPath)")
         }
     }
 
@@ -47,15 +50,15 @@ struct ProtectedVolumeRefusalPropertyTests {
         await propertyCheck(count: Self.iterations, input: protectedPathGenerator()) { path in
             let target = URL(fileURLWithPath: path)
             let resolver = makeResolver(target: target, canonical: target, mounts: [makeMount(target, index: 0)])
-            let resolved = try? resolver.resolve(target)
+            let resolved = try? await resolver.resolve(target)
             #expect(resolved == nil)
         }
     }
 }
 
-private func isProtectedVolumeError(_ body: () throws -> MountInfo) -> Bool {
+private func isProtectedVolumeError(_ body: () async throws -> MountInfo) async -> Bool {
     do {
-        _ = try body()
+        _ = try await body()
         return false
     } catch PhantomTraceError.protectedVolume {
         return true

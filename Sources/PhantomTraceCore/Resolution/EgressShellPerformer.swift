@@ -18,6 +18,8 @@ public enum EgressFailure: Equatable, Sendable {
     case processIdentityChanged(pid: UInt32)
     /// The text was sent but the shell never left the volume within the verification window.
     case stillOnVolume(pid: UInt32)
+    /// The task was cancelled while verifying. The text may already have been sent; the outcome is unknown.
+    case cancelled
 }
 
 /// Result of one Egress Shells action.
@@ -94,7 +96,7 @@ struct EgressShellPerformer: Sendable {
             do {
                 try await clock.sleep(seconds: Self.pollIntervalSeconds)
             } catch {
-                return .failed(.stillOnVolume(pid: target.pid))
+                return .failed(.cancelled)
             }
             waited += Self.pollIntervalSeconds
         }

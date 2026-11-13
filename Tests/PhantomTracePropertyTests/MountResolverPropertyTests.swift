@@ -15,7 +15,7 @@ struct MountResolverPropertyTests {
             let resolver = scenario.makeResolver()
             let expected = scenario.expectedMount()
             do {
-                let mount = try resolver.resolve(scenario.target)
+                let mount = try await resolver.resolve(scenario.target)
                 #expect(mount.mountPoint == expected)
             } catch {
                 #expect(expected == nil, "Unexpected error \(error) for \(scenario.target.path)")
@@ -28,7 +28,7 @@ struct MountResolverPropertyTests {
         await propertyCheck(count: Self.iterations, input: scenarioGenerator()) { scenario in
             let resolver = scenario.makeResolver()
             for mount in scenario.mounts {
-                let resolved = try? resolver.resolve(mount.mountPoint)
+                let resolved = try? await resolver.resolve(mount.mountPoint)
                 #expect(resolved == mount)
             }
         }
@@ -38,7 +38,7 @@ struct MountResolverPropertyTests {
     @Test func resolvedMountIsAbsoluteCanonicalInTableAndNamed() async {
         await propertyCheck(count: Self.iterations, input: scenarioGenerator()) { scenario in
             let resolver = scenario.makeResolver()
-            guard let mount = try? resolver.resolve(scenario.target) else { return }
+            guard let mount = try? await resolver.resolve(scenario.target) else { return }
             #expect(mount.mountPoint.path.hasPrefix("/"))
             #expect(mount.mountPoint == mount.mountPoint.standardizedFileURL)
             #expect(scenario.mounts.contains(mount))
