@@ -67,7 +67,7 @@ Enable the commit checks once per clone (lint, tests, project log, and `.kiro` g
 Scripts/install-git-hooks.sh
 ```
 
-SwiftLint is required for the checks: `brew install swiftlint`. On a Command Line Tools only machine, `swiftlint` may fail to load SourceKit unless `DYLD_FRAMEWORK_PATH=/Library/Developer/CommandLineTools/usr/lib` is set (and in some runs `SOURCEKIT_TOOLCHAIN_PATH=/Library/Developer/CommandLineTools`). This is a known gap; `Scripts/lint-and-test.sh` does not set it for you.
+SwiftLint is required for the checks: `brew install swiftlint`. On a Command Line Tools only machine, `swiftlint` may fail to load SourceKit unless `DYLD_FRAMEWORK_PATH=/Library/Developer/CommandLineTools/usr/lib` is set (and in some runs `SOURCEKIT_TOOLCHAIN_PATH=/Library/Developer/CommandLineTools`). `Scripts/lint-and-test.sh` sets `DYLD_FRAMEWORK_PATH` itself on Command Line Tools installs; set it yourself only when running `swiftlint` directly.
 
 ## Run
 

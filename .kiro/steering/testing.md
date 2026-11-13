@@ -10,7 +10,7 @@ Frameworks: Swift Testing (`import Testing`, `@Test`, `#expect`) for unit and pr
 
 - Unit tests: `Tests/PhantomTraceCoreTests`, with mock adapters.
 - Property tests: `Tests/PhantomTracePropertyTests`.
-- Fixtures: `Tests/Fixtures` (real captured `lsof -F` output: spaces, newlines, Unicode, `\x` escapes, non-UTF8 bytes, deleted files, symlinked mounts, `/Volumes` firmlinks). Save minimized property counterexamples there as regression fixtures.
+- Fixtures: `Tests/Fixtures` (hand-written and generated `lsof -F` samples, not yet captured from a real run; replace or add real captures when available: spaces, newlines, Unicode, `\x` escapes, non-UTF8 bytes, deleted files, symlinked mounts, `/Volumes` firmlinks). Save minimized property counterexamples there as regression fixtures.
 - Test files mirror source layout: `<Type>Tests.swift`, `<Type>PropertyTests.swift`.
 
 ## Rules

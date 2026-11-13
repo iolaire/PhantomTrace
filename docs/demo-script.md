@@ -10,7 +10,7 @@ Use a throwaway disk image, never a real drive.
 
 1. Create and attach a small image, for example `hdiutil create -size 20m -fs APFS -volname DemoDrive demo.dmg`, then `hdiutil attach demo.dmg`.
 2. Create the haunting: in Terminal, `cd /Volumes/DemoDrive` and leave the shell idle (a cwd lock). In another process, hold a file open (for example `tail -f /Volumes/DemoDrive/notes.txt`, or open a document from the volume in a GUI app).
-3. Install the Quick Action (`Scripts/install-quick-action.sh`, once it exists) and confirm Terminal automation permission is granted.
+3. Install the Quick Action (`Scripts/install-quick-action.sh`), enable it under Quick Actions > Customize in Finder, and confirm Terminal automation permission is granted.
 4. Close notifications, set a clean Desktop, and hide unrelated windows. No third-party trademarks, music, or copyrighted material in frame.
 
 ## Timeline (target 170 seconds)
