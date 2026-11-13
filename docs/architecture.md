@@ -173,9 +173,9 @@ The rest follow the design's provisional proposals and are marked `// PROVISIONA
 
 Recorded so nothing reads as finished that is not:
 
-- `ResolutionPipeline` does not pass user-confirmed system daemons through to plan building, so the "user-confirmed `systemDaemon`" exception for `SIGKILL` cannot be exercised from the pipeline.
-- `StageOutcome` cannot represent a manual Egress Shells result (terminal automation denied or unsupported, shell left for the user to handle), so those cases are not reported as manual.
-- `Banner` has no field for partial vs failed. The window controller infers the kind from the coordinator's message prefix, which is fragile.
+- The pipeline now accepts user-confirmed system daemons (`plan(_:on:confirmedDaemons:)`), so the `SIGKILL` exception for a confirmed `systemDaemon` works end to end in Core. No UI asks for that confirmation yet: the coordinator calls the two-argument `plan`, which passes none, so the app never kills a daemon without a prior graceful attempt.
+- `StageOutcome.manual` now reports Egress Shells actions that need the user to act by hand (no terminal, foreground job, terminal not scriptable) with the reason and the `cd ~` instruction. The window does not show them yet; it still lists only failed actions.
+- `Banner.kind` (`failed` or `partial`) is set by the coordinator and read by the window. The message-prefix inference is gone.
 - The owner ran the end-to-end flow by hand on 2026-11-12 (Quick Action, window flow, force quit, and a two-stage quit of `agy` then `zsh`). VoiceOver, Reduce Motion, and the drop target are still unverified, and `windowAnnouncement` is not posted yet.
 - `swiftlint` needs `DYLD_FRAMEWORK_PATH=/Library/Developer/CommandLineTools/usr/lib` on this machine.
 - The disk image integration test covers discover then unmount; it does not drive the full pipeline.

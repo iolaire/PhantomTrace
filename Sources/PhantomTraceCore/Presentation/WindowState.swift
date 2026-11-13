@@ -23,6 +23,13 @@ public enum PhantomChoice: Equatable, Sendable {
 
 /// A failure or partial-result notice shown inside the PHANTOM TRACE window (Requirement 14).
 public struct Banner: Equatable, Sendable {
+    /// Whether the scan failed outright or returned partial results (Requirements 14.1, 18.26).
+    public enum Kind: Equatable, Sendable {
+        case failed
+        case partial
+    }
+
+    public var kind: Kind
     public var message: String
     /// At most `maximumWarnings` warnings (Requirement 14.1).
     public var warnings: [ParseWarning]
@@ -30,15 +37,22 @@ public struct Banner: Equatable, Sendable {
     public var omittedWarningCount: Int
     public static let maximumWarnings = 100
 
-    public init(message: String, warnings: [ParseWarning] = [], omittedWarningCount: Int = 0) {
+    public init(
+        kind: Kind = .failed,
+        message: String,
+        warnings: [ParseWarning] = [],
+        omittedWarningCount: Int = 0
+    ) {
+        self.kind = kind
         self.message = message
         self.warnings = warnings
         self.omittedWarningCount = omittedWarningCount
     }
 
     /// Builds a banner that shows at most `maximumWarnings` warnings and counts the rest.
-    public static func capped(message: String, warnings: [ParseWarning]) -> Banner {
+    public static func capped(kind: Kind = .failed, message: String, warnings: [ParseWarning]) -> Banner {
         Banner(
+            kind: kind,
             message: message,
             warnings: Array(warnings.prefix(maximumWarnings)),
             omittedWarningCount: max(0, warnings.count - maximumWarnings)

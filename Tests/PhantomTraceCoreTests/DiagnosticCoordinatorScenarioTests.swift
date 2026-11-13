@@ -90,6 +90,7 @@ struct DiagnosticCoordinatorScenarioTests: CoordinatorScenario {
         let model = await rig.coordinator.current
         #expect(model.window == .phantomTrace)
         #expect(model.banner?.message.contains("15 seconds") == true)
+        #expect(model.banner?.kind == .failed)
         #expect(model.controls.rescanEnabled)
         #expect(!model.controls.proceedEnabled)
         #expect(!model.controls.handleMyselfEnabled)
@@ -107,6 +108,7 @@ struct DiagnosticCoordinatorScenarioTests: CoordinatorScenario {
         #expect(model.window == .phantomTrace)
         #expect(model.banner?.warnings == Array(warnings.prefix(100)))
         #expect(model.banner?.omittedWarningCount == 30)
+        #expect(model.banner?.kind == .partial)
         #expect(model.controls.rescanEnabled)
         #expect(!model.controls.proceedEnabled)
     }

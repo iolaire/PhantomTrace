@@ -163,6 +163,8 @@ struct EgressShellPerformerTests {
     @Test func pipelineTreatsAManualShellAsNeitherSuccessNorFailure() async throws {
         let (rig, outcome) = try await pipelineRun(shellDetails: shell(terminal: nil, foreground: nil))
         #expect(outcome.succeeded.isEmpty && outcome.failed.isEmpty)
+        #expect(outcome.manual.map(\.reason) == [.noTerminal])
+        #expect(outcome.manual.map(\.instruction) == [EgressShellPerformer.manualInstruction(pid: 10)])
         #expect(rig.terminal.calls.isEmpty && rig.signals.calls.isEmpty)
     }
 
