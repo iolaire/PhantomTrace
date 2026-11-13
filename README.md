@@ -39,7 +39,30 @@ The code for every task in the master spec's build order is written (Core librar
 - Also covered by unit and property tests: the main menu (Quit Cmd-Q, Close Window Cmd-W, Inspect... Cmd-O, File > Inspect Volume) and the drop window that lists mounted volumes with an Inspect button each (Requirement 19).
 - **Not verified:** VoiceOver and Reduce Motion have not been tested. The drop-target path (dragging onto the window or Dock icon) and the drop window's volume list were not named in the owner's report, so treat them as unconfirmed until ticked in `docs/ManualQA.md`. The 100 ms main-actor bound is not measured. Notarization has not been attempted.
 - Several behaviors are provisional and await the owner's confirmation; see [docs/architecture.md](docs/architecture.md#provisional-behaviors) and the known gaps in [docs/SubmissionChecklist.md](docs/SubmissionChecklist.md).
-- No screenshots or demo video exist yet. The app icon exists (`Packaging/AppIcon.icns`).
+- Screenshots were captured on 2026-11-13 from the rebuilt app on macOS 27.2.1 against a throwaway disk image (see Screenshots below). No demo video exists yet. The app icon exists (`Packaging/AppIcon.icns`).
+
+## Screenshots
+Without PhantomTrace, Finder refuses to eject the same volume and names nothing:
+
+![Finder: the disk wasn't ejected because one or more programs may be using it](docs/screenshots/finder-eject-fails.png)
+
+Captured on macOS 27.2.1 from Finder's File > Eject on the demo image while the two helper locks were running. The dialog was dismissed with Cancel; Force Eject was not used.
+
+With PhantomTrace:
+
+Captured from `build/PhantomTrace.app` on macOS 27.2.1 (build 26B131) against a throwaway 20 MB disk image. The two locks were a `tail -f` on a file and an interactive `zsh` in the volume root, both started by the capture session. Only those two helper pids were ever signaled.
+
+| State | Image |
+|---|---|
+| Cannot Put Away: the volume is held | ![Cannot Put Away](docs/screenshots/cannot-put-away.png) |
+| Phantom Trace: process, pid, user, lock category, path | ![Phantom Trace lock list](docs/screenshots/phantom-trace.png) |
+| Graceful Request plan preview (SIGTERM, named by pid) | ![Graceful Request plan](docs/screenshots/plan-preview.png) |
+| After the stage and rescan: `zsh` still holds the volume | ![After graceful rescan](docs/screenshots/after-graceful-rescan.png) |
+| Banish Locks plan preview (SIGKILL, named by pid) | ![Banish Locks plan](docs/screenshots/banish-plan.png) |
+| Banish confirmation, Cancel is the default button | ![Banish confirmation](docs/screenshots/banish-confirm.png) |
+| Volume Released: nothing holds the volume | ![Volume Released](docs/screenshots/volume-released.png) |
+
+The button clicks were sent by script under macOS Accessibility permission that the owner granted for the capture. The Eject button and Force Unmount were not pressed in this run; the image was detached afterwards with `hdiutil detach`.
 
 ## Platform
 
@@ -79,6 +102,7 @@ The CLI is read-only: it resolves the volume and lists the locks. It never signa
 swift run phantomtrace /Volumes/SomeDrive
 swift run phantomtrace "phantomtrace://inspect?path=%2FVolumes%2FSomeDrive"
 ```
+A real captured run against a throwaway disk image is in [docs/CliCapture.md](docs/CliCapture.md).
 
 ### App bundle
 

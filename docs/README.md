@@ -8,6 +8,7 @@
 | [KiroUsage.md](KiroUsage.md) | Evidence of how Kiro features were used (hackathon write-up) | Steering, hooks, specs, or PBT produce real evidence |
 | [SubmissionChecklist.md](SubmissionChecklist.md) | Kiroween 2026 requirements and known gaps | Anything is done or a gap appears |
 | [ManualQA.md](ManualQA.md) | Manual QA checklist: bundle, entry points, windows, accessibility, CLI, provisional behaviors | A UI state, entry point, or provisional behavior changes |
+| [CliCapture.md](CliCapture.md) | Captured output of the read-only CLI against a throwaway disk image | The CLI output format or the demo setup changes |
 | [demo-script.md](demo-script.md) | Plan for the under-3-minute demo video | The app flow changes |
 | [LookAndFeel/README.md](LookAndFeel/README.md) | Visual design reference art and notes | New art or UI direction |
 | [Assets.md](Assets.md) | Provenance and license of images and fonts | An asset is added, replaced, or bundled |

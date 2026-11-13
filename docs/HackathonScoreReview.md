@@ -2,208 +2,185 @@
 
 Date: 2026-11-13 (UTC). Days left until December 4, 2026, 2:00 pm PT (22:00 UTC): 21.
 
-Method: independent re-score from the repository at HEAD `033a629`. Owner statements in the docs (manual QA pass, asset provenance, hooks and power use) are treated as unverified. Commands run on this Mac: `swift build` (exit 0), `swiftlint --strict` (0 violations in 205 files), `swift test` (three runs, 111 + 90 + 259 tests, all passed; the third includes the local `DiskImageIntegrationTests` on its own temp image, and `hdiutil info` showed no leftover images afterwards). No process was signaled and no real volume was unmounted by me. GitHub was checked with unauthenticated web requests.
+Method: read the Rules, README, checklist, KiroUsage, demo script, specs, steering, hooks, git history, and two screenshots. Commands run on this Mac (Darwin arm64, macOS 27.2.1): `swift build` (passed), `swiftlint --strict` (0 violations in 205 files), `swift test` (259 tests in 33 suites passed, including `DiskImageIntegrationTests` on its own temp image). I did not launch the app and did not signal any process or unmount any volume. GitHub was checked with unauthenticated requests.
 
 ## 1. Verdict
 
-**Stage One: AT RISK (likely fail as things stand).** `https://github.com/iolaire/PhantomTrace` and `https://api.github.com/repos/iolaire/PhantomTrace` both return HTTP 404 to an unauthenticated request. A public repo is a hard rule, so the repo is private or not reachable. Theme fit and Kiro use would otherwise pass.
+**Stage One: AT RISK.** `https://github.com/iolaire/PhantomTrace` and the GitHub API both return HTTP 404 without authentication, although `origin/main` is up to date locally. A private repo breaks a hard rule. Theme fit and Kiro use would otherwise pass.
 
-**Score: 25 / 50.** Strong engineering and a real Kiro process trail, but nothing a judge can see yet: no video, no screenshots, no confirmed public repo, no release build.
-
-One line: a well-engineered, safety-minded tool whose judge-facing artifacts (public repo, video, screenshots, finished Kiro write-up) do not exist yet.
+**Score: 27 / 50.** Strong engineering and a real Kiro process trail. A judge cannot see it yet: no video, a repo that is not publicly reachable, and screenshots that are not committed.
 
 ## 2. Score table
 
 | Criterion | Score | Reason |
 |---|---|---|
-| Potential Impact | 6 | Real, relatable problem and a safe pipeline; one macOS build only, and the working flow is owner-reported, not shown publicly. |
-| Technological Implementation | 7 | Real specs, 11 steering files, 4 hooks, 24 property suites at 500 iterations, two documented bugs, one logged power audit. No custom agents or MCP use; hook firing unproven. |
-| Design | 5 | Coherent Platinum look with sprites, icon, custom dialogs and accessibility labels in code; no screenshot, VoiceOver and Reduce Motion untested. |
-| Innovation/Idea | 5 | Good Resurrection framing and a graduated opt-in pipeline; the core function overlaps `lsof` and "What's Keeping Me?". |
-| Presentation | 2 | No video (cap 3). README is a clear written pitch but has no images. |
-| **Total** | **25 / 50** | |
+| Potential Impact | 6 | Real, common annoyance and a safe fix path, but the audience is narrow and only the owner has run it. |
+| Technological Implementation | 7 | Specs, 11 steering files, 4 hooks, 22 property suites, and a good safety design. Hook, MCP, and agent evidence is missing. |
+| Design | 6 | Cohesive Platinum Retro Gothic UI shown in screenshots. VoiceOver and Reduce Motion are untested, and some controls look unfinished. |
+| Innovation/Idea | 5 | A faithful resurrection of "What's Keeping Me?" with a graduated, safe pipeline. Not a new concept. |
+| Presentation | 3 | No video (cap 3). The written pitch is clear, and the plan is only a plan. |
+| **Total** | **27 / 50** | |
 
 ## 3. Disqualification and blocker list (most severe first)
 
-1. **Repo not publicly reachable.** Both GitHub URLs above returned 404. Remote is `origin https://github.com/iolaire/PhantomTrace.git`. Public visibility and license detection in the About box cannot be confirmed. `docs/SubmissionChecklist.md` leaves this item unticked.
-2. **No demo video.** No YouTube link in the repo. Presentation capped at 3 (scored 2). Best Demo impossible. `docs/demo-script.md` is a plan only.
-3. **No screenshots.** `docs/screenshots/` is empty (only a placeholder). The README says "No screenshots or demo video exist yet."
-4. **Judges are unlikely to be able to run it.** One macOS build is supported (27.2.1), there is no prebuilt release, the app is ad-hoc signed and not notarized, and the Quick Action must be enabled by hand in Finder (README, "Finder Quick Action"). An AI or time-limited judge will not get past this.
-5. **Kiro write-up is incomplete.** `docs/KiroUsage.md` still says "record any created" (custom agents), "record any servers used" (MCP), and has "Evidence to add" lines (captured hook output, with/without steering comparison, surface differences, vibe coding comparison).
-6. **Manual QA unrecorded.** `docs/ManualQA.md` has 0 ticked and 107 unticked boxes. The working-app claim rests on one owner statement.
-7. **Thin history evidence.** 26 commits, all dated 2026-11-10 to 2026-11-12 (three days of a 36-day window). Commit `c441700` adds 235 files and 18,043 lines at once. The first commit (2026-11-10) is inside the Submission Period, so it is not a disqualifier, but the history shows little of the iterative building that the log claims.
+1. **Repo not publicly reachable.** Both `https://github.com/iolaire/PhantomTrace` and the API URL return 404 unauthenticated. The Rules require a public GitHub repo. Fix: make it public, then confirm the About panel shows "MIT License".
+2. **No demo video.** It is required for submission, and `README.md` and `docs/demo-script.md` both say it does not exist. A missing video is an incomplete submission.
+3. **Uncommitted work.** `git status` shows `docs/screenshots/*` (8 PNGs) and `docs/CliCapture.md` untracked, and README, checklist, and log edits unstaged. The README links to screenshots that a judge cloning `main` would not see. Commit and push them.
+4. **Checklist hard-requirement boxes are unticked.** Several are factually done: `LICENSE` is MIT, the repo holds source, and history starts inside the period. Judges may read the file as it stands.
+5. **"Kiro-inspired" ghost mascot.** `docs/Assets.md` says the ghost is Kiro-inspired and was checked as distinct. It is a small trademark-adjacent risk. The AI-generated art is disclosed, which is good, but its licensing rests on the owner's statement and not on a verified license.
+6. Not blockers: the first commit is 2026-11-10 (inside the Submission Period), `.gitignore` has no `.kiro` entry, `git ls-files .kiro` lists hooks, specs, steering, and a prompt, and the README discloses the carried-over West of House prompt style.
 
-## 4. Stage One detail
+## 4. Per-criterion detail
 
-**A. Disqualification risks**
+### Stage One gate
 
-| Item | Result | Evidence |
-|---|---|---|
-| Real, substantive Kiro use | Pass | `.kiro/specs` (2 specs, master: design 1,272 lines, requirements 431, tasks 482, 125 ticked, 0 open), `.kiro/steering` (11 files), `.kiro/hooks` (4), `.kiro/prompts/score-hackathon.md`; `docs/ProjectLog.md` rows cite task and requirement numbers. |
-| `/.kiro` at root, not in `.gitignore` | Pass | `.gitignore` has no `.kiro` entry; `git ls-files .kiro` lists 25 files. |
-| Public GitHub repo with detectable MIT `LICENSE` | **Fail / unverifiable** | `LICENSE` exists and starts "MIT License", but GitHub returns 404 to anonymous requests. |
-| Created in the Submission Period | Pass | First commit `b311c6c` 2026-11-10. README states "Pre-existing code: none" and discloses the 2025 West of House image-prompt carry-over. |
-| Source, assets, run instructions in repo | Pass | `Sources/`, `Packaging/`, sprites under `Sources/PhantomTraceUI/Resources/Sprites`, README Build and Run sections. |
-| No unlicensed assets or trademarks | Pass with risk | `docs/Assets.md` records Gemini-generated art and system fonts loaded by name (nothing bundled). The ghost is "Kiro-inspired"; the owner compared it by eye and judged it distinct. This is unverified and a visual-similarity risk. |
-| English only | Pass | All reviewed docs and UI strings are English. |
+- A, Kiro use: pass. `.kiro/specs` (2 specs; master `tasks.md` has 125 checked tasks and no open ones), `.kiro/steering` (11), `.kiro/hooks` (4).
+- A, `.kiro` tracked and not ignored: pass.
+- A, public repo: **fail / unverifiable** (404).
+- A, license: `LICENSE` is MIT. GitHub detection cannot be checked while the repo is private.
+- A, created in period: pass. 27 commits, 2026-11-10 to 2026-11-12, with PRs #1 to #4.
+- A, assets and English: pass, with the Gemini art caveat in section 3.
+- B, build, test, lint: `swift build` passed, `swift test` passed (259), `swiftlint --strict` clean. All three were run today.
+- B, install from README alone: not verified by me. The README documents `Scripts/make-app.sh`. The owner reports a manual pass, but `docs/ManualQA.md` is not filled in.
+- C, theme fit: pass. Reviving a "What's Keeping Me?"-style inspector is a plausible Resurrection entry.
+- C, Kiro fit: pass.
 
-**B. Functionality**
+### 1. Potential Impact: 6
 
-| Item | Result | Evidence |
-|---|---|---|
-| Install and run on macOS 27.2.1 from the README | Partly verified | `swift build` passed here. I did not launch the app or run `Scripts/make-app.sh`. Quick Action, window flow and stages are owner-reported only (README Status). |
-| `swift build` | Verified, passed | Exit 0 (linker warnings about missing Command Line Tools search paths only). |
-| `swift test` | Verified, passed | 111, 90 and 259 tests passed. |
-| `swiftlint --strict` | Verified, passed | 0 violations in 205 files, with `DYLD_FRAMEWORK_PATH` set. |
+Strengths:
+- A real, widely felt problem: Finder's unhelpful eject dialog. `docs/screenshots/finder-eject-fails.png` shows it.
+- Inform first, act second. Every action is opt-in and previewed (`.kiro/steering/safety.md`, `docs/screenshots/plan-preview.png`).
+- Entry points fit the problem: a Finder Quick Action, a drop window, and a read-only CLI (`Sources/phantomtrace`).
+- The lock list is clear: name, PID, user, category, and path (`phantom-trace.png`).
 
-**C. Theme and tools fit**
+Weaknesses:
+- Only macOS 27.2.1 is supported, with no release download. The build needs Command Line Tools and an ad-hoc signed bundle (`Scripts/make-app.sh`). The Quick Action must be enabled by hand.
+- Only the owner has run it. `docs/ManualQA.md` is empty, and the README says the pass is "owner-reported".
+- Tools like `lsof` and Activity Monitor already cover the technical user. The non-technical user is the stated audience, and there is no evidence one has tried it.
+- The `ResolutionPipeline` gaps listed in `docs/architecture.md` (daemon confirmation, manual egress outcomes) are open.
 
-- Resurrection: reasonable fit (System 7 / Mac OS 9 inspector style, "What's Keeping Me?" for modern macOS). Pass.
-- Kiro use: reasonable and real. Pass.
+Biggest lift: record a clean end-to-end video and fill in the ManualQA pass record (about +1).
 
-## 5. Per-criterion detail
+### 2. Technological Implementation: 7
 
-### Potential Impact: 6
+Strengths:
+- Spec-driven: `.kiro/specs/phantomtrace-volume-lock-forensics` (431 lines of requirements, a design, a 482-line task list), with log rows citing requirement numbers. Provisional behavior is labelled `// PROVISIONAL (Req 18.x)`.
+- Property-based testing with real findings: the `/private/var/vm` bug (`ProtectedVolumeRefusalPropertyTests`, regression in `MountResolverProtectionTests`). The `0xC000 | EBUSY` bug found by the integration test is honestly attributed to the integration test, not a property test. 22 property suites exist in `Tests/PhantomTracePropertyTests`.
+- Safety architecture: a single `SafetyPolicy` choke point, identity guard on `(pid, start time)`, argument-array subprocesses, and a total `LsofParser`. Network and `print` bans are enforced by custom lint rules. Hand-written mocks.
+- Process trail: `docs/ProjectLog.md` has one row per change, with a Kiro surface of IDE (105), Web (16), CLI (3), and Crew (1). The `swift-expert` power was used in a concurrency audit (D-021), and the fixes have tests (`ResolutionPipelineCancellationTests`).
 
-Strengths
-- Real, common pain: Finder's unhelpful eject error (`README.md`, `docs/ProjectOverview.md`).
-- Output names process, pid, user and file; opt-in, least-destructive-first pipeline (`Sources/PhantomTraceCore/Resolution/`).
-- Safety enforced at one choke point: `SafetyPolicy`, protected volumes, identity guard (`.kiro/steering/safety.md`, `Tests/PhantomTracePropertyTests/SafetyPolicy*`).
-- A read-only CLI exists for scripting (`Sources/phantomtrace/main.swift`).
+Weaknesses:
+- No hook evidence. `KiroUsage.md` admits no hook output was captured and no hook catch is claimed. Hook activity is owner-reported only.
+- No custom agents and no MCP in the repo. `.kiro/settings` is absent, and the `mcp.json` is in the user home directory, not the repo. The write-up has "record any created" placeholders.
+- No with/without steering comparison and no spec vs vibe-coding comparison. The surface comparison is missing as well. The Rules ask for these explicitly.
+- The parser fixtures are generated, not captured from real `lsof` (stated in `KiroUsage.md`). The history is short (3 days, 27 commits, many large mixed commits such as `c441700`), which is thin "steady commit" evidence.
 
-Weaknesses
-- One macOS build only (`.kiro/steering/product.md`); a judge on any other version cannot run it.
-- No public demonstration; the end-to-end flow is documented only by an owner statement (`docs/ManualQA.md` unticked).
-- The Quick Action stays hidden until enabled by hand (README); friction for the stated non-technical audience.
-- VoiceOver untested, so the accessibility claim is unproven (README Status).
+Biggest lift: add real evidence to `KiroUsage.md`: a captured hook block or lint message, a with/without steering example, and a short Web/IDE/CLI comparison (about +1).
 
-Single change with most gain: publish a short public video of the real flow so the impact is visible.
+### 3. Design: 6
 
-### Technological Implementation: 7
+Strengths:
+- The screenshots show a cohesive Platinum look: a pinstripe title bar, a skull-and-chain frame, a CRT illustration, and a ghost mascot (`docs/screenshots/phantom-trace.png`, `banish-confirm.png`).
+- Calm, specific copy: "Beware: this force-stops programs. Unsaved changes to open files may be lost forever." The banish dialog names the process and PID, with Cancel as the default.
+- 60 accessibility label or setter references in `Sources` and an `AccessibilityText` module with tests.
+- A coherent three-window flow with a drop target and a volume list.
 
-Strengths
-- Spec-driven: master spec with requirements, design and tasks, all 125 tasks ticked; log rows cite requirement numbers (`docs/ProjectLog.md`).
-- Steering is specific and some of it is enforced: custom SwiftLint rules ban `print(` in Core and networking APIs in `Sources` (`.swiftlint.yml`, ProjectLog 2026-11-12 code-quality row). Core has no AppKit; `PhantomTraceUI` is separate.
-- Property tests found a real bug: `ProtectedVolumeRefusalPropertyTests` caught `/private/var/vm` being rewritten by `standardizedFileURL` (`docs/KiroUsage.md`; regression test `MountResolverProtectionTests.swift` exists). 24 of 25 property files set `iterations = 500`.
-- Integration test found a bug the mocks hid: `0xC000 | EBUSY` mishandled in `LiveUnmounter` (`DiskImageIntegrationTests.swift`, `LiveUnmounterTests.swift`).
-- `swift-expert` power has a logged, concrete use: the D-021 concurrency audit (swallowed cancellation, `cancelled` error cases, async mount lookup, `ResolutionPipelineCancellationTests`) in `docs/ProjectLog.md` and `docs/KiroUsage.md`. The power is installed at `~/.kiro/powers/installed/swift-expert`.
-- Hook design shows thought: D-006 (why four hooks, what was rejected) and D-008 (agent-only hooks miss hand commits, so tracked git hooks were added).
+Weaknesses:
+- VoiceOver and Reduce Motion are untested (README). `ReduceMotion` appears once in `Sources`, which is thin support.
+- Visible rough edges in the screenshots: the "Lock Category" column shows "Working Dire" (truncated). In the banish dialog the system-blue Cancel button clashes with the platinum theme, and the radio buttons and Proceed look faded.
+- The copy is theme-heavy ("Proceed, if you dare", "Retreat to the Shadows"), which can obscure what a button does. This works against the product principle in `product.md`.
+- The drop-window screenshot was dropped, and the drop target path is untested.
 
-Weaknesses
-- No custom agents (no `.kiro/agents`), no project-level MCP (`.kiro/settings` is not tracked), no Kiro Crew, CLI or Web differences written up. Kiro Web appears in two early log rows only.
-- No hook output was ever captured; hook firing is owner-reported (`docs/KiroUsage.md`, `docs/SubmissionChecklist.md`). All commit hooks match `execute_bash` and see only agent-run commits.
-- No vibe-coding comparison and no with/without-steering example (`docs/KiroUsage.md`, "Evidence to add").
-- `Tests/Fixtures` total about 2 KB and are generated, not captured from real `lsof`, while `testing.md` asks for captured output. The cancel-with-grace change in `LiveProcessRunner` and the 60 s unmount timeout are untested (ProjectLog D-021 row).
+Biggest lift: fix the clipped column and the off-theme default button, add a drop-window screenshot, and run VoiceOver and Reduce Motion once (about +1).
 
-Single change with most gain: finish `docs/KiroUsage.md` with captured hook output and a with/without-steering example, and say plainly which Kiro features were not used.
+### 4. Innovation/Idea: 5
 
-### Design: 5
+Strengths:
+- The Resurrection framing is clear and credible: a classic single-purpose inspector brought to modern macOS.
+- The four-stage graduated pipeline (Egress Shells, Graceful, Banish, Clean Handoff) with a rescan after each stage is more careful than `lsof | kill`.
+- Egress Shells (`cd ~` into idle terminals instead of killing them) is a thoughtful, uncommon touch.
+- It maps to DiskArbitration busy codes and `.dmg` attachments, and it has a read-only CLI.
 
-Strengths
-- Consistent look: nine-part window chrome, close box, choice controls, art-framed `PhantomDialog` (`Sources/PhantomTraceUI/`).
-- Seven sprites at 1x and 2x plus an app icon (`Packaging/AppIcon.icns`), with provenance in `docs/Assets.md`.
-- Accessibility text exists in code (`AccessibilityText.swift`, accessibility labels in 13 source files) and Reduce Motion is read from `NSWorkspace` (`LockWindowContentView.swift:109`).
-- Specific copy and a three-window flow with forward and back (README Status, owner-reported).
+Weaknesses:
+- The core capability (find who holds a volume) is what `lsof` and several existing utilities already do. A dedicated GUI is the novelty.
+- Egress Shells needs Automation permission, and the demo may fall back to manual instructions.
+- No unusual data or tools are combined. The Kiro ghost reference adds nothing technical.
 
-Weaknesses
-- No screenshot in the repo (`docs/screenshots/` empty), so a judge who does not run it sees nothing. The UI was launched by the owner but never captured, which keeps this near the cap.
-- VoiceOver and Reduce Motion are untested (README Status).
-- `docs/Assets.md` still lists Monaco and the system font as "Planned"; typography claims (Chicago/Monaco) are not bundled or confirmed on screen.
-- Art is AI-generated and Kiro-inspired, which weakens originality of the visual identity and adds a similarity risk.
+Biggest lift: demo Egress Shells working live on screen. It is the one clearly differentiated feature (about +1).
 
-Single change with most gain: capture three screenshots (cannot put away, phantom trace, volume released) into `docs/screenshots/` and embed them in the README.
+### 5. Presentation: 3 (cap applied)
 
-### Innovation/Idea: 5
+Strengths:
+- A clear written pitch (problem, audience, how it works) in `README.md`.
+- A paced 170-second plan in `docs/demo-script.md`, with a Kiro cutaway and fallbacks.
+- Seven annotated screenshots that tell the flow story.
 
-Strengths
-- Resurrection framing is clear: a single-purpose System 7 style inspector for the Finder eject dialog.
-- Graduated, opt-in pipeline (Egress Shells, Graceful Request, Banish Locks, Clean Handoff) with fresh scan before and rescan after each stage, instead of a "kill everything" button.
-- Terminal `cd ~` egress without killing the session is a distinctive touch (`Sources/PhantomTraceCore/Resolution/`).
+Weaknesses:
+- No video, so the score is capped at 3.
+- The README has a long status section full of "not verified" notes, which reads as an unfinished project to a skim reader.
+- The Devpost description and the Kiro write-up are drafts only.
+- The README leads with the mechanism and has no one-line hero image.
 
-Weaknesses
-- The core function (find what holds a volume open) is what `lsof`, Activity Monitor and "What's Keeping Me?" already do; the novelty is the guided fix and the theme.
-- No unusual data source or technology combination; it wraps `lsof`, DiskArbitration and `diskutil`.
-- The Quick Action trigger is a standard Finder feature.
+Biggest lift: record and publish the YouTube video (under 3 minutes, on a Mac) and put its link at the top of the README (about +3 to +4).
 
-Single change with most gain: state in the pitch the one thing nothing else does (for example the idle-shell `cd ~` fix), and show it working in the video.
-
-### Presentation: 2
-
-Strengths
-- README gives a clear problem, audience and flow in plain language.
-- `docs/demo-script.md` is a tight, timed plan under 180 seconds with a Kiro cutaway.
-- `docs/ProjectOverview.md` and `docs/architecture.md` explain the design.
-
-Weaknesses
-- No video; capped at 3 and scored lower because no pitch is visible anywhere (`docs/demo-script.md`: "the video has not been recorded").
-- No images in the README or docs/screenshots.
-- `docs/demo-script.md` setup still says "Install the Quick Action (`Scripts/install-quick-action.sh`, once it exists)"; the script exists, so the plan is stale.
-- Devpost text, YouTube link and blog/social posts do not exist in the repo.
-
-Single change with most gain: record and publish the under-3-minute YouTube video from the existing script.
-
-## 6. Submission completeness
+## 5. Submission completeness
 
 | Item | Status |
 |---|---|
-| Text description | Missing for Devpost; the README and `docs/ProjectOverview.md` are usable source text. |
-| Working-app URL and test instructions | Partial. README Build and Run exist; no release build; repo not reachable anonymously. |
+| Text description | Draft only (`docs/ProjectOverview.md`, README). Devpost form unverifiable. |
+| Working app URL and test instructions | Instructions are in the README. No release or URL. Repo is not publicly reachable. |
 | YouTube link | Missing. |
-| GitHub URL | Unverifiable (404 anonymously). |
-| Category and bonus selections | Planned in `docs/SubmissionChecklist.md`, not submitted. |
-| Kiro write-up: IDE/CLI/Web/Crew differences | Not covered ("Evidence to add"). Log shows IDE for nearly all rows, Web for two. |
-| Kiro write-up: custom agents | Not used; stated as a placeholder in `docs/KiroUsage.md`. |
-| Kiro write-up: hooks | Covered (four hooks, design rationale); no captured firing. |
-| Kiro write-up: specs vs vibe coding | Specs covered; comparison missing. |
-| Kiro write-up: steering | Covered with log-backed examples; no with/without comparison. |
-| Kiro write-up: MCP | Not used; placeholder text remains. |
-| Kiro write-up: property-based testing | Covered with one real bug found. |
-| Kiro write-up: powers | Covered: `swift-expert`, two logged uses (D-021 audit; general Swift Testing guidance). |
+| GitHub URL | Exists but returns 404 unauthenticated. |
+| Category and bonus selections | Planned in the checklist. Unverifiable on Devpost. |
+| Kiro write-up: IDE/CLI/Web/Crew differences | Partly. Surfaces are logged but "how they differed" is not written. |
+| Kiro write-up: custom agents | Not used. Say so. |
+| Kiro write-up: hooks | Four hooks exist. Owner says they ran. No captured output. |
+| Kiro write-up: specs vs vibe coding | Spec evidence present. No comparison. |
+| Kiro write-up: steering | 11 files, with log-based evidence. No with/without example. |
+| Kiro write-up: MCP | Not used in the repo. Say so. |
+| Kiro write-up: property-based testing | Done, with one real bug. |
+| Kiro write-up: powers | `swift-expert` used, two logged uses. |
 
-## 7. Bonus prizes
+## 6. Bonus prizes
 
-| Prize | Readiness | Notes |
+| Prize | Readiness | Note |
 |---|---|---|
-| Best Demo | Not started | Needs a video, top 10% overall and top Presentation score. |
-| Bonus Blog Prize | Not started | No post. Must be a third-party public post, written for Kiroween 2026, published in the Submission Period. |
-| Social Blitz | Not started | No post. Must start with `#KiroweenHackathon26`, with the Kiro favorite and how it changed development. |
-| Best Ghost of Kiroween Past | Unverifiable | Only if the owner registered for Kiroween 2025 (West of House is mentioned). Needs a check in the form. |
-| Best Kiro Crew App | Not relevant | No Kiro Crew app. |
+| Best Demo | Not started | Needs a video, a top-10% overall score, and the top Presentation score. Not realistic at 27/50. |
+| Bonus Blog Prize | Not started | No post exists. Needs a public third-party post that mentions Kiroween 2026. It is the cheapest prize to win. |
+| Social Blitz | Not started | No post exists. It must start with `#KiroweenHackathon26`. |
+| Best Ghost of Kiroween Past | Partly relevant | The README mentions a 2025 entry (West of House). Confirm it was registered for Kiroween 2025 and tick it on the form. The 2026 project is newly created. |
+| Best Kiro Crew App | Not relevant | There is no separate Crew app repo. |
 | Best Startup, Best Student | Not relevant | No evidence of either. |
 
-## 8. Prioritized action plan (21 days left)
+## 7. Prioritized action plan (deadline Dec 4, 2:00 pm PT, 21 days left)
 
-Ordered by gain per hour, blockers first.
-
-| # | Action | Gain | Hours | Criterion |
+| # | Action | Gain | Effort (h) | Criterion |
 |---|---|---|---|---|
-| 1 | Make the GitHub repo public, confirm `LICENSE` shows in About, test with a logged-out browser | Removes likely disqualification | 0.25 | Stage One |
-| 2 | Record and publish the under-3-minute YouTube demo from `docs/demo-script.md` (fix the stale setup line first) | +4 to +5 | 3 | Presentation, Impact |
-| 3 | Capture three screenshots into `docs/screenshots/` and embed them in the README | +2 | 0.5 | Design, Presentation |
-| 4 | Capture one hook block or lint message and add it to `docs/KiroUsage.md`; fill the with/without-steering, vibe-coding and surface-difference lines; state plainly that custom agents and MCP were not used | +1 | 1.5 | Technological Implementation |
-| 5 | Fill in `docs/ManualQA.md` (VoiceOver, Reduce Motion, drop target) and tick the checklist items that are done | +1 | 1.5 | Design, Impact |
-| 6 | Attach a release zip of `build/PhantomTrace.app` (or a one-line `make-app.sh` instruction at the top of the README) so a judge can try it quickly | +1 | 1 | Impact, Functionality |
-| 7 | Post `#KiroweenHackathon26` and a short blog post (third-party site) with links to the repo and video | Bonus prizes | 2 | Bonuses |
-| 8 | Commit in smaller steps from now on so the history shows the work | Credibility | 0 | Stage One |
-| 9 | Add one custom agent or MCP server only if it genuinely helps; do not add one just to claim it | +0.5 | 2 | Technological Implementation |
+| 1 | Make the repo public, confirm MIT shows in About, commit and push the screenshots and docs. | Removes the Stage One risk | 0.5 | Gate, Design |
+| 2 | Record the under-3-minute demo (setup in `demo-script.md`), upload as public on YouTube, link it atop the README. | +3 to +4 | 3 | Presentation |
+| 3 | Fill in `docs/ManualQA.md` and tick the checklist boxes that are true. | +0.5 | 1 | Impact, Presentation |
+| 4 | Write a Bonus Blog post (mention Kiroween 2026) and a `#KiroweenHackathon26` post. | Two prizes | 2 | Bonus |
+| 5 | Add real Kiro evidence: a captured hook block, a steering with/without example, a surface comparison, and plain "not used" lines for agents and MCP. | +1 | 2 | Technological Implementation |
+| 6 | Fix the clipped column and the Cancel button style, retake the drop-window screenshot, run VoiceOver and Reduce Motion once. | +1 | 3 | Design |
+| 7 | Cut the README status section to a short "Verified / Not verified" table. | +0.5 | 0.5 | Presentation |
+| 8 | Capture a real `lsof -F` fixture from the throwaway image. | +0.3 | 1 | Technological Implementation |
+| 9 | Draft and save the Devpost text and the Kiro write-up before Dec 3. | Needed for completeness | 1.5 | Submission |
 
-## 9. Honesty check
+## 8. Honesty check
 
-Claims the code or repo does not fully support:
+Claims not supported by the code or artifacts:
+- `README.md` says screenshots were captured and linked. They are untracked, so they are not in the repo.
+- `README.md` says the Quick Action "has since been installed and seen in Finder". The sentence says the installer test passes, "but it has since been installed", which reads as contradictory. The evidence is owner-reported only.
+- `README.md` "Built with Kiro" says "fuzz tests of the `lsof`/`fuser` output parser". Fixtures are generated and `fuser` is not covered in the tests I read, so "fuzz" is overstated.
+- `docs/SubmissionChecklist.md` still lists "Hooks exist ... owner states they were active". No output was captured, so I give no credit beyond the existence of the files.
+- `docs/KiroUsage.md` opens with "This document is the draft ... fill each Evidence line". It is still in draft wording.
+- `docs/KiroUsage.md` "Property tests exist for the spec's properties" lists about 21 properties. I counted 22 suites, which is consistent, and did not check each against the spec.
+- The ManualQA pass record is empty, so the claim of a full manual pass rests on the owner's statement.
+- `docs/Assets.md` provenance (Gemini model, date, license) is the owner's statement and unverifiable.
 
-- `README.md` Build section says `Scripts/lint-and-test.sh` "does not set it for you" (the `DYLD_FRAMEWORK_PATH` fix). `Scripts/lint-and-test.sh:6` does export it. The README is out of date.
-- `docs/demo-script.md` setup: "Install the Quick Action (`Scripts/install-quick-action.sh`, once it exists)". The script exists.
-- `docs/Assets.md` lists Monaco and the system font as "Planned" and the sprites as "not yet seen in a running app", while the README reports the app launched and the owner reports working windows. These disagree.
-- README "Visual direction" says Monaco/Chicago typography; Chicago is not bundled or referenced as a runtime font, and no screenshot shows the result.
-- `docs/KiroUsage.md` says hooks were "active in Kiro IDE" (owner statement). No hook output exists, so this is unverified.
-- `.kiro/steering/testing.md` says fixtures are real captured `lsof -F` output; `docs/KiroUsage.md` correctly says they are generated, but the steering file is still wrong about it.
-- `docs/SubmissionChecklist.md` leaves most hard-requirement boxes unticked even though several (for example Kiro use, `.kiro` not ignored, creation date) are supported by evidence. This is conservative, not misleading.
-- The working app, Quick Action in Finder, two-stage quit and force-quit are owner-reported only; I did not launch the app.
-
-Scores capped or held down for missing evidence:
-
-- Presentation: capped at 3 for no video, scored 2 for no visible pitch at all.
-- Design: held at 5 because there is no screenshot and VoiceOver and Reduce Motion are untested.
-- Impact: held at 6 because the working flow is owner-reported and public access is unconfirmed.
-- Technological Implementation: held at 7 for no captured hook output, no custom agents or MCP, and no vibe-coding comparison.
-- Stage One: marked at risk because the repo is not reachable anonymously.
+Scores capped or discounted for missing evidence:
+- Presentation capped at 3 (no video).
+- Design held at 6 (VoiceOver and Reduce Motion untested, visible UI rough edges). The "never launched" cap does not apply because screenshots exist, though I did not launch the app myself.
+- Technological Implementation held at 7 (no hook capture, no MCP, no custom agents, no with/without steering evidence).
+- Potential Impact held at 6 (no third-party user or test evidence).
+- I did not run the app or `make-app.sh`, so install-from-README is not verified by me.
