@@ -118,7 +118,8 @@ xcrun stapler staple build/PhantomTrace.app
 - **Specs** in `.kiro/specs/`: mount-point path resolution, process discovery state machines, and safe unmount workflows.
 - **Property-based testing:** fuzz tests of the `lsof`/`fuser` output parser against malformed paths, non-UTF8 strings, spaces, and symlinks.
 - **Agent hooks** in `.kiro/hooks/`: pre-commit checks that enforce swiftlint rules and require passing tests.
-- **Steering files** in `.kiro/steering/`.
+- **Steering files** in `.kiro/steering/`: eleven files (product, safety, tech, testing, and more). Some rules are enforced as lint rules; see KiroUsage for examples.
+- **Kiro power:** `swift-expert` guided a Core concurrency audit (cancellation, async mount lookup; decision D-021) and general Swift Testing practice.
 
 See [docs/KiroUsage.md](docs/KiroUsage.md) for how each Kiro feature was used.
 
