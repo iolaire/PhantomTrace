@@ -1,0 +1,32 @@
+export type TerminalLine = {t: 'cmd' | 'out' | 'gap'; text?: string};
+
+export type Callout = {text: string; atSec: number};
+
+export type SceneDef = {
+  id: string;
+  title: string;
+  visual: 'still' | 'clip' | 'terminal' | 'title';
+  still?: string;
+  terminal?: {title: string; lines: TerminalLine[]};
+  titleCard?: {headline: string; sub: string; foot: string};
+  narration: string;
+  targetSec: number;
+  callouts: Callout[];
+  /** Seconds to cut from the start of the clip. */
+  trimStartSec?: number;
+  record: string;
+};
+
+export type SceneMedia = {
+  audio: string | null;
+  audioOwn: boolean;
+  audioSec: number;
+  clip: string | null;
+  clipSec: number;
+  still: string | null;
+};
+
+export type DemoProps = {
+  showCaptions: boolean;
+  showCallouts: boolean;
+};
