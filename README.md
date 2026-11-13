@@ -66,7 +66,7 @@ The button clicks were sent by script under macOS Accessibility permission that 
 
 ## Platform
 
-PhantomTrace is **macOS only** and targets **macOS 27.2.1 (build 26B131) only**. It is not supported on any other macOS version, older or newer, and not on Linux, Windows, or iOS.
+PhantomTrace is **macOS only**. The code builds with a deployment target of **macOS 15.0 (Sequoia) or later** and is **tested only on macOS 27.2.1 (build 26B131)**. Other macOS versions from 15.0 up are best effort and untested; versions older than 15.0 do not build. It is not supported on Linux, Windows, or iOS.
 
 ## Build
 

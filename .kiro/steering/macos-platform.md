@@ -6,7 +6,7 @@ inclusion: always
 
 ## Target
 
-macOS "Golden Gate" 27.2.1 (build 26B131) only; Apple silicon or Intel as the dev machine provides. Nothing else is tested or supported. `Package.swift` declares `platforms: [.macOS("27.2.1")]`; keep it. If the toolchain rejects that form, use the lowest declaration that is at least 27.2.1, and tell the user.
+Deployment target is macOS 15.0 (Sequoia) or later: `Package.swift` declares `platforms: [.macOS("15.0")]` and `LSMinimumSystemVersion` is `15.0`. 15.0 is the lowest version that compiles, because `Synchronization.Mutex` needs it; going lower means replacing `Mutex` everywhere. The only tested system is macOS "Golden Gate" 27.2.1 (build 26B131); Apple silicon or Intel as the dev machine provides. Versions 15.0 through 26.x are best effort and untested, so docs must say so. If the compiler flags an API newer than 15.0, guard it with `#available` in a `System/` adapter or the app target.
 
 This sandbox is **Linux**: it cannot build or test macOS-only code (DiskArbitration, AppKit, `lsof` semantics). When working here:
 

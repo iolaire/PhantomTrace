@@ -91,7 +91,7 @@ check "CFBundleExecutable is PhantomTrace" [ "$(plist_value CFBundleExecutable)"
 check "CFBundleIdentifier comes from the override" [ "$(plist_value CFBundleIdentifier)" = "com.example.pt" ]
 check "CFBundleShortVersionString comes from the override" [ "$(plist_value CFBundleShortVersionString)" = "9.8.7" ]
 check "CFBundleVersion comes from the override" [ "$(plist_value CFBundleVersion)" = "42" ]
-check "LSMinimumSystemVersion is 27.2.1" [ "$(plist_value LSMinimumSystemVersion)" = "27.2.1" ]
+check "LSMinimumSystemVersion is 15.0" [ "$(plist_value LSMinimumSystemVersion)" = "15.0" ]
 check "URL scheme phantomtrace is registered" \
   [ "$(plist_value CFBundleURLTypes:0:CFBundleURLSchemes:0)" = "phantomtrace" ]
 check "NSServices entry is present" [ -n "$(plist_value NSServices:0:NSMessage)" ]

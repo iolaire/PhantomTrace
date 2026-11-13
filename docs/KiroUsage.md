@@ -13,13 +13,13 @@ The Rules require a write-up showing how effectively Kiro was used. This documen
 
 Files in `.kiro/steering/`:
 
-- `product.md`: mission, principles, entry points, theme, platform scope (macOS 27.2.1 only), build order.
+- `product.md`: mission, principles, entry points, theme, platform scope (builds for macOS 15.0+, tested on 27.2.1 only), build order.
 - `tech.md`: Swift 6, SwiftPM, AppKit, DiskArbitration, concurrency, zero third-party runtime dependencies, quality gates.
 - `structure.md`: layering rule (Core library imports no AppKit), directory and file conventions.
 - `safety.md`: single SafetyPolicy choke point, protected processes and volumes, escalation rules, no shell strings, no network.
 - `testing.md`: Swift Testing, mock protocols for all system effects, round-trip and property coverage map, 500+ iterations.
 - `swift-conventions.md` (Swift files only): style, bytes-first data handling, dependency injection, concurrency.
-- `macos-platform.md`: macOS 27.2.1 specifics, lsof/DiskArbitration/TCC notes, packaging, Linux-sandbox caveat.
+- `macos-platform.md`: macOS 15.0 floor, 27.2.1 test target, lsof/DiskArbitration/TCC notes, packaging, Linux-sandbox caveat.
 - `platinum-ui.md` (app/UI files only): Platinum Retro Gothic look, Diagnostic Sheet rules, accessibility.
 - `git-workflow.md`: commit style, pre-commit gates, branching.
 - `documentation.md`: README, KiroUsage, spec, and checklist upkeep.

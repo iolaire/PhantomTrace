@@ -12,7 +12,7 @@ inclusion: always
 - Volume operations: DiskArbitration (`DADiskUnmount`), with `/usr/sbin/diskutil unmount` as the single fallback.
 - System tools used at runtime: `/usr/sbin/lsof`, `/usr/bin/fuser` (cross-check), `/usr/sbin/diskutil`, `/usr/bin/hdiutil`. Always absolute paths.
 - Logging: `OSLog` (`Logger`). No `print` in Core.
-- Platform: macOS 27.2.1 (build 26B131) only. See `macos-platform.md`.
+- Platform: deployment target macOS 15.0+, tested on macOS 27.2.1 (build 26B131) only. See `macos-platform.md`.
 
 ## Dependencies
 

@@ -44,7 +44,7 @@ Kiroween 2026, Resurrection category: resurrect classic single-purpose Mac diagn
 ## Platform target
 
 - macOS only. No other OS is supported.
-- macOS 27.2.1 (build 26B131) only. Every other macOS version, older or newer, is out of scope and unsupported because it cannot be tested. Do not add compatibility shims or `#available` fallbacks for other versions.
+- Deployment target macOS 15.0 or later (the lowest version the code compiles for; `Synchronization.Mutex` sets the floor). Only macOS 27.2.1 (build 26B131) is tested; other versions are best effort and must be described as untested. Do not add compatibility shims for versions below 15.0. Use `#available` only where an API is newer than 15.0, and keep it in `System/` adapters or the app target.
 - Details: `macos-platform.md`.
 
 ## Status

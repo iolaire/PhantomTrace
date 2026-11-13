@@ -187,7 +187,7 @@ Unit tests use mock adapters and captured `lsof` fixtures. Property tests (swift
 
 ## Platform and packaging
 
-macOS 27.2.1 (build 26B131) only. The app cannot use App Sandbox because it needs `lsof` and signals, so it ships with Hardened Runtime and minimal entitlements. Terminal automation needs the user's Automation permission and degrades to manual instructions. Details: `.kiro/steering/macos-platform.md`.
+Deployment target macOS 15.0 or later, tested only on macOS 27.2.1 (build 26B131). The app cannot use App Sandbox because it needs `lsof` and signals, so it ships with Hardened Runtime and minimal entitlements. Terminal automation needs the user's Automation permission and degrades to manual instructions. Details: `.kiro/steering/macos-platform.md`.
 
 ## Visual design
 

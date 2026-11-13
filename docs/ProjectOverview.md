@@ -20,7 +20,7 @@ When external drives, USB sticks, or disk images (`.dmg`) fail to unmount on mac
 
 
 
-**Supported Platform:** macOS only, targeting **macOS 27.2.1 (build 26B131) only**. Other macOS versions and other operating systems are unsupported.
+**Supported Platform:** macOS only. Builds for **macOS 15.0 or later**, tested only on **macOS 27.2.1 (build 26B131)**. Other macOS versions are best effort and untested; other operating systems are unsupported.
 
 ---
 

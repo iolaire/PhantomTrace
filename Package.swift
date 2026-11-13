@@ -13,7 +13,7 @@ let testingSettings: [SwiftSetting] = testingPluginFlags.isEmpty ? [] : [.unsafe
 
 let package = Package(
     name: "PhantomTrace",
-    platforms: [.macOS("27.2.1")],
+    platforms: [.macOS("15.0")],
     products: [
         .library(name: "PhantomTraceCore", targets: ["PhantomTraceCore"]),
         .library(name: "PhantomTraceUI", targets: ["PhantomTraceUI"]),

@@ -126,7 +126,7 @@ fi
 README=README.md
 has_text "$README" 'scaffolding stage' 'phrase "scaffolding stage"'
 has_text "$README" 'macOS only' 'platform statement "macOS only"'
-has_text "$README" 'macOS 27.2.1 (build 26B131) only' 'platform statement "macOS 27.2.1 (build 26B131) only"'
+has_text "$README" 'macOS 15.0' 'platform statement "macOS 15.0"'
 has_text "$README" 'MIT License' 'MIT License statement'
 has_text "$README" 'Kiroween 2026' 'hackathon name'
 has_text "$README" 'Resurrection' 'hackathon category'
@@ -261,7 +261,7 @@ for f in product tech structure safety testing hackathon; do
 done
 has_text $STEER/product.md 'identify which processes prevent a volume from ejecting' 'mission statement'
 has_text $STEER/product.md 'Resurrection' 'Resurrection theme'
-has_text $STEER/product.md '27.2.1 (build 26B131)' 'platform target 27.2.1 (build 26B131)'
+has_text $STEER/product.md '27.2.1 (build 26B131)' 'tested platform 27.2.1 (build 26B131)'
 has_text $STEER/product.md 'macOS only' 'macOS-only statement'
 has_text $STEER/tech.md 'Swift' 'Swift'
 has_text $STEER/tech.md 'SwiftPM' 'SwiftPM'
