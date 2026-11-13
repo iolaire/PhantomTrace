@@ -92,7 +92,7 @@ public final class LockWindowContentView: NSView {
         let banner = isTrace ? model.banner : nil
         bannerView.update(
             banner: banner,
-            kind: banner.map(WindowAppearance.bannerIsPartial) == true ? .partial : .failed,
+            kind: banner?.kind == .partial ? .partial : .failed,
             rescanEnabled: model.controls.rescanEnabled
         )
         failedList.update(list: isTrace ? model.failedActions : FailedActionList())

@@ -19,6 +19,13 @@ public actor ResolutionPipeline: StageRunning {
         let names: [ProcessIdentity: String]
     }
 
+    /// What the actions of one stage did, carried to the post-stage rescan.
+    private struct StageResults {
+        var succeeded: [ProposedAction] = []
+        var failed: [FailedAction] = []
+        var manual: [ManualAction] = []
+    }
+
     private let scanner: TimedScanner
     private let builder: StagePlanBuilder
     private let history: AttemptHistory
@@ -59,7 +66,11 @@ public actor ResolutionPipeline: StageRunning {
 
     // MARK: - StageRunning
 
-    public func plan(_ stage: ResolutionStage, on volume: MountInfo) async throws -> ResolutionPlan {
+    public func plan(
+        _ stage: ResolutionStage,
+        on volume: MountInfo,
+        confirmedDaemons: Set<ProcessIdentity>
+    ) async throws -> ResolutionPlan {
         approvals[stage] = nil
         guard stage != .cleanHandoff else {
             return ResolutionPlan(stage: stage, actions: [], skipped: [])
@@ -72,7 +83,8 @@ public actor ResolutionPipeline: StageRunning {
             scanCompletedAt: completedAt,
             now: clock.now(),
             ownerUserIDs: ownerIDs(for: scan.locks),
-            guiPIDs: Set(scan.locks.map(\.pid).filter { quitter.isGUIApplication(pid: Int32(truncatingIfNeeded: $0)) })
+            guiPIDs: Set(scan.locks.map(\.pid).filter { quitter.isGUIApplication(pid: Int32(truncatingIfNeeded: $0)) }),
+            confirmedDaemons: confirmedDaemons
         )
         let plan = await builder.plan(stage, input: input)
         var names: [ProcessIdentity: String] = [:]
@@ -87,22 +99,23 @@ public actor ResolutionPipeline: StageRunning {
         let approval = approvals.removeValue(forKey: plan.stage)
         // An approval is for the volume it was planned on; executing against another mount sends nothing.
         let runnable = plan.actions.filter { approval?.volume == volume && approval?.actions.contains($0) == true }
-        var succeeded: [ProposedAction] = []
-        var failed: [FailedAction] = []
+        var results = StageResults()
         for action in runnable {
             // Requirement 6: a cancelled stage must not send another signal.
             try Task.checkCancellation()
             let result = await run(action, stage: plan.stage, volume: volume, names: approval?.names ?? [:])
             switch result {
-            case .success: succeeded.append(action)
-            case .failure(let error): failed.append(FailedAction(action: action, error: error))
+            case .success: results.succeeded.append(action)
+            case .failure(let error): results.failed.append(FailedAction(action: action, error: error))
+            case .manual(let reason, let instruction):
+                results.manual.append(ManualAction(action: action, reason: reason, instruction: instruction))
             case .skipped: break
             }
         }
         if plan.stage == .gracefulRequest {
-            try await waitForGrace(succeeded.compactMap(\.target))
+            try await waitForGrace(results.succeeded.compactMap(\.target))
         }
-        return try await rescan(plan.stage, volume: volume, succeeded: succeeded, failed: failed)
+        return try await rescan(plan.stage, volume: volume, results: results)
     }
 
     public func cleanHandoff(on volume: MountInfo, force: Bool) async -> CleanHandoffResult {
@@ -114,7 +127,9 @@ public actor ResolutionPipeline: StageRunning {
     private enum ActionResult {
         case success
         case failure(PhantomTraceError)
-        /// Not delivered and not a failure the user must see, such as a shell that needs a manual `cd ~`.
+        /// Nothing was sent and the user must act by hand, such as a shell that needs a manual `cd ~`.
+        case manual(EgressManualReason, instruction: String)
+        /// Not delivered and not a failure the user must see, such as an unmount action in a signal stage.
         case skipped
     }
 
@@ -150,8 +165,8 @@ public actor ResolutionPipeline: StageRunning {
         switch await egress.perform(action, volumeMountPoint: volume.mountPoint) {
         case .succeeded:
             return .success
-        case .manual:
-            return .skipped
+        case .manual(let reason, let instruction):
+            return .manual(reason, instruction: instruction)
         case .failed(.processIdentityChanged(let pid)):
             return .failure(.processIdentityChanged(pid: pid))
         case .failed(.cancelled):
@@ -212,18 +227,21 @@ public actor ResolutionPipeline: StageRunning {
     private func rescan(
         _ stage: ResolutionStage,
         volume: MountInfo,
-        succeeded: [ProposedAction],
-        failed: [FailedAction]
+        results: StageResults
     ) async throws -> StageOutcome {
         try await clock.sleep(seconds: Self.settleSeconds)
         let scan = await scanner.scan(volume)
         if case .failure(.cancelled) = scan { throw CancellationError() }
         // A partial or failed rescan verifies nothing, so it is reported as timed out with no locks.
         if case .success(let result) = scan, !result.partial {
-            return StageOutcome(stage: stage, succeeded: succeeded, failed: failed, remainingLocks: result.locks)
+            return StageOutcome(
+                stage: stage, succeeded: results.succeeded, failed: results.failed, manual: results.manual,
+                remainingLocks: result.locks
+            )
         }
         return StageOutcome(
-            stage: stage, succeeded: succeeded, failed: failed, remainingLocks: [], rescanTimedOut: true
+            stage: stage, succeeded: results.succeeded, failed: results.failed, manual: results.manual,
+            remainingLocks: [], rescanTimedOut: true
         )
     }
 }

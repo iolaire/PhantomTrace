@@ -5,6 +5,7 @@ import Synchronization
 public final class MockStageRunner: StageRunning, StageReviewing {
     public enum Call: Equatable, Sendable {
         case plan(ResolutionStage)
+        case planConfirming(ResolutionStage, Set<ProcessIdentity>)
         case execute(ResolutionStage)
         case review(ResolutionStage)
         case cleanHandoff(force: Bool)
@@ -22,8 +23,12 @@ public final class MockStageRunner: StageRunning, StageReviewing {
     public func setApproval(_ value: Bool) {
         approval.withLock { $0 = value }
     }
-    public func plan(_ stage: ResolutionStage, on volume: MountInfo) async throws -> ResolutionPlan {
-        log.record(.plan(stage))
+    public func plan(
+        _ stage: ResolutionStage,
+        on volume: MountInfo,
+        confirmedDaemons: Set<ProcessIdentity>
+    ) async throws -> ResolutionPlan {
+        log.record(confirmedDaemons.isEmpty ? .plan(stage) : .planConfirming(stage, confirmedDaemons))
         return try plans.next().get()
     }
     public func execute(_ plan: ResolutionPlan, on volume: MountInfo) async throws -> StageOutcome {

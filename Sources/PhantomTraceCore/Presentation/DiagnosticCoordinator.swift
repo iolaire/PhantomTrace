@@ -254,6 +254,7 @@ extension DiagnosticCoordinator {
         if !missing, case .partial = state {
             degraded = true
             model.banner = Banner.capped(
+                kind: .partial,
                 message: "Discovery returned partial results. Some locks may be missing.",
                 warnings: warnings
             )

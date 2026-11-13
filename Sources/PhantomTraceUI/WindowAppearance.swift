@@ -75,11 +75,4 @@ public struct WindowAppearance: Equatable, Sendable {
             return "That item could not be inspected."
         }
     }
-
-    /// The banner message prefix the coordinator uses for a partial result; anything else is a failure.
-    static let partialMessagePrefix = "Discovery returned partial"
-
-    public static func bannerIsPartial(_ banner: Banner) -> Bool {
-        banner.message.hasPrefix(partialMessagePrefix)
-    }
 }

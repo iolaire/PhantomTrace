@@ -130,6 +130,24 @@ struct ResolutionPipelineGraceTests {
         #expect(plan.skipped.map(\.denial) == [.noPriorGracefulAttempt])
     }
 
+    @Test func userConfirmedSystemDaemonIsKilledThroughThePipeline() async throws {
+        let daemon = Fixtures.lock(30, name: "mdworker", role: .systemDaemon)
+        let rig = Fixtures.rig(locks: [daemon])
+        let confirmed: Set<ProcessIdentity> = [Fixtures.identity(30)]
+        let plan = try await rig.pipeline.plan(.banishLocks, on: Fixtures.volume, confirmedDaemons: confirmed)
+        #expect(plan.actions.compactMap(\.target?.pid) == [30])
+        _ = try await rig.pipeline.execute(plan, on: Fixtures.volume)
+        #expect(rig.signals.calls.map(\.signal) == [.kill])
+    }
+
+    @Test func confirmingADifferentIncarnationDoesNotAllowTheKill() async throws {
+        let daemon = Fixtures.lock(30, name: "mdworker", role: .systemDaemon)
+        let rig = Fixtures.rig(locks: [daemon])
+        let other = ProcessIdentity(pid: 30, startTime: Fixtures.start(30).addingTimeInterval(-60))
+        let plan = try await rig.pipeline.plan(.banishLocks, on: Fixtures.volume, confirmedDaemons: [other])
+        #expect(plan.actions.isEmpty)
+    }
+
     @Test func approvalIsSingleUseSoReplayingAPlanSendsNothing() async throws {
         let rig = Fixtures.rig(locks: [Fixtures.lock(10)])
         await rig.history.recordGracefulAttempt(for: Fixtures.identity(10))
