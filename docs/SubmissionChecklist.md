@@ -6,17 +6,17 @@ Category: **Resurrection**. Bonus categories to pursue: Best Demo, Bonus Blog Pr
 
 ## Hard requirements (disqualification risk)
 
-- [ ] Built with Kiro, with real use of several Kiro features (insufficient use is grounds for disqualification).
-- [ ] Project created during the Submission Period (Oct 30 to Dec 4, 2026). Disclose any pre-existing code or templates.
-- [ ] Public GitHub repository (not GitLab or Bitbucket).
-- [ ] OSI open source license file, detected by GitHub and visible in the repository About section (`LICENSE`, MIT).
+- [x] Built with Kiro, with real use of several Kiro features (insufficient use is grounds for disqualification). Checked 2026-11-13: specs, 11 steering files, 4 hooks, property tests, and the `swift-expert` power are in the repo; the log names the Kiro surface per change. Gaps in hook, MCP, and custom-agent evidence are listed in [KiroUsage.md](KiroUsage.md).
+- [x] Project created during the Submission Period (Oct 30 to Dec 4, 2026). Disclose any pre-existing code or templates. Checked 2026-11-13: first commit is 2026-11-10; the README discloses the only carry-over (an image-prompt style from the 2025 entry).
+- [x] Public GitHub repository (not GitLab or Bitbucket). Checked 2026-11-13: `https://github.com/iolaire/PhantomTrace` returns HTTP 200 unauthenticated and the API reports `private: false`.
+- [x] OSI open source license file, detected by GitHub and visible in the repository About section (`LICENSE`, MIT). Checked 2026-11-13: the GitHub API reports license `MIT` (spdx_id).
 - [x] `/.kiro` directory at the repo root, and not listed in `.gitignore` (checked 2026-11-11: `.kiro` files are tracked and `.gitignore` has no `.kiro` entry).
-- [ ] Repository holds all source, assets, and instructions needed to run the app (see README Build section).
+- [x] Repository holds all source, assets, and instructions needed to run the app (see README Build section). Checked 2026-11-13: `swift build`, `swiftlint --strict`, and `swift test` (259 tests) pass on macOS 27.2.1 from a clean tree; screenshots are tracked.
 - [ ] Working app installable and runnable on the target platform: macOS 27.2.1 (build 26B131). Owner-reported working on 2026-11-12; tick after the ManualQA pass record is filled in.
 - [ ] Demo video under 3 minutes, public on YouTube, showing the app running on a Mac.
 - [ ] Video has no third-party trademarks or copyrighted music or material without permission.
-- [ ] All submission materials in English.
-- [ ] Third-party SDKs, APIs, and data used within their licenses (current runtime dependencies: none).
+- [x] All submission materials in English. Checked 2026-11-13 for the repo docs; the Devpost text and video still need the same check.
+- [x] Third-party SDKs, APIs, and data used within their licenses (current runtime dependencies: none). Checked 2026-11-13: `Package.swift` has only the test-only `swift-property-based`; art provenance is in [Assets.md](Assets.md).
 
 ## Submission form content
 
