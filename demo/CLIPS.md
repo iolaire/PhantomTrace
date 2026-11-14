@@ -64,7 +64,7 @@ How it works:
 
 Steps:
 
-1. Grant **Accessibility** and **Screen Recording** to the app that runs the script (Kiro or your terminal), then restart that app.
+1. Grant **Accessibility** and **Screen Recording** to the app that runs the script (Kiro or your terminal), then restart that app. Steps, and how to switch them off again: see "Turn the recording permissions off and on" below.
 2. `Scripts/make-app.sh`, `Scripts/install-quick-action.sh` (enable it in Finder), then `Scripts/demo/setup-demo.sh`. `resolve` needs a Terminal tab with its cwd on the drive plus the `tail` lock. A `--headless` shell is classed `cliTool`, so Egress Shells is disabled for it.
 3. Clear the screen area being recorded. The clip is a region, so whatever is behind the windows shows.
 4. Preview: `PHANTOMTRACE_FLOW_TOP=235 Scripts/demo/record-flow.sh problem --preview` (or `resolve --preview`). This saves one still to `~/PhantomTraceDemo/preview.png`. Look at it, then delete it. `PHANTOMTRACE_FLOW_TOP` sets the top edge in screen points. Leave it out to use a third of the way down.
@@ -76,6 +76,58 @@ Known limits:
 - The Finder sidebar and the PhantomTrace start window show every mounted volume and network location. Other drives' names show unless only the demo image is mounted (the owner accepted this for the 2026-11-13 takes).
 - After `resolve` the volume is unmounted but the image is still attached. Reset as below.
 - A glow around the cursor or clicks is not drawn. Add it in Remotion if wanted.
+
+## Turn the recording permissions off and on
+
+Recording and hands-free driving need three macOS permissions for the app that runs the script (Kiro, Kiro Crew, or your terminal). Switch them off when you are done, and on again when you record.
+
+| Permission | What it allows | Where it lives |
+|---|---|---|
+| Accessibility | The script clicks and types for you (`record-flow.sh`) | Privacy & Security > Accessibility |
+| Screen Recording | The script records the screen (`record-clip.sh`, `record-flow.sh`) | Privacy & Security > Screen & System Audio Recording |
+| Automation | The script controls Terminal or Finder (asked on first use) | Privacy & Security > Automation |
+
+What a script can do:
+
+- **Turn off: yes.** `Scripts/demo/privileges.sh revoke --yes` removes all three for Kiro, Kiro Crew and Terminal using `tccutil reset`, which needs no password. Run it with no `--yes` first to see what it would remove. Name one app to limit it: `Scripts/demo/privileges.sh revoke --yes dev.kiro.desktop`.
+- **Turn on: no.** macOS will not let a script grant itself these. You must switch each one on in System Settings and confirm with your password or Touch ID. Writing the permission database directly is blocked by System Integrity Protection, and clicking the Settings window by script would itself need Accessibility. `Scripts/demo/privileges.sh grant` opens the two panes and prints the steps below.
+- **Check: yes.** `Scripts/demo/privileges.sh status` says whether the app that runs it has Accessibility and Screen Recording. Run it from the app you care about. It cannot read Automation.
+
+Bundle ids: Kiro `dev.kiro.desktop`, Kiro Crew `com.amazon.kiro.crew`, Terminal `com.apple.Terminal`. `Scripts/demo/privileges.sh list` shows them. If you use another terminal, name its bundle id (`defaults read /Applications/<App>.app/Contents/Info CFBundleIdentifier`).
+
+### Take down (after recording)
+
+Automatic:
+
+```bash
+Scripts/demo/privileges.sh revoke            # preview
+Scripts/demo/privileges.sh revoke --yes      # do it
+```
+
+Quit and reopen the affected apps. Each one loses the permission the next time it starts. Careful: if you run the command from an app you are resetting, that app loses access for its next run, which is the point.
+
+By hand, if you prefer:
+
+1. Open System Settings > Privacy & Security > Accessibility. Find Kiro (and Kiro Crew, Terminal). Switch each off, or select it and click the minus button.
+2. Open Privacy & Security > Screen & System Audio Recording. Do the same.
+3. Open Privacy & Security > Automation. Under each app (Kiro, Kiro Crew, Terminal), switch off Terminal and Finder.
+4. Quit and reopen those apps.
+5. Check: from each app, `Scripts/demo/privileges.sh status` should say NOT granted.
+
+### Set up (before recording)
+
+By hand, every time:
+
+1. `Scripts/demo/privileges.sh grant` opens the Accessibility and Screen Recording panes. (Or open System Settings > Privacy & Security yourself.)
+2. In Accessibility, click +, pick the app that will run the scripts (Kiro, Kiro Crew, or your terminal), and switch it on. Confirm with your password or Touch ID.
+3. In Screen & System Audio Recording, do the same.
+4. Quit the app with Cmd+Q and open it again. An app does not see a permission given while it was running.
+5. From that app run `Scripts/demo/privileges.sh status`. Both lines should say granted.
+6. Run the recording script. The first time it controls Terminal or Finder, macOS asks "wants to control ...". Click OK. That is Automation.
+
+If a permission looks on but the script says it is not granted: switch it off and on again, or remove the entry with the minus button and add it again, then restart the app. That happens after an app is updated or replaced.
+
+Limits: the setting names above are from macOS 15 to 26. This was written on 27.2.1 without checking the exact wording on screen, so a label may differ slightly. Revoke and status were run on 27.2.1; the revoke test used a harmless app (TextEdit), not Kiro, so that Kiro's own permissions were not changed.
 
 ## Reset between takes
 

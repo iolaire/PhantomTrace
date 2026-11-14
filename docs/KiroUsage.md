@@ -45,7 +45,23 @@ Four hooks in `.kiro/hooks/`, kept small on purpose. Each addresses a different 
 - Limit: PreToolUse hooks see only commits the agent runs. Real git hooks in `Scripts/git-hooks/` (enabled with `Scripts/install-git-hooks.sh`) call the same scripts so commits typed by hand are covered too.
 - Status: scripts tested with sample payloads (commit, non-commit, empty, garbage, missing SwiftLint). Owner statement, 2026-11-12: the hooks were active in Kiro IDE during the build, so the agent's commits and Swift saves ran through them. This is owner-reported; no hook output was captured at the time, so there is no transcript to cite.
 - Design evidence from the log: D-006 records why there are four focused hooks and what was rejected. D-008 records a gap found while building them (agent-only PreToolUse hooks miss hand-typed commits), which led to the tracked git hooks. The `project-log-check` hook also validates the Kiro surface column of new log rows (D-007).
-- Evidence to add: a captured block message or lint output from a hook, and any issue a hook actually caught during the build. None is recorded in the log, so none is claimed.
+- Captured hook output (2026-11-14, Kiro IDE). This is a deliberate demonstration on a throwaway branch, not a bug caught during the build. The branch was deleted and nothing was committed.
+  - `project-log-check` blocked a commit. A one-line change to `Sources/PhantomTraceCore/Models/PhantomTraceError.swift` was staged with no ProjectLog row, and the agent ran `git commit -m "test: hook demo"`. Kiro intercepted the call before it ran ("The tool was NOT executed") and returned:
+
+    ```
+    docs/ProjectLog.md is not staged. Add a work-log entry (and a decision or tool entry if relevant), stage it, then commit again. For trivial changes include [skip-log] in the commit message.
+    Kiro surface detected here (surface | version | evidence): Kiro IDE | n/a | IDE hook process (VSCODE_IPC_HOOK or VSCODE_PID, no TERM_PROGRAM)
+    ```
+  - The same run shows the Kiro surface detection working: the block message names Kiro IDE.
+  - `lint-on-save` was run by hand, not through the IDE. The agent's edit tool did not trigger the save hook, so `Scripts/hooks/lint-on-save.sh` was run directly on a file with a `print(...)` added to Core. It printed the custom steering-derived rule and exited 2:
+
+    ```
+    .../Sources/PhantomTraceCore/Models/PhantomTraceError.swift:21:24: error: No print in Core Violation: Use OSLog Logger, not print, in Core. (no_print_in_core)
+    SwiftLint found violations in Sources/PhantomTraceCore/Models/PhantomTraceError.swift (output above).
+    ```
+    This shows the script and the rule. It does not show the IDE hook firing on a save.
+  - Not tested: `pre-commit-check` and `kiro-gitignore-guard` (both stayed silent in the run above, consistent with passing).
+- Evidence to add: an IDE-triggered `lint-on-save` result (open a Swift file, add a `print`, save with Cmd-S), and any issue a hook actually caught during the build. None is recorded in the log, so none is claimed.
 
 ## Property-based testing
 
