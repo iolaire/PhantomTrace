@@ -49,7 +49,7 @@ Last reviewed 2026-11-12.
 
 - The owner completed a manual end-to-end pass on 2026-11-12 on a throwaway disk image: the Quick Action in Finder's right-click menu, the three-window flow with forward and back buttons, image placement, menus and Quit, force quitting apps, and a two-stage quit (`agy` in the terminal first, then the rescan shows `zsh` still locking the drive, and quitting that releases it). This is owner-reported; fill in the pass record in [ManualQA.md](ManualQA.md) and tick the "working app" item when the recorded pass matches. Status table: [architecture.md](architecture.md).
 - Design gaps from the last review are fixed in Core (D-023, details in [architecture.md](architecture.md#known-gaps-and-deviations-from-the-design)): the pipeline accepts confirmed daemons, `StageOutcome.manual` reports hand-off shells, and `Banner.kind` replaces the message-prefix check. Still open: no UI asks the user to confirm a daemon. The window now lists manual shells (2026-11-13).
-- Untested: VoiceOver, Reduce Motion, and the drop target path. [ManualQA.md](ManualQA.md) exists but its boxes and pass record are not filled in yet.
+- Untested: VoiceOver, Reduce Motion, and the drop target path. [ManualQA.md](ManualQA.md) is partly ticked (2026-11-13 pass record: Sections 1 and 7 in full, parts of 3 and 5); the rest is open.
 - Provisional behaviors (Req 18.6, 18.7, 18.15, 18.16, 18.21, 18.23, 18.26) still need the owner's confirmation.
 - Notarization is optional and has not been attempted (`notarytool` and `stapler` are present).
 - `swiftlint` on this machine needs `DYLD_FRAMEWORK_PATH=/Library/Developer/CommandLineTools/usr/lib`.

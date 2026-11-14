@@ -52,14 +52,14 @@ Scripts/restore-finder-volume-sidebar.sh Flash1GB
 
 Command: `Scripts/make-app.sh` (output `build/PhantomTrace.app`).
 
-- [ ] Script exits 0 and prints success only after signature verification (16.8, 16.11).
-- [ ] `build/PhantomTrace.app/Contents/MacOS/PhantomTrace`, `Contents/Info.plist`, and `Contents/Resources` exist (16.2).
-- [ ] `codesign --verify --strict --verbose=2 build/PhantomTrace.app` passes (16.8).
-- [ ] `codesign -dv --entitlements - build/PhantomTrace.app` shows the hardened runtime flag and no `com.apple.security.app-sandbox` entitlement (16.6, 16.7).
-- [ ] `plutil -p build/PhantomTrace.app/Contents/Info.plist` shows `CFBundleExecutable`, `CFBundleIdentifier`, `LSMinimumSystemVersion` = `27.2.1`, a `CFBundleURLTypes` entry with scheme `phantomtrace`, and an `NSServices` entry (16.3, 16.4).
-- [ ] No `.xcassets`, no Kiro logo or ghost art, and no Monaco, Menlo, SF, or Chicago font file in `Contents/Resources` (17.1, 17.15, 17.17).
-- [ ] Failure case: run the script with `SIGN_IDENTITY` set to an identity that does not exist. It exits non-zero, names the failed step on standard error, and a previous `build/PhantomTrace.app` is unchanged (16.9, 16.10).
-- [ ] Notarization is not performed by the script (16.12).
+- [x] Script exits 0 and prints success only after signature verification (16.8, 16.11).
+- [x] `build/PhantomTrace.app/Contents/MacOS/PhantomTrace`, `Contents/Info.plist`, and `Contents/Resources` exist (16.2).
+- [x] `codesign --verify --strict --verbose=2 build/PhantomTrace.app` passes (16.8).
+- [x] `codesign -dv --entitlements - build/PhantomTrace.app` shows the hardened runtime flag and no `com.apple.security.app-sandbox` entitlement (16.6, 16.7).
+- [x] `plutil -p build/PhantomTrace.app/Contents/Info.plist` shows `CFBundleExecutable`, `CFBundleIdentifier`, `LSMinimumSystemVersion` = `15.0` (D-022; the only tested system is still 27.2.1), a `CFBundleURLTypes` entry with scheme `phantomtrace`, and an `NSServices` entry (16.3, 16.4).
+- [x] No `.xcassets`, no Kiro logo or ghost art, and no Monaco, Menlo, SF, or Chicago font file in `Contents/Resources` (17.1, 17.15, 17.17).
+- [x] Failure case: run the script with `SIGN_IDENTITY` set to an identity that does not exist. It exits non-zero, names the failed step on standard error, and a previous `build/PhantomTrace.app` is unchanged (16.9, 16.10).
+- [x] Notarization is not performed by the script (16.12).
 
 ## 2. Launch and URL scheme (Req 12.1, 12.3, 12.4)
 
@@ -79,8 +79,8 @@ Workflow path:
 - [ ] `Scripts/install-quick-action.sh` exits 0 and prints no error; `~/Library/Services/Why Can't I Eject?.workflow` exists (12.8, 12.11).
 - [ ] Run it a second time: still exits 0 and the action is still present.
 - [ ] Failure case: make `~/Library/Services` unwritable in a temporary `HOME` (see `Tests/Scripts/install-quick-action-tests.sh`), or set `PHANTOMTRACE_QUICK_ACTION_SOURCE` to a missing folder. Exit non-zero, a cause on standard error, and an existing installed action is left unchanged (12.9).
-- [ ] Enable the action once: right-click any item in Finder, choose Quick Actions > Customize..., and tick "Why Can't I Eject?". A fresh install is hidden until this is done (seen on macOS 27.2.1, 2026-11-12).
-- [ ] In Finder, right-click the mounted `PTQA` volume on the Desktop or in the Computer window (the sidebar menu never shows Quick Actions) and find "Why Can't I Eject?" under Quick Actions. If it is still not visible, also tick it in System Settings > Keyboard > Keyboard Shortcuts > Services > Files and Folders. Note the result.
+- [x] Enable the action once: right-click any item in Finder, choose Quick Actions > Customize..., and tick "Why Can't I Eject?". A fresh install is hidden until this is done (seen on macOS 27.2.1, 2026-11-12).
+- [x] In Finder, right-click the mounted `PTQA` volume on the Desktop or in the Computer window (the sidebar menu never shows Quick Actions) and find "Why Can't I Eject?" under Quick Actions. If it is still not visible, also tick it in System Settings > Keyboard > Keyboard Shortcuts > Services > Files and Folders. Note the result.
 - [ ] Choosing it opens the app with the volume inspected within 2 seconds.
 - [ ] Also try on a folder and a file inside the volume: the owning volume is resolved.
 
@@ -129,19 +129,19 @@ Result to record: workflow works / NSServices works / both / neither. Decision s
 
 Start with the held file and shell from Section 0, then inspect `PTQA`.
 
-- [ ] Title plaque "CANNOT PUT AWAY", illustration `shackled-volume-and-padlocks`, yellow ghost (13.6, 18.10).
-- [ ] Spooky message, a question about running a Phantom Trace, exactly one Proceed button, and a close box (18.11).
-- [ ] Proceed opens the `phantomTrace` window (18.12).
+- [x] Title plaque "CANNOT PUT AWAY", illustration `shackled-volume-and-padlocks`, yellow ghost (13.6, 18.10).
+- [x] Spooky message, a question about running a Phantom Trace, exactly one Proceed button, and a close box (18.11).
+- [x] Proceed opens the `phantomTrace` window (18.12).
 - [ ] Close box closes the window without any action taken on processes.
 
 ### 5.3 `phantomTrace` window (Req 13, 18.3, 18.13, 18.14)
 
-- [ ] Title plaque "PHANTOM TRACE", illustration `crt-diagnostic-portal`, red ghost (13.7, 18.13).
-- [ ] The table has columns Process Name, PID, User, Lock Category, File Path, and one row for `tail` (open file handle) and one for the shell (cwd) (13.1).
+- [x] Title plaque "PHANTOM TRACE", illustration `crt-diagnostic-portal`, red ghost (13.7, 18.13).
+- [x] The table has columns Process Name, PID, User, Lock Category, File Path, and one row for `tail` (open file handle) and one for the shell (cwd) (13.1).
 - [ ] A long path is truncated in the middle and shows the full path in a tooltip within 1 second (13.2).
-- [ ] The choice control lists Egress Shells, Graceful Request, Banish Locks under "Let PhantomTrace act", then "I'll deal with these processes myself", plus exactly one Proceed button (13.3).
-- [ ] Proceed is disabled until an option is selected (18.14).
-- [ ] An inapplicable stage is shown disabled (for example Egress Shells when no idle shell is locking) (13.4).
+- [x] The choice control lists Egress Shells, Graceful Request, Banish Locks under "Let PhantomTrace act", then "I'll deal with these processes myself", plus exactly one Proceed button (13.3).
+- [x] Proceed is disabled until an option is selected (18.14).
+- [x] An inapplicable stage is shown disabled (for example Egress Shells when no idle shell is locking) (13.4).
 - [ ] Rows for processes owned by another user (if any are present) are read-only, show a lock icon and a text explanation, and are never targeted (13.12). If none can be produced, record "not exercised".
 - [ ] Blocked with no lock details (for example when `lsof` cannot see the holder): empty table, a "no lock details could be retrieved" message, every stage option disabled (13.13). Record "not exercised" if it cannot be produced safely.
 
@@ -149,17 +149,17 @@ Start with the held file and shell from Section 0, then inspect `PTQA`.
 
 Run one stage at a time, and confirm the plan preview names the process, pid, and file before anything runs.
 
-- [ ] Egress Shells: the plan lists the idle shell. After proceeding, the shell's cwd is no longer in the volume (or the app reports a manual instruction if Terminal automation is denied; no repeated prompts).
-- [ ] Graceful Request: the plan lists `tail` with a SIGTERM-style action. After proceeding, `tail` exits.
+- [x] Egress Shells: the plan lists the idle shell. After proceeding, the shell's cwd is no longer in the volume (or the app reports a manual instruction if Terminal automation is denied; no repeated prompts).
+- [x] Graceful Request: the plan lists `tail` with a SIGTERM-style action. After proceeding, `tail` exits.
 - [ ] Banish Locks: a confirmation lists name and pid. Declining sends nothing. Confirming works only for a process that earlier received a graceful request, or for a user-confirmed system daemon.
-- [ ] Each stage ends with a rescan; the table shows the new state without stale rows.
+- [x] Each stage ends with a rescan; the table shows the new state without stale rows.
 - [ ] Failed actions (for example a process that exited in between) are listed with pid and error kind (14.5).
 - [ ] Protected processes (launchd, Finder, and so on) never appear as targets.
 
 ### 5.5 `volumeReleased` window (Req 18.1, 18.19, 18.20, 18.22 to 18.25)
 
-- [ ] When a rescan finds zero locks, the window changes to `volumeReleased`: title "VOLUME RELEASED", illustration `shattered-chains-and-portullis`, green ghost, spooky message (13.8, 18.19, 18.20).
-- [ ] While still mounted: Eject button plus a note that retrying Eject in Finder also works (PROVISIONAL, see P5).
+- [x] When a rescan finds zero locks, the window changes to `volumeReleased`: title "VOLUME RELEASED", illustration `shattered-chains-and-portullis`, green ghost, spooky message (13.8, 18.19, 18.20).
+- [x] While still mounted: Eject button plus a note that retrying Eject in Finder also works (PROVISIONAL, see P5).
 - [ ] Eject shows progress and is disabled while unmounting (18.24). The volume unmounts non-forced.
 - [ ] Busy unmount: start `tail -f` again after releasing but before pressing Eject. Eject returns to the `phantomTrace` window with the new lock and the red ghost (18.25).
 - [ ] After the volume is gone (for example eject it from Finder while the window is open): the window shows `volumeReleased` with only the message and the Finder instruction, no Eject button (18.9, PROVISIONAL, see P6).
@@ -210,17 +210,17 @@ Other:
 
 Build once with `swift build`, then use `.build/debug/phantomtrace`. The CLI is read-only: it must never signal a process or unmount. Use the image from Section 0 with the helpers running.
 
-- [ ] `.build/debug/phantomtrace /Volumes/PTQA` prints Lock_Records naming `tail` (open file handle) and the shell (cwd) with pids, and exits 0 (`echo $?`) (12.5, 12.7).
-- [ ] `.build/debug/phantomtrace 'phantomtrace://inspect?path=%2FVolumes%2FPTQA'` gives the same result.
-- [ ] A relative path from inside the volume (`cd /Volumes/PTQA && /path/to/phantomtrace .`) resolves to the volume.
-- [ ] A file inside the volume (`/Volumes/PTQA/held.txt`) resolves to the owning volume.
-- [ ] No arguments: usage or error on standard error, nothing on standard output, non-zero exit (12.6).
-- [ ] A nonexistent path: error on standard error, no records, non-zero exit (12.6).
-- [ ] `/`: refused as protected, non-zero exit, no scan.
-- [ ] A file name that starts with `-` (create `/Volumes/PTQA/-dash.txt`, hold it with `tail -f`): handled as data, no option injection, listed correctly (15.8).
-- [ ] A file name with a space, a newline, or a quote (for example `touch "$(printf '/Volumes/PTQA/a\nb')"`): record is printed intact and nothing is executed (15.2).
-- [ ] After closing both helpers, the CLI reports zero locks and exits 0.
-- [ ] After all CLI runs, the helper processes are still running (the CLI sent no signals).
+- [x] `.build/debug/phantomtrace /Volumes/PTQA` prints Lock_Records naming `tail` (open file handle) and the shell (cwd) with pids, and exits 0 (`echo $?`) (12.5, 12.7).
+- [x] `.build/debug/phantomtrace 'phantomtrace://inspect?path=%2FVolumes%2FPTQA'` gives the same result.
+- [x] A relative path from inside the volume (`cd /Volumes/PTQA && /path/to/phantomtrace .`) resolves to the volume.
+- [x] A file inside the volume (`/Volumes/PTQA/held.txt`) resolves to the owning volume.
+- [x] No arguments: usage or error on standard error, nothing on standard output, non-zero exit (12.6).
+- [x] A nonexistent path: error on standard error, no records, non-zero exit (12.6).
+- [x] `/`: refused as protected, non-zero exit, no scan.
+- [x] A file name that starts with `-` (create `/Volumes/PTQA/-dash.txt`, hold it with `tail -f`): handled as data, no option injection, listed correctly (15.8).
+- [x] A file name with a space, a newline, or a quote (for example `touch "$(printf '/Volumes/PTQA/a\nb')"`): record is printed intact and nothing is executed (15.2).
+- [x] After closing both helpers, the CLI reports zero locks and exits 0.
+- [x] After all CLI runs, the helper processes are still running (the CLI sent no signals).
 
 ## 8. Provisional behaviors awaiting user confirmation (Req 18)
 
@@ -267,4 +267,5 @@ Open question for the owner: the Failure_Banner kind (failed versus partial) is 
 
 | Date | Tester | macOS build | App version | Sections run | Failures or notes |
 |---|---|---|---|---|---|
+| 2026-11-13 | Kiro (Kiro IDE), owner present | macOS 27.2.1 (build 26B131) | Local `build/PhantomTrace.app` (ad hoc signed) | 1 (all, re-run this date); 3 (Quick Action from the desktop icon; enable step done by the owner 2026-11-12); 5.2 to 5.5 (ticked items only, from the app driven through Accessibility, the demo clips and `docs/screenshots/`); 7 (all, re-run this date on a fresh PTQA image) | Section 7: the helpers were three `tail -f` and a `zsh -c 'sleep 900; :'` (cwd), so the shell showed as `cliTool`; the newline-and-quote file name printed on one line as `a\\nb q"uote` (lsof's escape, backslash escaped by the CLI), nothing executed; every run also printed "1 unreadable lsof entries were skipped" on standard error; with no locks the CLI printed no records and exited 0. Section 5.4: Egress moved a Terminal shell home and showed the Req 7.5 manual line for a shell on a bare pty; Banish confirmation listed name and pid and SIGKILLed a `zsh` that had ignored SIGTERM, but declining was not recorded, so that box is open. Not ticked: timing (2 s) checks, URL rejections, failed-action listing (14.5), Eject progress, force path, drop target, picker, VoiceOver, Reduce Motion |
 | 2026-11-12 | Project owner (owner-reported; step boxes above not individually ticked) | macOS 27.2.1 (build 26B131) | Local `build/PhantomTrace.app` | Quick Action in Finder, three-window flow with back and forward buttons, image placement, menus and Quit, force quit, two-stage quit (`agy` then `zsh`) | All worked as intended. Not covered: VoiceOver, Reduce Motion |
