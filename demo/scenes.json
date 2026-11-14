@@ -9,9 +9,14 @@
       "title": "The problem",
       "visual": "still",
       "still": "finder-eject-fails.png",
-      "narration": "You try to eject a drive, and Finder says a program may be using it. It never says which one.",
+      "narration": "You try to eject a drive from Finder. It says a program may be using it. It never says which one. You can only try again, or force it.",
       "targetSec": 12,
-      "callouts": [{ "text": "Finder names no program", "atSec": 3 }],
+      "callouts": [
+        {
+          "text": "Finder names no program",
+          "atSec": 6
+        }
+      ],
       "record": "Optional live clip. In Finder, select PhantomDemo, press Cmd+E. Let the dialog sit for 3 seconds."
     },
     {
@@ -21,28 +26,61 @@
       "terminal": {
         "title": "Terminal",
         "lines": [
-          { "t": "cmd", "text": "diskutil unmount /Volumes/PhantomDemo" },
-          { "t": "out", "text": "Volume PhantomDemo on disk8s1 failed to unmount: dissented by PID 95849 (/usr/bin/tail)" },
-          { "t": "out", "text": "Dissenter parent PPID 1 (/sbin/launchd)" },
-          { "t": "gap" },
-          { "t": "cmd", "text": "lsof +f -- /Volumes/PhantomDemo" },
-          { "t": "out", "text": "COMMAND   PID    USER   FD   TYPE DEVICE SIZE/OFF NODE NAME" },
-          { "t": "out", "text": "tail    95849 iolaire    3r   REG   1,30        6   18 /Volumes/PhantomDemo/notes.txt" },
-          { "t": "out", "text": "zsh     95851 iolaire  cwd    DIR   1,30      128    2 /Volumes/PhantomDemo" }
+          {
+            "t": "cmd",
+            "text": "diskutil unmount /Volumes/PhantomDemo"
+          },
+          {
+            "t": "out",
+            "text": "Volume PhantomDemo on disk8s1 failed to unmount: dissented by PID 95849 (/usr/bin/tail)"
+          },
+          {
+            "t": "out",
+            "text": "Dissenter parent PPID 1 (/sbin/launchd)"
+          },
+          {
+            "t": "gap"
+          },
+          {
+            "t": "cmd",
+            "text": "lsof +f -- /Volumes/PhantomDemo"
+          },
+          {
+            "t": "out",
+            "text": "COMMAND   PID    USER   FD   TYPE DEVICE SIZE/OFF NODE NAME"
+          },
+          {
+            "t": "out",
+            "text": "tail    95849 iolaire    3r   REG   1,30        6   18 /Volumes/PhantomDemo/notes.txt"
+          },
+          {
+            "t": "out",
+            "text": "zsh     95851 iolaire  cwd    DIR   1,30      128    2 /Volumes/PhantomDemo"
+          }
         ]
       },
       "narration": "Today that means lsof, guesswork, and sometimes pulling the cable. Even diskutil names only one process.",
       "targetSec": 12,
-      "callouts": [{ "text": "Replayed from docs/CliCapture.md (real output)", "atSec": 1 }],
+      "callouts": [
+        {
+          "text": "Captured output, replayed",
+          "atSec": 1
+        }
+      ],
       "record": "Optional live clip instead of the replay: run both commands in Terminal against the demo drive."
     },
     {
       "id": "s03-trigger",
       "title": "The trigger",
       "visual": "clip",
-      "narration": "PhantomTrace starts right where you are stuck. Right-click the volume, and choose Why Can't I Eject?",
+      "narration": "PhantomTrace starts where you are stuck. Right-click the drive, choose Why Can't I Eject, and the ghost appears.",
       "targetSec": 12,
-      "callouts": [{ "text": "Finder Quick Action", "atSec": 2 }],
+      "callouts": [
+        {
+          "text": "Finder Quick Action",
+          "atSec": 2
+        }
+      ],
       "record": "REQUIRED. Finder, right-click PhantomDemo on the Desktop or sidebar, Quick Actions, Why Can't I Eject? Stop when the PhantomTrace window opens. About 10 seconds."
     },
     {
@@ -50,11 +88,17 @@
       "title": "The reveal",
       "visual": "still",
       "still": "phantom-trace.png",
-      "narration": "A ghost appears, and the lock list names every process: an idle zsh sitting in the volume, and a tail holding a file open. You see the name, the process I D, and the file.",
+      "narration": "Press Summon the Phantom Trace. The list names every process: an idle zsh sitting in the volume, and a tail holding a file open. You see the name, the process I D, and the file.",
       "targetSec": 20,
       "callouts": [
-        { "text": "tail holds a file open", "atSec": 5 },
-        { "text": "zsh sits in the volume", "atSec": 9 }
+        {
+          "text": "tail holds a file open",
+          "atSec": 5
+        },
+        {
+          "text": "zsh sits in the volume",
+          "atSec": 9
+        }
       ],
       "record": "Optional live clip. Let the window open, then slowly move the pointer over each row."
     },
@@ -65,16 +109,26 @@
       "still": "plan-preview.png",
       "narration": "Nothing runs until you choose it. Each stage shows a plan first, and says why any process was skipped. Protected processes and other users' processes are never touched.",
       "targetSec": 18,
-      "callouts": [{ "text": "Preview, then confirm", "atSec": 3 }],
+      "callouts": [
+        {
+          "text": "Preview, then confirm",
+          "atSec": 3
+        }
+      ],
       "record": "Optional live clip. Choose a stage and press Proceed; stop on the plan preview."
     },
     {
       "id": "s06-egress",
       "title": "Stage 1: Egress Shells",
       "visual": "clip",
-      "narration": "Stage one, Egress Shells. The idle shell is told to change to your home folder. It moves out. It is not killed.",
+      "narration": "Stage one, Egress Shells. The idle shell goes home. The prompt changes. The shell is not killed.",
       "targetSec": 18,
-      "callouts": [{ "text": "cd ~, no signal sent", "atSec": 4 }],
+      "callouts": [
+        {
+          "text": "cd ~, no signal sent",
+          "atSec": 4
+        }
+      ],
       "record": "REQUIRED. Show the demo Terminal window and the PhantomTrace window side by side. Choose Egress Shells, Proceed, confirm. The Terminal prompt should change to ~. Keep going until the lock list updates. About 15 seconds."
     },
     {
@@ -82,9 +136,14 @@
       "title": "Stage 2: Graceful Request",
       "visual": "still",
       "still": "after-graceful-rescan.png",
-      "narration": "Stage two, Graceful Request. PhantomTrace asks the app to quit politely, waits, and scans again. Anything still holding the drive stays on the list.",
+      "narration": "Stage two, Graceful Request. PhantomTrace asks the program to quit, waits, and scans again. Anything still holding the drive stays on the list.",
       "targetSec": 20,
-      "callouts": [{ "text": "Rescan after every stage", "atSec": 8 }],
+      "callouts": [
+        {
+          "text": "Rescan after every stage",
+          "atSec": 8
+        }
+      ],
       "record": "Optional live clip. Choose Graceful Request, Proceed, confirm, then let the rescan finish."
     },
     {
@@ -92,9 +151,14 @@
       "title": "Stage 3: Banish Locks",
       "visual": "still",
       "still": "banish-confirm.png",
-      "narration": "Stage three is a last resort. It names each process and its I D, and waits for your confirmation.",
+      "narration": "Stage three is a last resort. It names each process and its I D, and waits for your confirmation. Here, it is not needed.",
       "targetSec": 14,
-      "callouts": [{ "text": "Explicit confirmation, default Cancel", "atSec": 4 }],
+      "callouts": [
+        {
+          "text": "Explicit confirmation, default Cancel",
+          "atSec": 4
+        }
+      ],
       "record": "Optional live clip. Only needed if a lock is still left after stage two."
     },
     {
@@ -102,9 +166,14 @@
       "title": "Clean Handoff",
       "visual": "clip",
       "still": "volume-released.png",
-      "narration": "When a fresh scan finds zero locks, Clean Handoff ejects the volume normally. The ghost turns green, and the drive is released.",
+      "narration": "When a fresh scan finds zero locks, the haunting is over. Eject unmounts the volume the normal way, and the drive icon is gone.",
       "targetSec": 18,
-      "callouts": [{ "text": "Zero locks, then a normal unmount", "atSec": 4 }],
+      "callouts": [
+        {
+          "text": "Zero locks, then a normal unmount",
+          "atSec": 4
+        }
+      ],
       "record": "REQUIRED. From the clear state press Eject. Show the green VOLUME RELEASED window and the drive leaving Finder. About 10 seconds. The still shows if there is no clip."
     },
     {
@@ -114,20 +183,39 @@
       "terminal": {
         "title": "PhantomTrace/.kiro",
         "lines": [
-          { "t": "cmd", "text": "ls .kiro" },
-          { "t": "out", "text": "hooks    specs    steering" },
-          { "t": "gap" },
-          { "t": "cmd", "text": "ls .kiro/specs .kiro/hooks" },
-          { "t": "out", "text": "phantomtrace-volume-lock-forensics   project-scaffolding" },
-          { "t": "out", "text": "kiro-gitignore-guard  lint-on-save  pre-commit-check  project-log-check" },
-          { "t": "gap" },
-          { "t": "cmd", "text": "swift test" },
-          { "t": "out", "text": "Test run with 261 tests in 33 suites passed" }
+          {
+            "t": "cmd",
+            "text": "ls .kiro"
+          },
+          {
+            "t": "out",
+            "text": "hooks    specs    steering"
+          },
+          {
+            "t": "gap"
+          },
+          {
+            "t": "cmd",
+            "text": "ls .kiro/specs .kiro/hooks"
+          },
+          {
+            "t": "out",
+            "text": "phantomtrace-volume-lock-forensics   project-scaffolding"
+          },
+          {
+            "t": "out",
+            "text": "kiro-gitignore-guard  lint-on-save  pre-commit-check  project-log-check"
+          }
         ]
       },
-      "narration": "Kiro shaped this build. Specs defined the safety rules, steering kept the code consistent, hooks check lint, tests, and the project log before commits, and property tests hammer the lsof parser.",
+      "narration": "Kiro shaped this build. Specs defined the safety rules, steering kept the code consistent, and hooks check lint, tests, and the project log before commits.",
       "targetSec": 16,
-      "callouts": [{ "text": "Replayed list; swap in a real recording if you like", "atSec": 1 }],
+      "callouts": [
+        {
+          "text": "The repo's own .kiro folder",
+          "atSec": 1
+        }
+      ],
       "record": "Optional live clip: Kiro showing .kiro/specs, steering and hooks, then a passing swift test run."
     },
     {

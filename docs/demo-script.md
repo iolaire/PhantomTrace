@@ -39,7 +39,7 @@ The video is built from the `demo/` project, one scene per beat of the timeline 
 3. Record your voice per scene into `demo/public/audio/<scene-id>.wav`.
 4. `cd demo && npm install && npm run studio`, then `npm run render`.
 
-Status: kit built and checked on stills only. No real clip or voice-over is recorded yet.
+Status (2026-11-13): five clips are recorded (`s01-problem`, `s03-trigger`, `s06-egress`, `s07-graceful`, `s09-handoff`), the narration text is matched to them, and a 103 s draft renders with machine-voice placeholders. Your own voice-over is not recorded yet.
 
 ## Mention Kiro (judging)
 

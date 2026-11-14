@@ -1,4 +1,4 @@
-import {AbsoluteFill, Img, interpolate, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
+import {AbsoluteFill, Img, Sequence, interpolate, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import {Audio, Video} from '@remotion/media';
 import {Callouts} from '../components/Callouts';
 import {Captions} from '../components/Captions';
@@ -42,13 +42,30 @@ export const SceneView = ({scene, showCaptions, showCallouts}: Props) => {
   } else if (scene.visual === 'title' && scene.titleCard) {
     visual = <TitleCard {...scene.titleCard} />;
   } else if (media?.clip) {
-    // The still (if any) sits underneath, so it shows if the clip ends before the voice does.
-    visual = (
-      <>
-        {media.still ? <StillLayer src={media.still} /> : null}
-        <Video src={staticFile(media.clip)} trimBefore={trimFrames} muted style={{objectFit: 'contain'}} />
-      </>
+    // When the clip ends before the voice does, the last frame stays on screen, or (afterClip "still")
+    // the scene's screenshot takes over.
+    const clipFrames = Math.max(1, Math.round(media.clipSec * fps) - trimFrames);
+    const clip = (
+      <AbsoluteFill style={{paddingBottom: 150}}>
+        <Video
+          src={staticFile(media.clip)}
+          trimBefore={trimFrames}
+          muted
+          style={{width: '100%', height: '100%', objectFit: 'contain'}}
+        />
+      </AbsoluteFill>
     );
+    visual =
+      scene.afterClip === 'still' && media.still ? (
+        <>
+          <Sequence durationInFrames={clipFrames}>{clip}</Sequence>
+          <Sequence from={clipFrames}>
+            <StillLayer src={media.still} />
+          </Sequence>
+        </>
+      ) : (
+        clip
+      );
   } else if (media?.still) {
     visual = <StillLayer src={media.still} />;
   } else {

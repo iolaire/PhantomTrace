@@ -12,6 +12,8 @@ export type SceneDef = {
   narration: string;
   targetSec: number;
   callouts: Callout[];
+  /** What shows when the clip ends before the voice does: its last frame (default) or the scene's still. */
+  afterClip?: 'hold' | 'still';
   /** Seconds to cut from the start of the clip. */
   trimStartSec?: number;
   record: string;
