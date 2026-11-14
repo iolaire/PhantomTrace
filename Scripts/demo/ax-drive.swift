@@ -6,12 +6,15 @@
 //   ax-drive <app> dump [depth]          print the AX tree (role, title, description, value, enabled)
 //   ax-drive <app> press <text> [role]   AXPress the first element whose title or description contains <text>
 //   ax-drive <app> click <text> [role]   glide the real pointer to that element and post a real left click
+//   ax-drive <app> rclick <text> [role]  the same with a right click (opens a context menu)
+//   (<text> matches a title or description by substring, or an AXStaticText value exactly)
 //   ax-drive <app> wait <text> [role]    wait up to 20 s until that element exists and is enabled
 //   ax-drive <app> move <title> <x> <y>  move the window with that exact title (top-left screen points)
 //   ax-drive <app> screen                print the main screen's visible frame as "x y width height"
 //   ax-drive <app> pointer <x> <y>       put the pointer at a screen point (no click)
 //
 // AXWIN=<window title> limits press/click to one window ("" is the untitled lock window).
+// AXAT=<x>,<y> limits press/click/wait to the open menu under that screen point (desktop context menus).
 // Needs Accessibility permission for the app that runs it (System Settings > Privacy & Security).
 // Use `click` while recording with `screencapture -v -C -k`: AXPress moves no pointer and draws no
 // click ring, a real click does. Demo use only, against the throwaway PhantomDemo drive.
@@ -44,8 +47,12 @@ func dump(_ element: AXUIElement, depth: Int, maxDepth: Int) {
 func find(_ element: AXUIElement, _ text: String, role: String?, depth: Int = 0) -> AXUIElement? {
     guard depth <= 14 else { return nil }
     let elementRole = attribute(element, "AXRole") as? String ?? ""
-    let labels = [attribute(element, "AXTitle") as? String, attribute(element, "AXDescription") as? String]
+    var labels = [attribute(element, "AXTitle") as? String, attribute(element, "AXDescription") as? String]
         .compactMap { $0 }
+    // Static text (Finder sidebar rows, file names) carries its label in AXValue; match it exactly.
+    if elementRole == "AXStaticText", let value = attribute(element, "AXValue") as? String, value == text {
+        labels.append(value)
+    }
     if role == nil || elementRole == role, labels.contains(where: { $0.contains(text) }) { return element }
     for child in children(element) {
         if let match = find(child, text, role: role, depth: depth + 1) { return match }
@@ -77,7 +84,7 @@ func postMouse(_ type: CGEventType, at point: CGPoint) {
 }
 
 /// Eased glide from the current pointer position, then a real click, so the recording shows motion.
-func glideAndClick(to target: CGPoint) {
+func glideAndClick(to target: CGPoint, right: Bool = false) {
     let start = CGEvent(source: nil)?.location ?? target
     let steps = 24
     for step in 1...steps {
@@ -88,6 +95,14 @@ func glideAndClick(to target: CGPoint) {
         usleep(16_000)
     }
     usleep(120_000)
+    if right {
+        CGEvent(mouseEventSource: nil, mouseType: .rightMouseDown, mouseCursorPosition: target, mouseButton: .right)?
+            .post(tap: .cghidEventTap)
+        usleep(90_000)
+        CGEvent(mouseEventSource: nil, mouseType: .rightMouseUp, mouseCursorPosition: target, mouseButton: .right)?
+            .post(tap: .cghidEventTap)
+        return
+    }
     postMouse(.leftMouseDown, at: target)
     usleep(90_000)
     postMouse(.leftMouseUp, at: target)
@@ -126,6 +141,13 @@ case "screen":
     let top = primary.frame.maxY - visible.maxY
     print("\(Int(visible.minX)) \(Int(top)) \(Int(visible.width)) \(Int(visible.height))")
     exit(0)
+case "escape":
+    // Closes an open menu without choosing anything.
+    for down in [true, false] {
+        CGEvent(keyboardEventSource: nil, virtualKey: 53, keyDown: down)?.post(tap: .cghidEventTap)
+        usleep(40_000)
+    }
+    exit(0)
 case "pointer":
     guard args.count >= 5, let x = Double(args[3]), let y = Double(args[4]) else {
         fail("usage: ax-drive <app> pointer <x> <y>", code: 2)
@@ -142,6 +164,24 @@ guard let running = NSWorkspace.shared.runningApplications.first(where: {
 }) else { fail("app not running: \(appName)") }
 let app = AXUIElementCreateApplication(running.processIdentifier)
 var root = app
+// AXAT=x,y searches from the menu under that screen point. Finder's desktop context menu is not listed
+// in its parent's AXChildren, so it can't be found from the app root; it is reachable by position only.
+if let spot = ProcessInfo.processInfo.environment["AXAT"] {
+    let parts = spot.split(separator: ",").compactMap { Float($0) }
+    guard parts.count == 2 else { fail("AXAT must be x,y") }
+    var hit: AXUIElement?
+    guard AXUIElementCopyElementAtPosition(AXUIElementCreateSystemWide(), parts[0], parts[1], &hit) == .success,
+          var current = hit else { fail("nothing at \(spot)") }
+    // Climb to the outermost menu so sibling items and open submenus are all inside the search root.
+    var menu: AXUIElement?
+    for _ in 0..<12 {
+        if (attribute(current, "AXRole") as? String) == "AXMenu" { menu = current }
+        guard let parent = attribute(current, "AXParent"), CFGetTypeID(parent) == AXUIElementGetTypeID() else { break }
+        current = parent as! AXUIElement  // swiftlint:disable:this force_cast
+    }
+    guard let found = menu else { fail("no menu at \(spot)") }
+    root = found
+}
 if let scope = ProcessInfo.processInfo.environment["AXWIN"] {
     guard let scoped = window(of: app, titled: scope) else { fail("window not found: \"\(scope)\"") }
     root = scoped
@@ -155,18 +195,18 @@ case "dump":
 case "press":
     guard let element = find(root, text, role: role) else { fail("not found: \(text)") }
     print("press \(text): \(AXUIElementPerformAction(element, kAXPressAction as CFString).rawValue)")
-case "click":
+case "click", "rclick":
     guard let element = find(root, text, role: role) else { fail("not found: \(text)") }
     let box = frame(of: element)
     // Radio buttons: aim at the circle on the left, not the middle of the label.
     let isRadio = (attribute(element, "AXRole") as? String) == "AXRadioButton"
     let target = CGPoint(x: isRadio ? box.minX + 8 : box.midX, y: box.midY)
-    glideAndClick(to: target)
-    print("click \(text) at \(Int(target.x)),\(Int(target.y))")
+    glideAndClick(to: target, right: command == "rclick")
+    print("\(command) \(text) at \(Int(target.x)),\(Int(target.y))")
 case "wait":
     let deadline = Date().addingTimeInterval(20)
     while Date() < deadline {
-        if let element = find(app, text, role: role), (attribute(element, "AXEnabled") as? Bool) ?? true {
+        if let element = find(root, text, role: role), (attribute(element, "AXEnabled") as? Bool) ?? true {
             print("ready \(text)")
             exit(0)
         }

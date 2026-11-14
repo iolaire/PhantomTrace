@@ -213,6 +213,7 @@ extension DiagnosticCoordinator {
         // Requirement 14.2: clear the banner and warnings once the new run begins.
         model.banner = nil
         model.failedActions = FailedActionList()
+        model.manualActions = ManualActionList()
         model.resolveError = nil
         degraded = false
         if isFirstScan {
@@ -308,6 +309,7 @@ extension DiagnosticCoordinator {
         state = next
         model.isStageRunning = true  // Requirement 13.5
         model.failedActions = FailedActionList()
+        model.manualActions = ManualActionList()
         refreshDerived()
         publish()
         let plan: ResolutionPlan
@@ -326,6 +328,7 @@ extension DiagnosticCoordinator {
         do {
             let outcome = try await stages.execute(plan, on: mount)
             model.failedActions = FailedActionList(capping: outcome.failed)
+            model.manualActions = ManualActionList(capping: outcome.manual)  // Requirement 7.5
             state = DiscoveryReducer.reduce(state, .stageCompleted)
             model.isStageRunning = false
             // The pipeline already rescanned (Requirement 11.2). Use that fresh result; a timed-out

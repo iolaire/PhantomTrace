@@ -18,6 +18,8 @@ public struct WindowModel: Equatable, Sendable {
     public var isUnmounting: Bool
     /// Failed actions of the last stage, capped at 500 entries (Requirement 14.5).
     public var failedActions: FailedActionList
+    /// Egress Shells actions of the last stage that need a hand-typed `cd ~` (Requirement 7.5).
+    public var manualActions: ManualActionList
     /// Locks owned by another user: shown read-only and never a stage target (Requirement 13.12).
     public var readOnlyLockIDs: Set<UUID>
     /// Set when the input could not be resolved (Requirement 2). Alert only; no window content.
@@ -37,6 +39,7 @@ public struct WindowModel: Equatable, Sendable {
         isStageRunning: Bool = false,
         isUnmounting: Bool = false,
         failedActions: FailedActionList = FailedActionList(),
+        manualActions: ManualActionList = ManualActionList(),
         readOnlyLockIDs: Set<UUID> = [],
         resolveError: PhantomTraceError? = nil
     ) {
@@ -50,6 +53,7 @@ public struct WindowModel: Equatable, Sendable {
         self.isStageRunning = isStageRunning
         self.isUnmounting = isUnmounting
         self.failedActions = failedActions
+        self.manualActions = manualActions
         self.readOnlyLockIDs = readOnlyLockIDs
         self.resolveError = resolveError
     }

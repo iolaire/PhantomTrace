@@ -15,7 +15,7 @@ The demo runs on macOS (Finder, the Quick Action, the PhantomTrace app). The cli
 | Required | `s03-trigger` | Right-click the drive in Finder, Quick Actions, Why Can't I Eject? Stop when the PhantomTrace window opens. | 10 to 12 s |
 | Required | `s06-egress` | Terminal and PhantomTrace side by side. Choose Egress Shells, Proceed, confirm. The Terminal prompt goes to `~` and the lock list updates. | 12 to 15 s |
 | Required | `s09-handoff` | Press Eject. The green VOLUME RELEASED window shows, and the drive leaves Finder. | 10 to 12 s |
-| Optional | `s01-problem` | Select the drive in Finder, press Cmd+E. Let Finder's refusal dialog sit for 3 s. | 6 to 8 s |
+| Optional | `s01-problem` | Open the drive's Finder window, right-click the drive in the sidebar, Eject. Let Finder's refusal dialog (it names no program and offers only Force Eject) sit for 3 s, then Cancel. | 10 to 12 s |
 | Optional | `s04-reveal` | The lock list opens. Slowly point at each row. | 10 to 15 s |
 | Optional | `s05-safety` | Choose a stage, press Proceed. Stop on the plan preview. | 8 to 12 s |
 | Optional | `s07-graceful` | Graceful Request, Proceed, confirm. Let the rescan finish. | 10 to 15 s |
@@ -44,30 +44,37 @@ It counts down 3 seconds, records the screen with no sound, and saves `demo/publ
 
 Run the next take by repeating the same command. It replaces only that scene's file.
 
-## Record the resolution flow hands-free (Kiro or a person)
+## Record hands-free (Kiro or a person)
 
-`Scripts/demo/record-flow.sh` records Egress Shells -> Graceful Request -> Eject as one clip, with no keyboard or mouse use. Kiro recorded the current `s06-egress.mp4` this way on 2026-11-13 (18.9 s, 1920x666). It drives the app through the Accessibility API with `Scripts/demo/ax-drive.swift` (built on first use into `~/PhantomTraceDemo/bin/`).
+`Scripts/demo/record-flow.sh` records the clips without anyone touching the keyboard or mouse. It drives Finder and PhantomTrace through the Accessibility API, using `Scripts/demo/ax-drive.swift` (built on first use into `~/PhantomTraceDemo/bin/`). Kiro recorded the current clips this way on 2026-11-13. It has two modes:
 
-What it does:
+| Mode | Shows | Saves |
+|---|---|---|
+| `problem` | Finder window on the drive, right-click the drive in the sidebar, Eject, Finder's "wasn't ejected" alert for 3 s, then Cancel. No PhantomTrace. | `s01-problem` (about 12 s) |
+| `resolve` | One take: right-click the drive's desktop icon, then Quick Actions > Why Can't I Eject?, Summon, Egress Shells, Graceful Request, Eject. The desktop icon disappears at the end. | Cut from the take at logged step times: `s03-trigger` (to the lock list), `s06-egress`, `s07-graceful`, `s09-handoff` (release and eject). The full take and the step times stay in `~/PhantomTraceDemo/takes/`. |
 
-- Moves the PhantomTrace start window flush right. The lock window then opens on top of it, because the app keeps it on screen, and the plan dialogs center on that. Terminal sits to the left. App placement code and requirements are unchanged.
-- Gives the demo Terminal tab a `%~ %#` prompt and an 18 pt font, so the prompt visibly changes from `/Volumes/PhantomDemo %` to `~ %`.
-- Glides the real pointer to each control and clicks it. `screencapture -C -k` shows the cursor and draws a ring on each click. (AXPress alone moves no pointer and draws no ring.)
-- Waits for each control to appear, then pauses about 1 s, so the gaps stay short. It records a screen region, then trims the clip to the measured length.
+How it works:
+
+- `resolve` layout, left to right: the drive's desktop icon, Terminal, PhantomTrace. The start window is moved flush right, so the lock window opens on top of it (the app keeps it on screen) and plan dialogs center on that. App placement code and requirements are unchanged. The icon's old desktop position is put back after a preview.
+- The demo Terminal tab gets a `%~ %#` prompt and an 18 pt font, so the prompt visibly changes from `/Volumes/PhantomDemo %` to `~ %`.
+- The real pointer glides to each control and clicks or right-clicks it. `screencapture -C -k` shows the cursor and a ring on each click (AXPress alone moves no pointer and draws no ring).
+- Each step waits for its control, then pauses about 1 s. The script records a screen region and trims it to the measured length.
+- Finder's desktop context menu is not in Finder's AX tree. `ax-drive` finds it by screen position (`AXAT=x,y`).
+- It never presses Force Eject or Force Unmount.
 
 Steps:
 
 1. Grant **Accessibility** and **Screen Recording** to the app that runs the script (Kiro or your terminal), then restart that app.
-2. `Scripts/make-app.sh`, then `Scripts/demo/setup-demo.sh`. You need a Terminal tab with its cwd on the drive and the `tail` lock. A `--headless` shell is classed `cliTool`, so Egress Shells is disabled for it.
-3. Clear the right part of the main screen. The clip is a region, so whatever is behind the windows shows.
-4. `PHANTOMTRACE_FLOW_TOP=235 Scripts/demo/record-flow.sh --preview` lays out the windows and saves one still to `~/PhantomTraceDemo/preview.png`. Look at it, then delete it. `PHANTOMTRACE_FLOW_TOP` sets the top edge in screen points. Leave it out to use a third of the way down.
-5. `PHANTOMTRACE_FLOW_TOP=235 Scripts/demo/record-flow.sh s06-egress`. Check frames before keeping the file.
+2. `Scripts/make-app.sh`, `Scripts/install-quick-action.sh` (enable it in Finder), then `Scripts/demo/setup-demo.sh`. `resolve` needs a Terminal tab with its cwd on the drive plus the `tail` lock. A `--headless` shell is classed `cliTool`, so Egress Shells is disabled for it.
+3. Clear the screen area being recorded. The clip is a region, so whatever is behind the windows shows.
+4. Preview: `PHANTOMTRACE_FLOW_TOP=235 Scripts/demo/record-flow.sh problem --preview` (or `resolve --preview`). This saves one still to `~/PhantomTraceDemo/preview.png`. Look at it, then delete it. `PHANTOMTRACE_FLOW_TOP` sets the top edge in screen points. Leave it out to use a third of the way down.
+5. Record `problem` first, because it leaves the drive mounted. Then, if the shell has moved, `cd /Volumes/PhantomDemo` in the demo Terminal tab again, and record `resolve`. Check frames before keeping the files.
 
 Known limits:
 
-- The first Egress Shells run on a new build can sit on "Conjuring..." for about 15 s with no message while macOS asks whether PhantomTrace may control Terminal. Allow it and run again. The app does not show the Requirement 7.5 "type `cd ~`" instruction when the send fails (open bug).
-- The start window lists every mounted volume for about 1 s at the start. Other drives' names show unless only the demo image is mounted.
-- After the flow the volume is unmounted but the image is still attached. Reset as below.
+- The first Egress Shells run on a new build can sit on "Conjuring..." for about 15 s with no message while macOS asks whether PhantomTrace may control Terminal. Allow it and run again. If the send fails, the window shows "Do it yourself (...): ... type: cd ~" under the lock table (Requirement 7.5, fixed after these clips were recorded; the recorded clips are unaffected because the send succeeded).
+- The Finder sidebar and the PhantomTrace start window show every mounted volume and network location. Other drives' names show unless only the demo image is mounted (the owner accepted this for the 2026-11-13 takes).
+- After `resolve` the volume is unmounted but the image is still attached. Reset as below.
 - A glow around the cursor or clicks is not drawn. Add it in Remotion if wanted.
 
 ## Reset between takes

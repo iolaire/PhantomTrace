@@ -95,7 +95,10 @@ public final class LockWindowContentView: NSView {
             kind: banner?.kind == .partial ? .partial : .failed,
             rescanEnabled: model.controls.rescanEnabled
         )
-        failedList.update(list: isTrace ? model.failedActions : FailedActionList())
+        failedList.update(
+            list: isTrace ? model.failedActions : FailedActionList(),
+            manual: isTrace ? model.manualActions : ManualActionList()
+        )
         proceedButton.updateProceed(from: model)
         goBackButton.updateGoBack(from: model)
         ejectButton.updateEject(from: model)
@@ -266,9 +269,21 @@ public final class LockWindowContentView: NSView {
         stack.edgeInsets = NSEdgeInsets(top: 8, left: 12, bottom: 12, right: 12)
         footer.setContentHuggingPriority(.required, for: .vertical)
         needsUpdateConstraints = true
+        // The chrome is a fixed 720x520 (design, owner decision 2026-11-12), so the results list gets its
+        // room from the lock table. A scroll view has no intrinsic height; without a floor the stack squeezes
+        // the list to 0 pt and its messages never show (Requirements 7.5, 14.5). Priorities, low to high:
+        // table's preferred 90 pt (480) < list floor (490) < windowSizeStayPut (500), so the list shrinks the
+        // table, down to the required 60 pt (header and two rows; more rows scroll), and never grows the window.
+        // The list is detached while hidden, and the table then keeps 90 pt.
+        let tablePreferred = lockTable.heightAnchor.constraint(greaterThanOrEqualToConstant: 90)
+        tablePreferred.priority = NSLayoutConstraint.Priority(480)
+        let failedListFloor = failedList.heightAnchor.constraint(greaterThanOrEqualToConstant: 44)
+        failedListFloor.priority = NSLayoutConstraint.Priority(490)
         NSLayoutConstraint.activate([
-            lockTable.heightAnchor.constraint(greaterThanOrEqualToConstant: 90),
-            failedList.heightAnchor.constraint(lessThanOrEqualToConstant: 70)
+            lockTable.heightAnchor.constraint(greaterThanOrEqualToConstant: 60),
+            tablePreferred,
+            failedList.heightAnchor.constraint(lessThanOrEqualToConstant: 70),
+            failedListFloor
         ])
         return stack
     }

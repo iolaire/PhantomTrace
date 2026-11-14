@@ -77,4 +77,24 @@ enum StageMessages {
         guard let pid = failure.action.target?.pid else { return "\(action): \(reason)" }
         return "\(action), pid \(pid): \(reason)"
     }
+
+    /// Why PhantomTrace sent nothing to a shell (Requirement 7.5).
+    static func describe(_ reason: EgressManualReason) -> String {
+        switch reason {
+        case .noTerminal: return "the shell has no terminal"
+        case .foregroundJob: return "a program is running in its terminal"
+        case .notScriptable: return "PhantomTrace could not type into its terminal"
+        }
+    }
+
+    /// "Do it yourself (PhantomTrace could not type into its terminal): In the terminal running the shell
+    /// with pid 5883, type: cd ~". The instruction is Core's fixed text with the pid, nothing else.
+    static func describe(_ manual: ManualAction) -> String {
+        "Do it yourself (\(describe(manual.reason))): \(manual.instruction)"
+    }
+
+    static func omittedManualActions(_ count: Int) -> String? {
+        guard count > 0 else { return nil }
+        return "and \(count) more shell\(count == 1 ? "" : "s") to move by hand not shown"
+    }
 }

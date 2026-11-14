@@ -76,4 +76,51 @@ struct StageMessagesTests {
         #expect(!StageMessages.noEligibleBanishProcesses.isEmpty)
         #expect(!StageMessages.scanFailedHint.isEmpty)
     }
+
+    @Test
+    func manualShellLineGivesTheReasonAndTheCdHomeInstruction() {
+        let manual = ManualAction(
+            action: UITestData.action(.resetShellCwd, pid: 5883),
+            reason: .notScriptable,
+            instruction: "In the terminal running the shell with pid 5883, type: cd ~"
+        )
+        #expect(StageMessages.describe(manual) == "Do it yourself (PhantomTrace could not type into its terminal): "
+            + "In the terminal running the shell with pid 5883, type: cd ~")
+    }
+
+    @Test
+    func everyManualReasonHasDistinctText() {
+        let reasons: [EgressManualReason] = [.noTerminal, .foregroundJob, .notScriptable]
+        let texts = reasons.map { StageMessages.describe($0) }
+        #expect(Set(texts).count == reasons.count)
+        #expect(texts.allSatisfy { !$0.isEmpty })
+    }
+
+    @Test
+    func omittedManualActionCountUsesSingularAndPlural() {
+        #expect(StageMessages.omittedManualActions(0) == nil)
+        #expect(StageMessages.omittedManualActions(1) == "and 1 more shell to move by hand not shown")
+        #expect(StageMessages.omittedManualActions(30) == "and 30 more shells to move by hand not shown")
+    }
+
+    @Test @MainActor
+    func resultListShowsManualShellsBeforeFailedActions() {
+        let manual = ManualActionList(capping: [ManualAction(
+            action: UITestData.action(.resetShellCwd, pid: 7),
+            reason: .foregroundJob,
+            instruction: "In the terminal running the shell with pid 7, type: cd ~"
+        )])
+        let failed = FailedActionList(capping: [FailedAction(
+            action: UITestData.action(.quitApplication, pid: 8), error: .permissionDenied(pid: 8)
+        )])
+        let lines = FailedActionListView.text(for: failed, manual: manual, noEligibleBanish: false)
+            .components(separatedBy: "\n")
+        #expect(lines.count == 2)
+        #expect(lines[0].hasSuffix("pid 7, type: cd ~"))
+        #expect(lines[1] == "Quit application, pid 8: permission denied")
+        #expect(FailedActionListView.text(for: FailedActionList(), noEligibleBanish: false).isEmpty)
+        #expect(FailedActionListView.accessibilityLabel(failed: 1, manual: 1)
+            == "Stage results. 1 shell to move by hand, 1 failed action")
+        #expect(FailedActionListView.accessibilityLabel(failed: 0, manual: 0) == "No failed actions")
+    }
 }
