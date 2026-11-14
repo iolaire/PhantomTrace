@@ -33,7 +33,7 @@ public func selectWindow(
         case .notAMountPoint, .protectedVolume:
             return nil  // resolve failure: alert only, no lock window (Requirement 2)
         case .lsofUnavailable, .lsofTimedOut, .commandTimedOut, .commandLaunchFailed, .permissionDenied,
-             .processIdentityChanged, .unmountBusy, .unmountFailed, .cancelled:
+             .processIdentityChanged, .safetyDenied, .unmountBusy, .unmountFailed, .cancelled:
             return .phantomTrace
         }
     case .scanning, .parsed, .classified:

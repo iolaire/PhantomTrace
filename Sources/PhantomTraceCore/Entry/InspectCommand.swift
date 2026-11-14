@@ -132,7 +132,7 @@ public struct InspectCommand: Sendable {
             return "could not launch \(command)"
         case .cancelled:
             return "cancelled"
-        case .permissionDenied, .processIdentityChanged, .unmountBusy, .unmountFailed:
+        case .permissionDenied, .processIdentityChanged, .safetyDenied, .unmountBusy, .unmountFailed:
             return "could not inspect the volume"
         }
     }

@@ -1,6 +1,7 @@
 import {AbsoluteFill, Img, Sequence, interpolate, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import {Audio, Video} from '@remotion/media';
 import {Callouts} from '../components/Callouts';
+import {Intro} from '../components/Intro';
 import {Captions} from '../components/Captions';
 import {Slate} from '../components/Slate';
 import {TerminalView} from '../components/TerminalView';
@@ -39,6 +40,8 @@ export const SceneView = ({scene, showCaptions, showCallouts}: Props) => {
   let visual;
   if (scene.visual === 'terminal' && scene.terminal) {
     visual = <TerminalView title={scene.terminal.title} lines={scene.terminal.lines} />;
+  } else if (scene.visual === 'intro' && scene.titleCard) {
+    visual = <Intro {...scene.titleCard} />;
   } else if (scene.visual === 'title' && scene.titleCard) {
     visual = <TitleCard {...scene.titleCard} />;
   } else if (media?.clip) {

@@ -9,6 +9,16 @@ const stillsTarget = path.join(root, 'public', 'stills');
 mkdirSync(stillsTarget, {recursive: true});
 mkdirSync(path.join(root, 'src', 'generated'), {recursive: true});
 
+// Art for the opening image, from the project's own look-and-feel files (transparent PNGs).
+const artSource = path.resolve(root, '..', 'docs', 'LookAndFeel', 'use');
+const artTarget = path.join(root, 'public', 'art');
+mkdirSync(artTarget, {recursive: true});
+for (const file of ['ghost-looking-left-yellow.png']) {
+  const from = path.join(artSource, file);
+  if (existsSync(from)) copyFileSync(from, path.join(artTarget, file));
+  else console.warn(`warning: opening art ${file} not found in docs/LookAndFeel/use`);
+}
+
 const manifest = {};
 let total = 0;
 const pad = 0.6; // seconds of air after the voice
@@ -38,7 +48,7 @@ for (const scene of config.scenes) {
   }
   manifest[scene.id] = entry;
 
-  const sec = Math.max(entry.audio ? entry.audioSec + pad : scene.targetSec, entry.clipSec, 3);
+  const sec = Math.max(entry.audio ? entry.audioSec + pad : scene.targetSec, entry.clipSec, scene.minSec ?? 3);
   total += sec;
   const words = wordCount(scene.narration);
   const note = [

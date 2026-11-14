@@ -1,0 +1,20 @@
+{
+  "name": "safety-reviewer",
+  "description": "Read-only reviewer that checks a PhantomTrace diff against the safety and layering steering rules and reports violations with file and line.",
+  "prompt": "file://./prompts/safety-reviewer.md",
+  "tools": ["read"],
+  "excludedTools": ["write", "shell", "web"],
+  "permissions": {
+    "rules": [
+      { "capability": "fs_read", "match": ["**"], "effect": "allow" },
+      { "capability": "fs_write", "match": ["**"], "effect": "deny" },
+      { "capability": "shell", "match": ["*"], "effect": "deny" }
+    ]
+  },
+  "resources": [
+    "file://.kiro/steering/safety.md",
+    "file://.kiro/steering/structure.md",
+    "file://.kiro/steering/tech.md",
+    "file://.kiro/steering/testing.md"
+  ]
+}

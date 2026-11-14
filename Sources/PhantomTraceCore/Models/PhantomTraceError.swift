@@ -12,6 +12,8 @@ public enum PhantomTraceError: Error, Equatable, Sendable {
     case commandLaunchFailed(command: String)
     case permissionDenied(pid: UInt32)
     case processIdentityChanged(pid: UInt32)
+    /// `SafetyPolicy` denied the action when the pipeline re-checked it right before sending.
+    case safetyDenied(SafetyDenial)
     case unmountBusy
     case unmountFailed(code: Int32)
     /// The task was cancelled before the operation finished. Nothing further was sent or unmounted.

@@ -17,6 +17,8 @@ public actor ResolutionPipeline: StageRunning {
         let volume: MountInfo
         let actions: [ProposedAction]
         let names: [ProcessIdentity: String]
+        /// The facts each action was approved with, so `execute` can ask the policy again.
+        let contexts: [ProcessIdentity: SafetyContext]
     }
 
     /// What the actions of one stage did, carried to the post-stage rescan.
@@ -28,6 +30,7 @@ public actor ResolutionPipeline: StageRunning {
 
     private let scanner: TimedScanner
     private let builder: StagePlanBuilder
+    private let policy: any SafetyPolicying
     private let history: AttemptHistory
     private let inspector: any ProcessInspecting
     private let signals: any SignalSending
@@ -54,6 +57,7 @@ public actor ResolutionPipeline: StageRunning {
     ) {
         scanner = TimedScanner(discovery: discovery, clock: clock)
         builder = StagePlanBuilder(policy: policy)
+        self.policy = policy
         self.history = history
         self.inspector = inspector
         self.signals = signals
@@ -78,20 +82,28 @@ public actor ResolutionPipeline: StageRunning {
         // Requirement 11.1: a failed or timed-out scan means no plan.
         let scan = try await scanner.scan(volume).get()
         let completedAt = clock.now()
+        let owners = ownerIDs(for: scan.locks)
+        let guiPIDs = Set(scan.locks.map(\.pid).filter { quitter.isGUIApplication(pid: Int32(truncatingIfNeeded: $0)) })
+        let now = clock.now()
         let input = StagePlanInput(
             locks: scan.locks,
             scanCompletedAt: completedAt,
-            now: clock.now(),
-            ownerUserIDs: ownerIDs(for: scan.locks),
-            guiPIDs: Set(scan.locks.map(\.pid).filter { quitter.isGUIApplication(pid: Int32(truncatingIfNeeded: $0)) }),
-            confirmedDaemons: confirmedDaemons
+            now: now,
+            ownerUserIDs: owners,
+            guiPIDs: guiPIDs,
+            confirmedDaemons: confirmedDaemons,
+            // Requirement 6.6: time spent gathering the owner and GUI facts.
+            determinationMilliseconds: Int((now.timeIntervalSince(completedAt) * 1000).rounded(.up))
         )
         let plan = await builder.plan(stage, input: input)
         var names: [ProcessIdentity: String] = [:]
+        var contexts: [ProcessIdentity: SafetyContext] = [:]
         for lock in scan.locks {
-            if let identity = lock.identity { names[identity] = lock.processName }
+            guard let identity = lock.identity else { continue }
+            names[identity] = lock.processName
+            contexts[identity] = StagePlanBuilder.safetyContext(for: lock, input: input)
         }
-        approvals[stage] = Approval(volume: volume, actions: plan.actions, names: names)
+        approvals[stage] = Approval(volume: volume, actions: plan.actions, names: names, contexts: contexts)
         return plan
     }
 
@@ -103,7 +115,10 @@ public actor ResolutionPipeline: StageRunning {
         for action in runnable {
             // Requirement 6: a cancelled stage must not send another signal.
             try Task.checkCancellation()
-            let result = await run(action, stage: plan.stage, volume: volume, names: approval?.names ?? [:])
+            let result = await run(
+                action, stage: plan.stage, volume: volume,
+                names: approval?.names ?? [:], contexts: approval?.contexts ?? [:]
+            )
             switch result {
             case .success: results.succeeded.append(action)
             case .failure(let error): results.failed.append(FailedAction(action: action, error: error))
@@ -137,12 +152,19 @@ public actor ResolutionPipeline: StageRunning {
         _ action: ProposedAction,
         stage: ResolutionStage,
         volume: MountInfo,
-        names: [ProcessIdentity: String]
+        names: [ProcessIdentity: String],
+        contexts: [ProcessIdentity: SafetyContext]
     ) async -> ActionResult {
         guard let target = action.target else { return .skipped }
         // Requirements 8.7, 9.6: identity is checked right before anything is sent.
         guard identityHolds(target, expectedName: stage == .banishLocks ? names[target] : nil) else {
             return .failure(.processIdentityChanged(pid: target.pid))
+        }
+        // Requirement 6.7: ask the policy again right before sending, so the attempt history it checks
+        // for a SIGKILL is the one at send time and not only the one at plan time.
+        guard let context = contexts[target] else { return .failure(.safetyDenied(.undeterminableState)) }
+        if case .deny(let denial) = await policy.evaluate(action, context: context) {
+            return .failure(.safetyDenied(denial))
         }
         switch action.kind {
         case .resetShellCwd:

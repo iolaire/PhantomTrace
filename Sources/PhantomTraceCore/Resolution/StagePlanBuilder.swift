@@ -14,6 +14,9 @@ public struct StagePlanInput: Equatable, Sendable {
     public let guiPIDs: Set<UInt32>
     public let authorizedIdentities: Set<ProcessIdentity>
     public let confirmedDaemons: Set<ProcessIdentity>
+    /// Time spent gathering owner and GUI facts, in milliseconds. Over 1000 ms they count as undetermined
+    /// (Requirement 6.6).
+    public let determinationMilliseconds: Int
 
     public init(
         locks: [LockRecord],
@@ -22,7 +25,8 @@ public struct StagePlanInput: Equatable, Sendable {
         ownerUserIDs: [UInt32: UInt32],
         guiPIDs: Set<UInt32> = [],
         authorizedIdentities: Set<ProcessIdentity> = [],
-        confirmedDaemons: Set<ProcessIdentity> = []
+        confirmedDaemons: Set<ProcessIdentity> = [],
+        determinationMilliseconds: Int = 0
     ) {
         self.locks = locks
         self.scanCompletedAt = scanCompletedAt
@@ -31,6 +35,7 @@ public struct StagePlanInput: Equatable, Sendable {
         self.guiPIDs = guiPIDs
         self.authorizedIdentities = authorizedIdentities
         self.confirmedDaemons = confirmedDaemons
+        self.determinationMilliseconds = determinationMilliseconds
     }
 }
 
@@ -61,6 +66,18 @@ public struct StagePlanBuilder: Sendable {
         }
     }
 
+    /// The facts `SafetyPolicy` needs for one lock. Shared with the pipeline, which re-checks an action
+    /// with the same facts right before sending it.
+    static func safetyContext(for lock: LockRecord, input: StagePlanInput) -> SafetyContext {
+        SafetyContext(
+            processName: lock.processName,
+            role: lock.role,
+            ownerUserID: input.ownerUserIDs[lock.pid],
+            authorizedIdentities: input.authorizedIdentities,
+            confirmedDaemons: input.confirmedDaemons,
+            determinationMilliseconds: input.determinationMilliseconds
+        )
+    }
     private typealias Candidate = (lock: LockRecord, kind: ProposedActionKind)
 
     private func egressCandidates(_ input: StagePlanInput) -> [Candidate] {
@@ -101,14 +118,7 @@ public struct StagePlanBuilder: Sendable {
                 target: lock.identity,
                 reason: "\(lock.processName) (pid \(lock.pid)) holds \(lock.path)"
             )
-            let context = SafetyContext(
-                processName: lock.processName,
-                role: lock.role,
-                ownerUserID: input.ownerUserIDs[lock.pid],
-                authorizedIdentities: input.authorizedIdentities,
-                confirmedDaemons: input.confirmedDaemons
-            )
-            switch await policy.evaluate(action, context: context) {
+            switch await policy.evaluate(action, context: Self.safetyContext(for: lock, input: input)) {
             case .allow:
                 actions.append(action)
             case .deny(let denial):

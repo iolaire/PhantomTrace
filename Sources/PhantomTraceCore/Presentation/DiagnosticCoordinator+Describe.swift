@@ -17,7 +17,7 @@ extension DiagnosticCoordinator {
         case .commandTimedOut(let command, let seconds):
             return "\(command) did not finish within \(Int(seconds)) seconds."
         case .commandLaunchFailed(let command): return "\(command) could not be started."
-        case .permissionDenied, .processIdentityChanged, .unmountBusy, .unmountFailed, .cancelled:
+        case .permissionDenied, .processIdentityChanged, .safetyDenied, .unmountBusy, .unmountFailed, .cancelled:
             return describeOperation(error)
         }
     }
@@ -27,6 +27,7 @@ extension DiagnosticCoordinator {
         switch error {
         case .permissionDenied(let pid): return "permission denied for pid \(pid)."
         case .processIdentityChanged(let pid): return "pid \(pid) changed, so it was left alone."
+        case .safetyDenied: return "the safety check refused this action, so nothing was sent."
         case .unmountBusy: return "the volume is still busy."
         case .unmountFailed(let code): return "the unmount failed (code \(code))."
         case .cancelled: return "the operation was cancelled before it finished."

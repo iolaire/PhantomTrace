@@ -17,10 +17,12 @@ Use a throwaway disk image, never a real drive.
 
 | Time | Beat | On screen | Narration idea |
 |---|---|---|---|
+| 0:00 to 0:06 (new scene `s00-intro`) | Opening image | Frame 0 is already the finished poster (yellow ghost, "PhantomTrace", "Why can't I eject?"); a colored glitch settles and embers rise. Never blank | "Why won't this drive eject? Meet PhantomTrace." |
 | 0:00 to 0:15 | The problem | Finder: try to eject DemoDrive, see "The disk wasn't ejected because one or more programs may be using it" | "Finder tells you something is using the disk. It never says what." |
 | 0:15 to 0:30 | The old way | Terminal with `lsof` output scrolling | "Today that means lsof, guesswork, and sometimes pulling the cable." |
 | 0:30 to 0:45 | The trigger | Right-click the volume, Quick Actions, "Why Can't I Eject?" | "PhantomTrace starts from Finder, no menu-bar widget." |
 | 0:45 to 1:10 | Reveal | Diagnostic Sheet: haunting ghost, table with process name, pid, user, lock category, path | "An idle zsh sitting in the volume, and an app holding a file open." |
+| 1:10 to 1:28 (new scene `s04b-heritage`, 17 s; shorten others to stay under 180 s) | Heritage | The Cannot Put Away window with the style callout | "The look carries over from my 2025 entry, West of House, a spooky retelling of the classic text game Zork. The art was made fresh for this project." |
 | 1:10 to 1:25 | Safety | Plan preview with skipped locks and reasons; a protected or other-user process shown read-only | "Nothing runs until you choose it, and protected processes are never touched." |
 | 1:25 to 1:45 | Stage 1 | Egress Shells: the Terminal prompt returns to home, session alive | "The shell moves out without being killed." |
 | 1:45 to 2:10 | Stage 2 | Graceful Request: app quits politely; table rescans | "Ask politely first. It rescans after every stage." |

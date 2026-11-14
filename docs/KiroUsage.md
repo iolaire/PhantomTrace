@@ -2,6 +2,21 @@
 
 The Rules require a write-up showing how effectively Kiro was used. This document is the draft. Fill each "Evidence" line with what actually happened during the build; leave out anything not used.
 
+## Feature map
+One line per Kiro feature, with where it lives and where the evidence is. "Not used" is stated plainly.
+
+| Feature | Where | Evidence |
+|---|---|---|
+| Specs | `.kiro/specs/phantomtrace-volume-lock-forensics/`, `.kiro/specs/project-scaffolding/` | Work-log rows cite task and requirement numbers; see Spec-driven development |
+| Steering | `.kiro/steering/` (11 files) | Lint rules and tests traced to steering rules; see Steering docs |
+| Hooks | `.kiro/hooks/` (4 files), scripts in `Scripts/hooks/` | Captured block output for `project-log-check` and `pre-commit-check`; IDE-triggered `lint-on-save` still to add; see Agent hooks |
+| Property-based tests | `Tests/PhantomTracePropertyTests` | A real bug found (`/private/var/vm`); see Property-based testing |
+| Real-capture fixture | `Tests/Fixtures/real_capture_macos.lsof` | A real `lsof` capture exposed a spec gap (short escapes); see Property-based testing |
+| Powers | `swift-expert` | Concurrency audit (D-021); see Other Kiro features |
+| Custom agent | `.kiro/agents/safety-reviewer.json` | Defined; its prompt was dry-run once by a general sub-agent, not by the agent itself; see Custom agent |
+| Reusable prompt | `.kiro/prompts/score-hackathon.md` | Produces `docs/HackathonScoreReview.md` |
+| MCP | none | Not used |
+
 ## Spec-driven development
 
 - Master spec: `.kiro/specs/phantomtrace-volume-lock-forensics/` (requirements, design) covering mount-point path resolution, process discovery, and the safe unmount workflow.
@@ -60,7 +75,14 @@ Four hooks in `.kiro/hooks/`, kept small on purpose. Each addresses a different 
     SwiftLint found violations in Sources/PhantomTraceCore/Models/PhantomTraceError.swift (output above).
     ```
     This shows the script and the rule. It does not show the IDE hook firing on a save.
-  - Not tested: `pre-commit-check` and `kiro-gitignore-guard` (both stayed silent in the run above, consistent with passing).
+  - `pre-commit-check` blocked a commit (2026-11-14, Kiro IDE). On a throwaway branch (deleted afterwards, nothing committed), a `print("hook demo")` line was added to `Sources/PhantomTraceCore/Models/PhantomTraceError.swift`, staged, and `git commit -m "test: pre-commit hook demo [skip-log]"` was run by the agent. Kiro intercepted it ("The tool was NOT executed"). The hook ran `swiftlint --strict` over all 208 files and ended with:
+    ```
+    .../Sources/PhantomTraceCore/Models/PhantomTraceError.swift:21:19: error: No print in Core Violation: Use OSLog Logger, not print, in Core. (no_print_in_core)
+    Done linting! Found 1 violation, 1 serious in 208 files.
+    Commit blocked: lint or tests failed (output above).
+    ```
+    This shows the steering rule (`tech.md`: no `print` in Core) enforced twice: by the custom lint rule and by the commit gate.
+  - Not tested: `kiro-gitignore-guard` (stayed silent in the runs above, consistent with passing).
 - Evidence to add: an IDE-triggered `lint-on-save` result (open a Swift file, add a `print`, save with Cmd-S), and any issue a hook actually caught during the build. None is recorded in the log, so none is claimed.
 
 ## Property-based testing
@@ -70,14 +92,15 @@ Four hooks in `.kiro/hooks/`, kept small on purpose. Each addresses a different 
 - Property tests exist for the spec's properties (parser totality, round-trip, byte fidelity, validity and determinism, truncation safety, unknown fields, classification, symlink containment, mount resolution, protected volumes, safety deny-list, escalation order, identity guard, plan construction, unmount gating, fresh state, discovery idempotence, URL round-trip, truncation, ghost state, window selection, argument-array fidelity), at 500 iterations each.
 - Bug found by a property test: `ProtectedVolumeRefusalPropertyTests` (Property 10) failed on the counterexample `/private/var/vm`. `MountResolver.isProtected` used `standardizedFileURL`, which rewrites `/private/var/vm` to `/var/vm`, so the protected path was not refused. Fixed by normalizing `.`/`..` lexically and refusing both forms; `MountResolverProtectionTests` is the regression test. This is a safety rule.
 - Bug found by an integration test, not a property test: `DiskImageIntegrationTests` (a real throwaway disk image with a held file and a shell) showed that DiskArbitration reports busy as `0xC000 | EBUSY` (49168). `LiveUnmounter` treated that as a generic failure and ran the `diskutil` fallback instead of returning `unmountBusy`. Fixed in `LiveUnmounter.swift` and covered by `LiveUnmounterTests`. The mock-based tests could not have found this because the mocks encoded the wrong assumption.
-- Other properties passed without finding bugs; those are logged as "no bug found" in `docs/ProjectLog.md`. Parser fixtures in `Tests/Fixtures` are generated, not captured from real `lsof`.
+- Gap found by a real `lsof` capture (2026-11-14): `Tests/Fixtures/real_capture_macos.lsof` was captured from `/usr/sbin/lsof -F pcLnftau0 -w +f` on macOS 27.2.1 against a throwaway disk image (names with a space, non-ASCII characters, and a newline). lsof writes a newline in a name as the two bytes `\n` (a further probe showed `\b`, `\t`, `\f`, `\r` the same way, and `\\` for a backslash; BEL, VT and ESC come out as raw bytes). Requirement 4.4 lists only octal, `\x` and `\\` escapes, so the parser reports a malformed escape and keeps the two bytes. The generated fixtures could not show this because they were written from the spec. `LsofParserRealCaptureTests` pins today's behavior and marks the desired behavior with `withKnownIssue` until a spec change is decided. The same cause explains the "1 unreadable lsof entries were skipped" note in the 2026-11-13 ManualQA pass. This is a spec gap, not yet fixed.
+- Other properties passed without finding bugs; those are logged as "no bug found" in `docs/ProjectLog.md`. Most parser fixtures in `Tests/Fixtures` are generated; `real_capture_macos.lsof` is the one real capture.
 
 ## Other Kiro features
 
 - Kiro IDE, CLI, Web, Crew, or Mobile: each work-log row in `docs/ProjectLog.md` names the surface (detected by `Scripts/kiro-surface.sh`), so the log shows which surface did what. Evidence to add: how they differed.
 - Kiro operating the real app (2026-11-13, Kiro IDE): with Accessibility and Screen Recording granted by the owner, Kiro drove PhantomTrace through the macOS Accessibility API and recorded the demo clips. One shows Finder's own eject failure (`s01-problem`). One continuous take goes from the desktop Quick Action through Egress Shells, Graceful Request and Eject, and is cut into `s03-trigger`, `s06-egress`, `s07-graceful` and `s09-handoff`. It used a real pointer glide and clicks, so the clip shows the cursor and click rings. The tools are in the repo (`Scripts/demo/ax-drive.swift`, `Scripts/demo/record-flow.sh`, see `demo/CLIPS.md`). While doing this, Kiro found a real bug: the app drops `StageOutcome.manual`, so a shell that cannot be sent `cd ~` gets no on-screen instruction (Requirement 7.5). Fixing it showed a second, older bug: the stage results list had always collapsed to 0 pt, so failed actions (Requirement 14.5) were never visible either. Both are fixed and checked on screen with a shell on a bare pty. It also fixed `teardown-demo.sh` for the state after Eject. Details in `docs/ProjectLog.md`.
-- Custom agents: record any created and their effect.
-- MCP: record any servers used and what they enabled.
+- Custom agent, `safety-reviewer` (`.kiro/agents/safety-reviewer.json`, prompt in `.kiro/agents/prompts/safety-reviewer.md`): read-only (read tools only; write, shell and web excluded and denied by permission rules), loaded with `safety.md`, `structure.md`, `tech.md` and `testing.md`. It checks code against the safety rules and reports `severity | file:line | rule | problem`. The agent has not yet been run from the IDE or CLI. Its prompt was dry-run once on 2026-11-14 by a general sub-agent (read-only) over Core Resolution and System, the UI, the app and the CLI. It found no blockers and seven minor notes, including two real gaps against `safety.md`: `StagePlanBuilder` never passes `determinationMilliseconds`, so the 1000 ms undeterminable-state denial cannot trigger in production, and `ResolutionPipeline.execute` runs actions approved at `plan()` time without calling `SafetyPolicy.evaluate` again. Both were fixed the same day (2026-11-14): the pipeline now measures fact-gathering time and passes it to the policy, and `execute` asks `SafetyPolicy.evaluate` again right before each send and reports a refusal as `PhantomTraceError.safetyDenied`. `ResolutionPipelineSafetyRecheckTests` covers both (a kill is refused when the recorded graceful attempt is gone at send time; a 1.5 s fact lookup denies the action). That is the review loop closing: steering rule, agent prompt, finding, fix, test. Evidence to add: a run of the agent itself on a real diff.
+- MCP: not used. No server is configured and none is claimed.
 - Kiro powers: the `swift-expert` power is installed (`~/.kiro/powers/installed/swift-expert`, with `swift-general.md` and `swift-api-design-guidelines.md` steering files) and was used in Kiro IDE for Swift guidance. Two uses are logged in `docs/ProjectLog.md`, both dated 2026-11-12:
   - Concurrency audit (decision D-021, the stronger use). An audit of Core against the power's concurrency guidance found three problems: cancellation was swallowed in `ResolutionPipeline.execute` (a cancelled stage kept signalling, then rescanned), a cancelled scan was reported as `lsofUnavailable`, and a semaphore with `Task.detached` blocked the coordinator actor during `.dmg` resolution. The fixes added `PhantomTraceError.cancelled` and `EgressFailure.cancelled`, made `MountResolving.resolve` and `MountTableProviding.mounts(forDiskImage:)` `async`, made `LiveUnmounter` resume its continuation exactly once, and added `ResolutionPipelineCancellationTests`. Verified on macOS: 259 tests pass and `swiftlint --strict` reports 0 violations. Not covered by a test: the cancel-with-grace change in `LiveProcessRunner` and the 60 s unmount timeout, which is provisional.
   - Test hardening. Only the general Swift Testing guidance was used. The power's concurrency testing reference was not available, so nothing more is claimed for that row.

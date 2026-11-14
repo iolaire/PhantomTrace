@@ -7,6 +7,7 @@
   "scripts": {
     "sync": "node scripts/sync.mjs",
     "vo:placeholder": "node scripts/placeholder-vo.mjs",
+    "thumbnail": "npm run sync && remotion still src/index.ts Thumbnail out/thumbnail.png --frame=0 && ffmpeg -y -loglevel error -i out/thumbnail.png -vf scale=1280:720 -q:v 3 out/thumbnail.jpg",
     "guide": "node scripts/guide.mjs",
     "studio": "npm run sync && remotion studio src/index.ts",
     "render": "npm run sync && remotion render src/index.ts Demo out/phantomtrace-demo.mp4",

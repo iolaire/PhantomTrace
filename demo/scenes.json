@@ -5,6 +5,21 @@
   "maxTotalSeconds": 175,
   "scenes": [
     {
+      "id": "s00-intro",
+      "title": "Opening image",
+      "visual": "intro",
+      "titleCard": {
+        "headline": "PhantomTrace",
+        "sub": "Why can't I eject?",
+        "foot": "Kiroween 2026 · Resurrection · Built with Kiro"
+      },
+      "narration": "Why won't this drive eject? Meet PhantomTrace.",
+      "targetSec": 6,
+      "minSec": 6,
+      "callouts": [],
+      "record": "No recording needed. Art: docs/LookAndFeel/use/ghost-looking-left-yellow.png."
+    },
+    {
       "id": "s01-problem",
       "title": "The problem",
       "visual": "still",
@@ -101,6 +116,21 @@
         }
       ],
       "record": "Optional live clip. Let the window open, then slowly move the pointer over each row."
+    },
+    {
+      "id": "s04b-heritage",
+      "title": "Where the look comes from",
+      "visual": "still",
+      "still": "cannot-put-away.png",
+      "narration": "A note on the look. It carries over from my 2025 Kiroween entry, West of House, a spooky retelling of the classic text game Zork. That dark woodcut style now lives in a System 7 and Mac O S 9 platinum window, with its status icons and outline. The art was made fresh for this project.",
+      "targetSec": 19,
+      "callouts": [
+        {
+          "text": "Style carried over from West of House (2025)",
+          "atSec": 1.5
+        }
+      ],
+      "record": "No recording needed. Optional: show a West of House screenshot beside this window, but only if you own it and add it to docs/Assets.md first."
     },
     {
       "id": "s05-safety",

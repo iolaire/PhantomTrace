@@ -2,6 +2,7 @@ node_modules/
 out/
 # Made by `npm run sync` from ../docs/screenshots and the files in public/
 public/stills/
+public/art/
 src/generated/
 # Machine-voice stand-ins made by `npm run vo:placeholder`. Your own recordings go in public/audio/.
 public/audio/placeholder/

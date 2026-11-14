@@ -18,7 +18,7 @@ export const sceneSeconds = (scene: SceneDef): number => {
   const trim = scene.trimStartSec ?? 0;
   const voice = media?.audio ? media.audioSec + VOICE_PAD_SEC : scene.targetSec;
   const clip = media?.clip ? Math.max(0, media.clipSec - trim) : 0;
-  return Math.max(voice, clip, MIN_SCENE_SEC);
+  return Math.max(voice, clip, scene.minSec ?? MIN_SCENE_SEC);
 };
 
 export const sceneFrames = (scene: SceneDef): number => Math.ceil(sceneSeconds(scene) * FPS);

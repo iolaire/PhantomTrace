@@ -41,7 +41,7 @@ enum StageMessages {
             return "\(URL(fileURLWithPath: command).lastPathComponent) timed out after \(Int(seconds)) s"
         case .commandLaunchFailed(let command):
             return "\(URL(fileURLWithPath: command).lastPathComponent) could not be started"
-        case .permissionDenied, .processIdentityChanged, .unmountBusy, .unmountFailed, .cancelled:
+        case .permissionDenied, .processIdentityChanged, .safetyDenied, .unmountBusy, .unmountFailed, .cancelled:
             return describeOperation(error)
         }
     }
@@ -51,6 +51,7 @@ enum StageMessages {
         switch error {
         case .permissionDenied: return "permission denied"
         case .processIdentityChanged: return "process changed since the scan"
+        case .safetyDenied(let denial): return "not allowed: \(StageDialogText.denialText(denial))"
         case .unmountBusy: return "volume is busy"
         case .unmountFailed(let code): return "unmount failed (code \(code))"
         case .cancelled: return "cancelled before it finished"
