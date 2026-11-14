@@ -13,6 +13,6 @@
 | [LookAndFeel/README.md](LookAndFeel/README.md) | Visual design reference art and notes | New art or UI direction |
 | [Assets.md](Assets.md) | Provenance and license of images and fonts | An asset is added, replaced, or bundled |
 | [Hackathon/Rules.md](Hackathon/Rules.md), [Hackathon/Faq.md](Hackathon/Faq.md) | Official rules and FAQ (reference only, do not edit) | Never |
-| `screenshots/` | App screenshots for the README and demo (empty: the app has not been launched yet) | UI states are captured |
+| `screenshots/` | App screenshots for the README and demo (retaking them needs the permissions in [../demo/CLIPS.md](../demo/CLIPS.md#turn-the-recording-permissions-off-and-on)) | UI states are captured |
 
 The authoritative design and requirements are the specs in `.kiro/specs/`; rules for contributors and agents are in `.kiro/steering/`.

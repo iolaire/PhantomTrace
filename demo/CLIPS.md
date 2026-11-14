@@ -79,7 +79,7 @@ Known limits:
 
 ## Turn the recording permissions off and on
 
-Recording and hands-free driving need three macOS permissions for the app that runs the script (Kiro, Kiro Crew, or your terminal). Switch them off when you are done, and on again when you record.
+Recording clips, hands-free driving, and taking screenshots with `screencapture` all need three macOS permissions for the app that runs the script (Kiro, Kiro Crew, or your terminal). Switch them off when you are done, and on again when you record.
 
 | Permission | What it allows | Where it lives |
 |---|---|---|

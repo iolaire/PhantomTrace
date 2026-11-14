@@ -30,6 +30,16 @@ Use a throwaway disk image, never a real drive.
 
 Keep 10 seconds of slack. If a beat runs long, cut the old-way beat first.
 
+## Permissions for recording and screenshots
+
+Screen clips, hands-free recording (`Scripts/demo/record-flow.sh`) and automated screenshots need macOS Accessibility, Screen Recording and Automation for the app that runs them (Kiro, Kiro Crew, or your terminal). Turn them on only while recording, then off again:
+
+- Check: `Scripts/demo/privileges.sh status`
+- Turn on: `Scripts/demo/privileges.sh grant`, then switch each on by hand and restart the app (macOS does not allow a script to do this)
+- Turn off: `Scripts/demo/privileges.sh revoke --yes`
+
+Full steps, the by-hand version, and what each permission allows: [demo/CLIPS.md](../demo/CLIPS.md#turn-the-recording-permissions-off-and-on).
+
 ## Making the video (Remotion kit)
 
 The video is built from the `demo/` project, one scene per beat of the timeline above: [demo/README.md](../demo/README.md). The narration text lives in `demo/scenes.json`, and [demo/NARRATION.md](../demo/NARRATION.md) is the guide for editing it and recording your own voice.
